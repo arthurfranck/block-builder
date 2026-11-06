@@ -10,6 +10,15 @@ Every commit that changes `index.html` must update `README.md` in the same commi
 
 Before committing, reread the whole README against the current `index.html` and fix anything that is no longer true. Do not commit a page change with a stale README.
 
+## Run the tests (required)
+
+Before every commit that changes `index.html`, run `npm test` and make sure it passes. If WebKit can't be installed where you work, run at least `npm run test:chrome` and say in the commit message that the WebKit setups were not run locally (CI runs them all).
+
+- A change to what the page does needs a test change in the same commit: add or update tests in `tests/` for the new or changed behaviour.
+- Never delete or loosen a failing test to make the suite pass; fix the page, or ask.
+- If you fix a known issue marked with `test.fail`, remove that line and the matching bullet in the README's Tests section.
+- If you change the saved-plan format, keep `tests/fixtures/plans-v1.json` importing, and add a new fixture for the new version.
+
 ## Project facts
 
 - The whole app is `index.html`. There is no build step.

@@ -1,0 +1,1386 @@
+{
+ "app": "block-builder",
+ "version": 1,
+ "plans": {
+  "spring-10k-v1": {
+   "name": "Spring 10K",
+   "inputs": {
+    "goal": "race",
+    "startDate": "2026-11-09",
+    "dist": "10k",
+    "customKm": 15,
+    "raceDate": "2027-03-14",
+    "weeks": 8,
+    "curVol": 30,
+    "curLong": 12,
+    "recDist": "10",
+    "recTime": "52:00",
+    "runs": 4,
+    "days": [
+     1,
+     2,
+     4,
+     6
+    ],
+    "longDay": 6,
+    "race": null
+   },
+   "types": [
+    {
+     "id": "easy",
+     "name": "Easy run",
+     "kind": "easy",
+     "on": true,
+     "locked": true,
+     "phases": [
+      "base",
+      "build",
+      "peak",
+      "taper"
+     ],
+     "tpl": "{km} km relaxed at {easy}. You should be able to talk in full sentences."
+    },
+    {
+     "id": "long",
+     "name": "Long run",
+     "kind": "long",
+     "on": true,
+     "locked": true,
+     "phases": [
+      "base",
+      "build",
+      "peak",
+      "taper"
+     ],
+     "tpl": "{km} km steady at {easy}. {work}"
+    },
+    {
+     "id": "recovery",
+     "name": "Recovery run",
+     "kind": "recovery",
+     "on": true,
+     "phases": [
+      "base",
+      "build",
+      "peak",
+      "taper"
+     ],
+     "tpl": "{km} km very easy, slower than {easy}. Short and loose."
+    },
+    {
+     "id": "strides",
+     "name": "Easy + strides",
+     "kind": "easy",
+     "on": true,
+     "phases": [
+      "base",
+      "build",
+      "peak",
+      "taper"
+     ],
+     "tpl": "{km} km at {easy}, then {work}."
+    },
+    {
+     "id": "tempo",
+     "name": "Tempo",
+     "kind": "hard",
+     "on": true,
+     "phases": [
+      "build",
+      "peak"
+     ],
+     "tpl": "2 km warm-up, {work}, 2 km cool-down."
+    },
+    {
+     "id": "intervals",
+     "name": "Intervals",
+     "kind": "hard",
+     "on": true,
+     "phases": [
+      "build",
+      "peak"
+     ],
+     "tpl": "2 km warm-up with strides, {work}, 2 km cool-down."
+    },
+    {
+     "id": "hills",
+     "name": "Hill repeats",
+     "kind": "hard",
+     "on": true,
+     "phases": [
+      "base",
+      "build"
+     ],
+     "tpl": "2 km warm-up, {work}, 2 km cool-down."
+    },
+    {
+     "id": "fartlek",
+     "name": "Fartlek",
+     "kind": "hard",
+     "on": false,
+     "phases": [
+      "base",
+      "build"
+     ],
+     "tpl": "2 km warm-up, {work}, 2 km cool-down."
+    },
+    {
+     "id": "progression",
+     "name": "Progression run",
+     "kind": "hard",
+     "on": false,
+     "phases": [
+      "base",
+      "build",
+      "peak"
+     ],
+     "tpl": "{km} km starting at {easy}, {work}."
+    },
+    {
+     "id": "racepace",
+     "name": "Race pace",
+     "kind": "hard",
+     "on": true,
+     "phases": [
+      "peak",
+      "taper"
+     ],
+     "tpl": "2 km warm-up, {work}, 2 km cool-down."
+    }
+   ],
+   "plan": {
+    "weeks": [
+     {
+      "n": 1,
+      "phase": "base",
+      "cutback": false,
+      "start": "2027-01-18",
+      "target": 30,
+      "note": "",
+      "sessions": [
+       {
+        "id": "24d7gt2l",
+        "day": 1,
+        "typeId": "hills",
+        "name": "Hill repeats",
+        "kind": "hard",
+        "km": 7.5,
+        "desc": "2 km warm-up, 6 × 75 s uphill at hard effort, jog back down, 2 km cool-down.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 6,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "t",
+              75
+             ],
+             "pace": null
+            },
+            {
+             "p": "recovery",
+             "g": [
+              "t",
+              120
+             ],
+             "pace": null
+            }
+           ]
+          }
+         ],
+         "wu": [
+          "d",
+          2
+         ],
+         "cd": [
+          "d",
+          2
+         ]
+        }
+       },
+       {
+        "id": "7isg8hie",
+        "day": 2,
+        "typeId": "strides",
+        "name": "Easy + strides",
+        "kind": "easy",
+        "km": 6,
+        "desc": "6 km at 6:20/km, then 6 × 20 s strides with full walk-back recovery.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              6
+             ],
+             "pace": "easy"
+            }
+           ]
+          },
+          {
+           "n": 6,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "t",
+              20
+             ],
+             "pace": null
+            },
+            {
+             "p": "recovery",
+             "g": [
+              "t",
+              60
+             ],
+             "pace": null
+            }
+           ]
+          }
+         ]
+        }
+       },
+       {
+        "id": "i0txf1ii",
+        "day": 4,
+        "typeId": "easy",
+        "name": "Easy run",
+        "kind": "easy",
+        "km": 6,
+        "desc": "6 km relaxed at 6:20/km. You should be able to talk in full sentences.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              6
+             ],
+             "pace": "easy"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       {
+        "id": "pjackrmg",
+        "day": 6,
+        "typeId": "long",
+        "name": "Long run",
+        "kind": "long",
+        "km": 11,
+        "desc": "11 km steady at 6:20/km.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              11
+             ],
+             "pace": "easy"
+            }
+           ]
+          }
+         ]
+        }
+       }
+      ]
+     },
+     {
+      "n": 2,
+      "phase": "base",
+      "cutback": false,
+      "start": "2027-01-25",
+      "target": 32,
+      "note": "",
+      "sessions": [
+       {
+        "id": "ngyfxo6z",
+        "day": 1,
+        "typeId": "hills",
+        "name": "Hill repeats",
+        "kind": "hard",
+        "km": 8,
+        "desc": "2 km warm-up, 7 × 75 s uphill at hard effort, jog back down, 2 km cool-down.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 7,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "t",
+              75
+             ],
+             "pace": null
+            },
+            {
+             "p": "recovery",
+             "g": [
+              "t",
+              120
+             ],
+             "pace": null
+            }
+           ]
+          }
+         ],
+         "wu": [
+          "d",
+          2
+         ],
+         "cd": [
+          "d",
+          2
+         ]
+        }
+       },
+       {
+        "id": "hivf5dkq",
+        "day": 2,
+        "typeId": "strides",
+        "name": "Easy + strides",
+        "kind": "easy",
+        "km": 6.5,
+        "desc": "6.5 km at 6:20/km, then 6 × 20 s strides with full walk-back recovery.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              6.5
+             ],
+             "pace": "easy"
+            }
+           ]
+          },
+          {
+           "n": 6,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "t",
+              20
+             ],
+             "pace": null
+            },
+            {
+             "p": "recovery",
+             "g": [
+              "t",
+              60
+             ],
+             "pace": null
+            }
+           ]
+          }
+         ]
+        }
+       },
+       {
+        "id": "n9mtml1a",
+        "day": 4,
+        "typeId": "easy",
+        "name": "Easy run",
+        "kind": "easy",
+        "km": 6.5,
+        "desc": "6.5 km relaxed at 6:20/km. You should be able to talk in full sentences.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              6.5
+             ],
+             "pace": "easy"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       {
+        "id": "68w14hd9",
+        "day": 6,
+        "typeId": "long",
+        "name": "Long run",
+        "kind": "long",
+        "km": 11,
+        "desc": "11 km steady at 6:20/km.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              11
+             ],
+             "pace": "easy"
+            }
+           ]
+          }
+         ]
+        }
+       }
+      ]
+     },
+     {
+      "n": 3,
+      "phase": "base",
+      "cutback": false,
+      "start": "2027-02-01",
+      "target": 33,
+      "note": "",
+      "sessions": [
+       {
+        "id": "86z7qgt5",
+        "day": 1,
+        "typeId": "hills",
+        "name": "Hill repeats",
+        "kind": "hard",
+        "km": 8,
+        "desc": "2 km warm-up, 7 × 75 s uphill at hard effort, jog back down, 2 km cool-down.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 7,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "t",
+              75
+             ],
+             "pace": null
+            },
+            {
+             "p": "recovery",
+             "g": [
+              "t",
+              120
+             ],
+             "pace": null
+            }
+           ]
+          }
+         ],
+         "wu": [
+          "d",
+          2
+         ],
+         "cd": [
+          "d",
+          2
+         ]
+        }
+       },
+       {
+        "id": "lfn9o9r8",
+        "day": 2,
+        "typeId": "strides",
+        "name": "Easy + strides",
+        "kind": "easy",
+        "km": 7,
+        "desc": "7 km at 6:20/km, then 7 × 20 s strides with full walk-back recovery.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              7
+             ],
+             "pace": "easy"
+            }
+           ]
+          },
+          {
+           "n": 7,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "t",
+              20
+             ],
+             "pace": null
+            },
+            {
+             "p": "recovery",
+             "g": [
+              "t",
+              60
+             ],
+             "pace": null
+            }
+           ]
+          }
+         ]
+        }
+       },
+       {
+        "id": "0zycps43",
+        "day": 4,
+        "typeId": "easy",
+        "name": "Easy run",
+        "kind": "easy",
+        "km": 7,
+        "desc": "7 km relaxed at 6:20/km. You should be able to talk in full sentences.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              7
+             ],
+             "pace": "easy"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       {
+        "id": "0qh8mt3v",
+        "day": 6,
+        "typeId": "long",
+        "name": "Long run",
+        "kind": "long",
+        "km": 11,
+        "desc": "11 km steady at 6:20/km.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              11
+             ],
+             "pace": "easy"
+            }
+           ]
+          }
+         ]
+        }
+       }
+      ]
+     },
+     {
+      "n": 4,
+      "phase": "build",
+      "cutback": true,
+      "start": "2027-02-08",
+      "target": 27,
+      "note": "",
+      "sessions": [
+       {
+        "id": "sfunuh98",
+        "day": 1,
+        "typeId": "tempo",
+        "name": "Tempo",
+        "kind": "hard",
+        "km": 8.5,
+        "desc": "2 km warm-up, 23 min continuous at 5:17/km, 2 km cool-down.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "t",
+              1380
+             ],
+             "pace": "tempo"
+            }
+           ]
+          }
+         ],
+         "wu": [
+          "d",
+          2
+         ],
+         "cd": [
+          "d",
+          2
+         ]
+        }
+       },
+       {
+        "id": "s507vc4e",
+        "day": 2,
+        "typeId": "strides",
+        "name": "Easy + strides",
+        "kind": "easy",
+        "km": 5,
+        "desc": "5 km at 6:20/km, then 7 × 20 s strides with full walk-back recovery.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              5
+             ],
+             "pace": "easy"
+            }
+           ]
+          },
+          {
+           "n": 7,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "t",
+              20
+             ],
+             "pace": null
+            },
+            {
+             "p": "recovery",
+             "g": [
+              "t",
+              60
+             ],
+             "pace": null
+            }
+           ]
+          }
+         ]
+        }
+       },
+       {
+        "id": "agb85z0i",
+        "day": 4,
+        "typeId": "easy",
+        "name": "Easy run",
+        "kind": "easy",
+        "km": 5,
+        "desc": "5 km relaxed at 6:20/km. You should be able to talk in full sentences.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              5
+             ],
+             "pace": "easy"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       {
+        "id": "4gyfqxj7",
+        "day": 6,
+        "typeId": "long",
+        "name": "Long run",
+        "kind": "long",
+        "km": 8,
+        "desc": "8 km steady at 6:20/km.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              8
+             ],
+             "pace": "easy"
+            }
+           ]
+          }
+         ]
+        }
+       }
+      ]
+     },
+     {
+      "n": 5,
+      "phase": "build",
+      "cutback": false,
+      "start": "2027-02-15",
+      "target": 35,
+      "note": "",
+      "sessions": [
+       {
+        "id": "mki8y34d",
+        "day": 1,
+        "typeId": "intervals",
+        "name": "Intervals",
+        "kind": "hard",
+        "km": 10.5,
+        "desc": "2 km warm-up with strides, 5 × 1000 m at 4:52/km, 2 min jog, 2 km cool-down.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 5,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              1
+             ],
+             "pace": "interval"
+            },
+            {
+             "p": "recovery",
+             "g": [
+              "t",
+              120
+             ],
+             "pace": null
+            }
+           ]
+          }
+         ],
+         "wu": [
+          "d",
+          2
+         ],
+         "cd": [
+          "d",
+          2
+         ]
+        }
+       },
+       {
+        "id": "wab12vd1",
+        "day": 2,
+        "typeId": "strides",
+        "name": "Easy + strides",
+        "kind": "easy",
+        "km": 6.5,
+        "desc": "6.5 km at 6:20/km, then 7 × 20 s strides with full walk-back recovery.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              6.5
+             ],
+             "pace": "easy"
+            }
+           ]
+          },
+          {
+           "n": 7,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "t",
+              20
+             ],
+             "pace": null
+            },
+            {
+             "p": "recovery",
+             "g": [
+              "t",
+              60
+             ],
+             "pace": null
+            }
+           ]
+          }
+         ]
+        }
+       },
+       {
+        "id": "xk320qo3",
+        "day": 4,
+        "typeId": "easy",
+        "name": "Easy run",
+        "kind": "easy",
+        "km": 6.5,
+        "desc": "6.5 km relaxed at 6:20/km. You should be able to talk in full sentences.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              6.5
+             ],
+             "pace": "easy"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       {
+        "id": "f1cts0rg",
+        "day": 6,
+        "typeId": "long",
+        "name": "Long run",
+        "kind": "long",
+        "km": 11.5,
+        "desc": "11.5 km steady at 6:20/km.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              11.5
+             ],
+             "pace": "easy"
+            }
+           ]
+          }
+         ]
+        }
+       }
+      ]
+     },
+     {
+      "n": 6,
+      "phase": "peak",
+      "cutback": false,
+      "start": "2027-02-22",
+      "target": 37,
+      "note": "",
+      "sessions": [
+       {
+        "id": "wswdqbmb",
+        "day": 1,
+        "typeId": "racepace",
+        "name": "Race pace",
+        "kind": "hard",
+        "km": 13,
+        "desc": "2 km warm-up, 4 × 2 km at 5:12/km, 2 min jog, 2 km cool-down.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 4,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              2
+             ],
+             "pace": "race"
+            },
+            {
+             "p": "recovery",
+             "g": [
+              "t",
+              120
+             ],
+             "pace": null
+            }
+           ]
+          }
+         ],
+         "wu": [
+          "d",
+          2
+         ],
+         "cd": [
+          "d",
+          2
+         ]
+        }
+       },
+       {
+        "id": "mpwk51xt",
+        "day": 2,
+        "typeId": "strides",
+        "name": "Easy + strides",
+        "kind": "easy",
+        "km": 6,
+        "desc": "6 km at 6:20/km, then 8 × 20 s strides with full walk-back recovery.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              6
+             ],
+             "pace": "easy"
+            }
+           ]
+          },
+          {
+           "n": 8,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "t",
+              20
+             ],
+             "pace": null
+            },
+            {
+             "p": "recovery",
+             "g": [
+              "t",
+              60
+             ],
+             "pace": null
+            }
+           ]
+          }
+         ]
+        }
+       },
+       {
+        "id": "llte10ov",
+        "day": 4,
+        "typeId": "easy",
+        "name": "Easy run",
+        "kind": "easy",
+        "km": 6,
+        "desc": "6 km relaxed at 6:20/km. You should be able to talk in full sentences.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              6
+             ],
+             "pace": "easy"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       {
+        "id": "is8ymueo",
+        "day": 6,
+        "typeId": "long",
+        "name": "Long run",
+        "kind": "long",
+        "km": 12,
+        "desc": "12 km steady at 6:20/km. Pick up to 5:17/km for the final 10 minutes.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              12
+             ],
+             "pace": "easy"
+            }
+           ]
+          }
+         ]
+        }
+       }
+      ]
+     },
+     {
+      "n": 7,
+      "phase": "peak",
+      "cutback": false,
+      "start": "2027-03-01",
+      "target": 39,
+      "note": "",
+      "sessions": [
+       {
+        "id": "onyxs1d3",
+        "day": 1,
+        "typeId": "tempo",
+        "name": "Tempo",
+        "kind": "hard",
+        "km": 9.5,
+        "desc": "2 km warm-up, 30 min continuous at 5:17/km, 2 km cool-down.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "t",
+              1800
+             ],
+             "pace": "tempo"
+            }
+           ]
+          }
+         ],
+         "wu": [
+          "d",
+          2
+         ],
+         "cd": [
+          "d",
+          2
+         ]
+        }
+       },
+       {
+        "id": "hzesuotl",
+        "day": 2,
+        "typeId": "strides",
+        "name": "Easy + strides",
+        "kind": "easy",
+        "km": 8.5,
+        "desc": "8.5 km at 6:20/km, then 8 × 20 s strides with full walk-back recovery.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              8.5
+             ],
+             "pace": "easy"
+            }
+           ]
+          },
+          {
+           "n": 8,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "t",
+              20
+             ],
+             "pace": null
+            },
+            {
+             "p": "recovery",
+             "g": [
+              "t",
+              60
+             ],
+             "pace": null
+            }
+           ]
+          }
+         ]
+        }
+       },
+       {
+        "id": "rzxaoswq",
+        "day": 4,
+        "typeId": "easy",
+        "name": "Easy run",
+        "kind": "easy",
+        "km": 8.5,
+        "desc": "8.5 km relaxed at 6:20/km. You should be able to talk in full sentences.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              8.5
+             ],
+             "pace": "easy"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       {
+        "id": "v3znv0bb",
+        "day": 6,
+        "typeId": "long",
+        "name": "Long run",
+        "kind": "long",
+        "km": 13,
+        "desc": "13 km steady at 6:20/km. Pick up to 5:17/km for the final 10 minutes.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              13
+             ],
+             "pace": "easy"
+            }
+           ]
+          }
+         ]
+        }
+       }
+      ]
+     },
+     {
+      "n": 8,
+      "phase": "taper",
+      "cutback": false,
+      "start": "2027-03-08",
+      "target": 23,
+      "note": "",
+      "sessions": [
+       {
+        "id": "wjplxmnc",
+        "day": 1,
+        "typeId": "strides",
+        "name": "Easy + strides",
+        "kind": "easy",
+        "km": 4,
+        "desc": "4 km at 6:20/km, then 7 × 20 s strides with full walk-back recovery.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              4
+             ],
+             "pace": "easy"
+            }
+           ]
+          },
+          {
+           "n": 7,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "t",
+              20
+             ],
+             "pace": null
+            },
+            {
+             "p": "recovery",
+             "g": [
+              "t",
+              60
+             ],
+             "pace": null
+            }
+           ]
+          }
+         ]
+        }
+       },
+       {
+        "id": "xlftrdct",
+        "day": 2,
+        "typeId": "tempo",
+        "name": "Tempo",
+        "kind": "hard",
+        "km": 7,
+        "desc": "2 km warm-up, 15 min continuous at 5:17/km, 2 km cool-down.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "t",
+              900
+             ],
+             "pace": "tempo"
+            }
+           ]
+          }
+         ],
+         "wu": [
+          "d",
+          2
+         ],
+         "cd": [
+          "d",
+          2
+         ]
+        }
+       },
+       {
+        "id": "j87lykjj",
+        "day": 4,
+        "typeId": "easy",
+        "name": "Easy run",
+        "kind": "easy",
+        "km": 4,
+        "desc": "4 km relaxed at 6:20/km. You should be able to talk in full sentences.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              4
+             ],
+             "pace": "easy"
+            }
+           ]
+          }
+         ]
+        }
+       },
+       {
+        "id": "udpthb7r",
+        "day": 6,
+        "typeId": "race",
+        "name": "Race day",
+        "kind": "race",
+        "km": 10,
+        "desc": "10K race. Your recent result points to about 52:00 (5:12/km). Start the first km 5 to 10 s/km slower than that, settle, then race the second half.",
+        "note": "",
+        "watch": {
+         "blocks": [
+          {
+           "n": 1,
+           "steps": [
+            {
+             "p": "work",
+             "g": [
+              "d",
+              10
+             ],
+             "pace": "race"
+            }
+           ]
+          }
+         ]
+        }
+       }
+      ]
+     }
+    ],
+    "meta": {
+     "noRace": false,
+     "D": 10,
+     "c": "10k",
+     "taperN": 1,
+     "peakV": 39,
+     "start": "2027-01-18",
+     "vdot": 38.21300132819697,
+     "raceSec": 3119.999999999999,
+     "racePace": "5:12/km"
+    }
+   },
+   "edited": false,
+   "updatedAt": 1790848800000
+  }
+ }
+}

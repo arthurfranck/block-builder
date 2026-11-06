@@ -1,0 +1,17 @@
+{
+  "name": "block-builder",
+  "private": true,
+  "description": "Automated tests for Block Builder. The app itself is index.html and needs no install.",
+  "scripts": {
+    "test": "playwright test",
+    "test:desktop": "playwright test --project=desktop-*",
+    "test:mobile": "playwright test --project=iphone-*",
+    "test:chrome": "playwright test --project=desktop-chrome",
+    "test:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
+    "@playwright/test": "^1.63.0",
+    "@types/node": "^22.0.0"
+  }
+}

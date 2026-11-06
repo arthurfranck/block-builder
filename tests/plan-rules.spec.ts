@@ -1,0 +1,86 @@
+import { test, expect, type Week } from './helpers';
+
+/*
+ * Training rules checked on the generated grid. One test per scenario checks
+ * every rule with soft assertions, so a failure lists everything that broke.
+ */
+type Scenario = { dist: '5k' | '10k' | 'hm' | 'm' | 'custom'; customKm?: number; runs: number; weeks: number; longDay?: number; curVol: number; curLong: number; taper: number };
+const SCENARIOS: Scenario[] = [
+  { dist: '5k', runs: 4, weeks: 8, curVol: 25, curLong: 8, taper: 1 },
+  { dist: '10k', runs: 5, weeks: 10, curVol: 30, curLong: 12, taper: 1 },
+  { dist: 'hm', runs: 5, weeks: 12, curVol: 30, curLong: 12, taper: 2 },
+  { dist: 'hm', runs: 7, weeks: 6, curVol: 40, curLong: 14, taper: 1 },
+  { dist: 'm', runs: 6, weeks: 18, curVol: 45, curLong: 16, taper: 3 },
+  { dist: 'm', runs: 3, weeks: 12, curVol: 40, curLong: 16, taper: 3 },
+  { dist: 'custom', customKm: 15, runs: 4, weeks: 10, longDay: 5, curVol: 30, curLong: 12, taper: 2 },
+];
+const ORDER = ['base', 'build', 'peak', 'taper'];
+const label = (s: Scenario) => `${s.dist === 'custom' ? s.customKm + ' km' : s.dist}, ${s.runs} runs, ${s.weeks} weeks`;
+const nonRaceKm = (w: Week) => w.sessions.filter((s) => s.kind !== 'race').reduce((a, s) => a + s.km, 0);
+
+for (const sc of SCENARIOS) {
+  test(`rules hold: ${label(sc)}`, async ({ app }) => {
+    const { taper, ...cfg } = sc;
+    await app.configure(cfg);
+    const weeks = await app.plan();
+    const longDay = sc.longDay ?? 6;
+
+    expect.soft(weeks, 'week count').toHaveLength(sc.weeks);
+    const phases = weeks.map((w) => w.phase);
+    expect.soft(phases.every((p, i) => i === 0 || ORDER.indexOf(p) >= ORDER.indexOf(phases[i - 1])), `phases in order: ${phases}`).toBe(true);
+    expect.soft(phases.filter((p) => p === 'taper'), 'taper weeks').toHaveLength(taper);
+
+    const last = weeks.at(-1)!;
+    expect.soft(last.sessions.filter((s) => s.kind === 'race'), 'one race, last week').toHaveLength(1);
+    expect.soft(weeks.slice(0, -1).flatMap((w) => w.sessions).filter((s) => s.kind === 'race'), 'no race before the last week').toHaveLength(0);
+
+    for (const [i, w] of weeks.entries()) {
+      expect.soft(w.sessions, `week ${w.n}: runs per week`).toHaveLength(sc.runs);
+      if (w !== last) {
+        const longs = w.sessions.filter((s) => s.kind === 'long');
+        expect.soft(longs.map((s) => s.day), `week ${w.n}: one long run on the long-run day`).toEqual([longDay]);
+      }
+      expect.soft(w.sessions.every((s) => s.km > 0), `week ${w.n}: no empty runs`).toBe(true);
+      if (i === 0) continue;
+      const prev = weeks[i - 1];
+      if (w.cutback) expect.soft(w.km, `week ${w.n}: cutback lighter than week ${prev.n}`).toBeLessThan(prev.km);
+      if (w.phase === 'taper') expect.soft(nonRaceKm(w), `week ${w.n}: taper lighter than week ${prev.n} (race excluded)`).toBeLessThan(nonRaceKm(prev));
+    }
+  });
+}
+
+test.describe('weekly volume increase', () => {
+  /*
+   * Known issue, found when this suite was written: the engine targets at most +10% a week,
+   * but rounding and the 4 km minimum per run push some weeks to +19%
+   * (worst cases: short blocks, 6-7 runs a week). Remove test.fail() once fixed.
+   */
+  test('stays within 10% week to week, also after a cutback', async ({ app }) => {
+    test.fail(true, 'known issue: some weeks rise 13-19% after rounding');
+    const problems: string[] = [];
+    for (const sc of SCENARIOS) {
+      const { taper, ...cfg } = sc;
+      await app.configure(cfg);
+      const weeks = await app.plan();
+      weeks.forEach((w, i) => {
+        if (i === 0 || w.cutback || w.phase === 'taper') return;
+        const ref = weeks[i - 1].cutback ? weeks[i - 2] : weeks[i - 1];
+        if (ref && w.km > ref.km * 1.1 + 0.05) problems.push(`${label(sc)}: week ${w.n} ${ref.km} → ${w.km} km (+${Math.round((w.km / ref.km - 1) * 100)}%)`);
+      });
+    }
+    expect(problems).toEqual([]);
+  });
+
+  test('never jumps more than 20% week to week', async ({ app }) => {
+    for (const sc of SCENARIOS) {
+      const { taper, ...cfg } = sc;
+      await app.configure(cfg);
+      const weeks = await app.plan();
+      weeks.forEach((w, i) => {
+        if (i === 0 || w.cutback || w.phase === 'taper') return;
+        const ref = weeks[i - 1].cutback ? weeks[i - 2] : weeks[i - 1];
+        if (ref) expect.soft(w.km, `${label(sc)}: week ${w.n}`).toBeLessThanOrEqual(ref.km * 1.2);
+      });
+    }
+  });
+});

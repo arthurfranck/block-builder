@@ -1,0 +1,38 @@
+name: Tests
+
+# Reports only: GitHub Pages publishes main whether or not these pass.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: ${{ matrix.project }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        project:
+          - desktop-chrome
+          - desktop-safari
+          - iphone-16-safari
+          - iphone-16-pro-max-safari
+          - iphone-16-chrome
+          - iphone-17-pro-max-safari
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install --no-audit --no-fund
+      - name: Install browser
+        run: npx playwright install --with-deps ${{ matrix.project == 'desktop-chrome' && 'chromium' || 'webkit' }}
+      - run: npx playwright test --project=${{ matrix.project }}
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: report-${{ matrix.project }}
+          path: playwright-report/
+          retention-days: 14
