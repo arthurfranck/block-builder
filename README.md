@@ -11,6 +11,7 @@ Block Builder creates a running training block in the browser. You pick a race o
 - **Paces:** worked out from a recent race result (easy, tempo, intervals, race pace).
 - **Run types:** easy, recovery, long, tempo, intervals, hill repeats, fartlek, progression and race pace. You can add custom types and edit their description templates and the phases they're used in.
 - **Editing:** edit, move (drag and drop), add or delete any run, with a personal note per run.
+- **Today:** above the load profile, a card shows today's run with Edit and Send to watch (or, on a rest day, the next run and its date; before the plan starts, the start date and first run). Next to it, the local forecast: current conditions and feels-like temperature, high and low, rain chance, wind, sunset, and an hourly strip to 22:00 that marks the driest slot left in the day. Type a city or use your location; the choice is remembered in your browser.
 - **Race countdown:** optional, with the race name, city and a link to its page (Finishers search built in).
 - **Watch export:** Apple Watch (`.workout`, through WorkoutKit), Garmin and other devices (`.fit`), per run, per week or for the whole plan.
 - **Other exports:** calendar (`.ics`), plus a format dropdown for the plan itself: spreadsheet (`.csv`) or printable PDF (A4 landscape week-by-day grid with phases, weekly km, run descriptions and plan totals). The dropdown remembers the last format picked.
@@ -20,7 +21,7 @@ Block Builder creates a running training block in the browser. You pick a race o
 
 ## Where plans are stored
 
-Plans are saved in the visitor's browser (`localStorage`) only. There are no accounts and no server. **My plans → Export** downloads every plan as one JSON file, and **Import** loads it back on any device or browser.
+Plans are saved in the visitor's browser (`localStorage`) only. The weather city is stored there too (`bb-wx`). There are no accounts and no server. **My plans → Export** downloads every plan as one JSON file, and **Import** loads it back on any device or browser.
 
 ## Tech
 
@@ -28,13 +29,14 @@ Plans are saved in the visitor's browser (`localStorage`) only. There are no acc
 - External resources:
   - Google Fonts (Barlow, Barlow Condensed, JetBrains Mono)
   - [`@bibixx/workoutkit`](https://www.npmjs.com/package/@bibixx/workoutkit) from jsDelivr, loaded only when exporting to Apple Watch
+  - [Open-Meteo](https://open-meteo.com) forecast and geocoding APIs (free, no key), called only once a city or location is set
   - [jsPDF](https://github.com/parallax/jsPDF) 4.2.1 and [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable) 5.0.9 from cdnjs, loaded only when exporting a PDF
 - Hosted on GitHub Pages from the `main` branch, root folder.
 - `package.json`, `playwright.config.ts` and `tests/` are for the automated tests only; the page doesn't use them.
 
 ## Run locally
 
-Open `index.html` in a browser. Everything works offline except the fonts, which fall back to system fonts, the Apple Watch export and the PDF export.
+Open `index.html` in a browser. Everything works offline except the fonts, which fall back to system fonts, the weather, the Apple Watch export and the PDF export.
 
 ## Tests
 
@@ -69,6 +71,7 @@ Every test starts on a frozen date (Friday 6 November 2026, Paris time) with emp
 | `plan-rules.spec.ts` | phase order, taper length, cutback and taper volume, one race on race day, long-run day, weekly increase |
 | `setup-form.spec.ts` | paces, running days, run types, warnings |
 | `editing.spec.ts` | edit, add, delete and move runs (drag and drop on desktop), hand edits vs settings |
+| `today.spec.ts` | Today card before the plan, on a run day and on a rest day, Edit from the card, forecast and driest slot (Open-Meteo mocked), unknown city, failed request |
 | `race.spec.ts` | race name, Finishers link, countdown, race passed or today |
 | `storage.spec.ts` | save, autosave, rename, delete, JSON export, import of a version 1 file (`tests/fixtures/plans-v1.json`) |
 | `exports.spec.ts` | CSV, PDF, calendar, Garmin and Apple Watch zips |
@@ -92,10 +95,11 @@ This is the standalone version of a Claude artifact. The claude.ai version also 
 - per-user cloud saving
 - a greeting with the viewer's name
 
-All three depend on the claude.ai artifact runtime, so they were removed here.
+All three depend on the claude.ai artifact runtime, so they were removed here. The other way round, the weather on the Today card works only here: claude.ai artifacts block outside network calls, so the forecast can't load there.
 
 ## Changelog
 
+- **2026-11-06:** Today card above the load profile: today's run (or the next one) and the local forecast with the driest slot left in the day.
 - **2026-11-06:** Export the plan as PDF or CSV from a format dropdown (replaces the Export CSV button).
 - **2026-11-06:** First standalone release:
   - Coach notes removed.

@@ -208,6 +208,45 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 .plans-list .pl.cur{border-color:var(--accent)}
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:14px;z-index:60}
 @media (prefers-reduced-motion:no-preference){.ses{transition:border-color .15s}}
+/* today: session of the day beside the local forecast */
+.today{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+@media (max-width:760px){.today{grid-template-columns:minmax(0,1fr)}}
+.today>div{padding:12px 14px 14px;display:grid;gap:8px;align-content:start;min-width:0}
+.today .wxp{border-left:1px solid var(--line);background:color-mix(in srgb,var(--surface-2) 55%,var(--surface))}
+@media (max-width:760px){.today .wxp{border-left:0;border-top:1px solid var(--line)}}
+.today .eyebrow{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font-family:var(--f-display);font-weight:600;font-size:15px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.today .eyebrow b{color:var(--ink);font-weight:700}
+.tses{position:relative;display:grid;gap:4px;padding:2px 0 2px 12px}
+.tses::before{content:"";position:absolute;left:0;top:3px;bottom:3px;width:4px;border-radius:2px;background:var(--k)}
+.tses .tn{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.tses .tn b{font-family:var(--f-display);font-weight:700;font-size:28px;line-height:1;text-transform:uppercase;color:var(--kt,var(--k))}
+.tses .tn span{font-family:var(--f-mono);font-size:15px}
+.tses p{margin:0;font-size:14.5px;max-width:62ch}
+.tses .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.today .rest b{font-family:var(--f-display);font-weight:700;font-size:28px;line-height:1;text-transform:uppercase;color:var(--recovery)}
+.today .rest p,.today .tnext{margin:0;font-size:14px;color:var(--muted)}
+.today .tnext b{color:var(--ink);font-weight:600}
+.wxnow{display:flex;align-items:center;gap:12px;min-width:0}
+.wxnow svg{width:40px;height:40px;flex:none;color:var(--ink)}
+.wxnow .tmp{font-family:var(--f-display);font-weight:700;font-size:40px;line-height:.9;font-variant-numeric:tabular-nums}
+.wxnow .dsc{display:grid;min-width:0;font-size:13.5px}
+.wxnow .dsc b{font-weight:600}
+.wxnow .dsc span{color:var(--muted)}
+.wxfacts{display:flex;flex-wrap:wrap;gap:4px 14px;font-family:var(--f-mono);font-size:12.5px;color:var(--muted)}
+.wxfacts b{color:var(--ink);font-weight:500}
+.wxhours{display:flex;gap:4px;overflow-x:auto;padding-bottom:2px}
+.wxh{flex:1 0 46px;display:grid;justify-items:center;gap:1px;padding:5px 2px;border-radius:6px;border:1px solid transparent;font-variant-numeric:tabular-nums}
+.wxh .hr{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.wxh .tp{font-weight:600;font-size:14px}
+.wxh .pp{font-family:var(--f-mono);font-size:11px;color:var(--long)}
+.wxh.best{border-color:var(--easy);background:color-mix(in srgb,var(--easy) 10%,transparent)}
+.wxbest{font-size:13px;color:var(--muted)}
+.wxbest b{color:var(--easy);font-weight:600}
+.wxloc{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12.5px;color:var(--muted)}
+.wxloc .icon-btn{font-size:12.5px;text-decoration:underline}
+#wxForm{display:flex;flex-wrap:wrap;gap:6px}
+#wxForm input{flex:1 1 140px;min-width:0;border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 9px}
+
 </style>
 
 <div class="wrap">
@@ -373,7 +412,16 @@ noPerm:"You can't save to this page.",saveFail:"Save failed. Your plan is still 
 localOnly:"Plans are kept in this browser only. Use Export to keep a copy or move them to another device.",exportPlans:"Export",importPlans:"Import…",imported:"Imported {n} plan(s).",importFail:"That file isn't a Block Builder export.",planMeta:"{lbl} · {w} weeks · race {d}",
 open:"Open",del:"Delete",noPlans:"No saved plans yet. Build one and press Save plan.",close:"Close",delQ:"Delete plan?",delT:"\"{name}\" will be removed for good.",
 deleted:"Plan deleted.",delFail:"Couldn't delete that plan.",newQ:"Start a new plan?",newT:"This plan hasn't been saved.",startNew:"Start new",
-langEdited:"Hand-edited sessions keep their current text. Use Rebuild from settings to translate them."
+langEdited:"Hand-edited sessions keep their current text. Use Rebuild from settings to translate them.",
+tdToday:"Today",tdWeek:"Week {n} · {phase}",tdRest:"Rest day",tdRestT:"No run planned today.",tdNext:"Next: <b>{when}</b>, {name} {km} km",
+tdBefore:"Plan starts {d}",tdBeforeT:"First run: <b>{when}</b>, {name} {km} km",tdDone:"Plan finished",tdDoneT:"The last week ended on {d}.",
+tdEdit:"Edit",tdWatchTitle:"{name} · {d}",
+wxTitle:"Weather",wxSet:"Add a city to see today's forecast for your run.",wxCity:"City",wxCityPh:"e.g. Paris",wxGo:"Show forecast",wxGeo:"Use my location",
+wxChange:"Change",wxLoading:"Loading forecast…",wxNoCity:"No city called “{q}”. Try adding the country, like “Deauville, France”.",
+wxBlocked:"The forecast couldn't load. Check your connection, then use Change to try again.",
+wxGeoFail:"Location isn't available here. Type a city instead.",wxFeels:"feels {v}°",wxHiLo:"high {h}° · low {l}°",wxRain:"rain {p}%",wxWind:"wind {w} km/h",
+wxSun:"sunset {t}",wxBest:"Driest slot left today: <b>{h}</b>, {p}% rain, {tp}°",wxUpd:"Updated {t}",
+wmo0:"Clear",wmo1:"Mostly clear",wmo2:"Partly cloudy",wmo3:"Overcast",wmo45:"Fog",wmo51:"Drizzle",wmo56:"Freezing drizzle",wmo61:"Rain",wmo65:"Heavy rain",wmo66:"Freezing rain",wmo71:"Snow",wmo80:"Showers",wmo85:"Snow showers",wmo95:"Thunderstorm"
 },
 fr:{
 planNameLabel:"Nom du plan",secGoal:"Objectif",goalRace:"Préparer une course",goalFit:"Me remettre en forme",focusDist:"Distance de référence",startDate:"Date de début",focusHint:"Elle fixe les allures et la longueur des sorties longues. Pas de course, pas d'affûtage : le plan progresse simplement semaine après semaine.",fitHint:"Du lundi {s} au dimanche {e}.",fitBlock:"Plan forme {n} semaines",hFitStarts:"Votre plan de {n} semaines commence le lundi {d}.",hFitIn:"Semaine {n} sur {t}, phase {phase}{cut}.",hFitDone:"Votre plan de {n} semaines s'est terminé le {d}. Indiquez une nouvelle date de début pour préparer la suite.",wa_pastFit:"La semaine 1 a commencé le {d}. Déplacez la date de début pour que le plan démarre maintenant.",planMetaFit:"Base {lbl} · {w} semaines · début le {d}",myPlans:"Mes plans",newPlan:"Nouveau plan",savePlan:"Enregistrer",language:"Langue",
@@ -460,7 +508,16 @@ noPerm:"Vous ne pouvez pas enregistrer sur cette page.",saveFail:"Échec de l'en
 localOnly:"Les plans sont conservés dans ce navigateur uniquement. Utilisez Exporter pour en garder une copie ou les passer sur un autre appareil.",exportPlans:"Exporter",importPlans:"Importer…",imported:"{n} plan(s) importé(s).",importFail:"Ce fichier n'est pas un export Block Builder.",planMeta:"{lbl} · {w} semaines · course le {d}",
 open:"Ouvrir",del:"Supprimer",noPlans:"Aucun plan enregistré. Créez-en un puis cliquez sur Enregistrer.",close:"Fermer",delQ:"Supprimer le plan ?",delT:"« {name} » sera supprimé définitivement.",
 deleted:"Plan supprimé.",delFail:"Impossible de supprimer ce plan.",newQ:"Commencer un nouveau plan ?",newT:"Ce plan n'a pas été enregistré.",startNew:"Nouveau plan",
-langEdited:"Les séances modifiées à la main gardent leur texte. Utilisez « Recalculer depuis les réglages » pour les traduire."
+langEdited:"Les séances modifiées à la main gardent leur texte. Utilisez « Recalculer depuis les réglages » pour les traduire.",
+tdToday:"Aujourd'hui",tdWeek:"Semaine {n} · {phase}",tdRest:"Repos",tdRestT:"Pas de sortie prévue aujourd'hui.",tdNext:"Prochaine : <b>{when}</b>, {name} {km} km",
+tdBefore:"Le plan commence le {d}",tdBeforeT:"Première sortie : <b>{when}</b>, {name} {km} km",tdDone:"Plan terminé",tdDoneT:"La dernière semaine s'est terminée le {d}.",
+tdEdit:"Modifier",tdWatchTitle:"{name} · {d}",
+wxTitle:"Météo",wxSet:"Ajoutez une ville pour voir la météo du jour pour votre sortie.",wxCity:"Ville",wxCityPh:"ex. Paris",wxGo:"Voir la météo",wxGeo:"Utiliser ma position",
+wxChange:"Changer",wxLoading:"Chargement de la météo…",wxNoCity:"Aucune ville nommée « {q} ». Ajoutez le pays, par exemple « Deauville, France ».",
+wxBlocked:"La météo n'a pas pu se charger. Vérifiez votre connexion, puis utilisez Changer pour réessayer.",
+wxGeoFail:"La position n'est pas disponible ici. Saisissez une ville.",wxFeels:"ressenti {v}°",wxHiLo:"max {h}° · min {l}°",wxRain:"pluie {p} %",wxWind:"vent {w} km/h",
+wxSun:"coucher {t}",wxBest:"Créneau le plus sec aujourd'hui : <b>{h}</b>, {p} % de pluie, {tp}°",wxUpd:"Mis à jour à {t}",
+wmo0:"Ciel clair",wmo1:"Plutôt dégagé",wmo2:"Partiellement nuageux",wmo3:"Couvert",wmo45:"Brouillard",wmo51:"Bruine",wmo56:"Bruine verglaçante",wmo61:"Pluie",wmo65:"Forte pluie",wmo66:"Pluie verglaçante",wmo71:"Neige",wmo80:"Averses",wmo85:"Averses de neige",wmo95:"Orage"
 }};
 let LANG=(()=>{try{const s=localStorage.getItem("bb-lang");if(s==="fr"||s==="en")return s;}catch(_){}return /^fr/i.test(navigator.language||"")?"fr":"en";})();
 function t(k,v){let s=(I18N[LANG]&&I18N[LANG][k]);if(s==null)s=I18N.en[k]!=null?I18N.en[k]:k;return v?s.replace(/\{(\w+)\}/g,(m,x)=>v[x]!==undefined?v[x]:m):s;}
@@ -852,6 +909,7 @@ function renderPlan(){
     <div class="stat"><b>${longest}</b><span>${t("stLongest")}</span></div>
     ${P.meta.raceSec?`<div class="stat"><b>${fmtDur(P.meta.raceSec)}</b><span>${esc(cap(t("stEquiv",{lbl:distLabel(I)})))}</span></div>`:""}
   </div>`;
+  h+=renderToday();
   h+=`<div class="profile"><div class="profile-head"><h2>${t("loadProfile")}</h2><div class="legend">${PHASES.map(p=>`<span><i style="background:${phaseColor(p)}"></i>${phaseLbl(p)}</span>`).join("")}<span><i style="background:var(--ink);height:2px;opacity:.55;vertical-align:3px"></i>${t("longRunLeg")}</span></div></div><div class="chart" id="profileChart"></div></div>`;
   h+=`<div class="toolbar">
     <span class="spacer"></span>
@@ -876,8 +934,98 @@ function renderPlan(){
   h+=`</tbody></table></div>`;
   $("#plan").innerHTML=h;
   drawProfile();
+  renderWx();wxLoad(false);
 }
 
+
+/* ---------- today: session of the day + forecast (Open-Meteo, no key) ---------- */
+const WX={loc:(()=>{try{const v=JSON.parse(localStorage.getItem("bb-wx")||"null");return v&&isFinite(v.lat)&&isFinite(v.lon)?v:null;}catch(_){return null;}})(),data:null,at:0,busy:false,err:"",editing:false};
+function wxSaveLoc(l){WX.loc=l;WX.data=null;WX.at=0;WX.err="";WX.editing=false;try{localStorage.setItem("bb-wx",JSON.stringify(l));}catch(_){}}
+function wmoKey(c){c=+c;if(c===0)return 0;if(c===1)return 1;if(c===2)return 2;if(c===3)return 3;if(c===45||c===48)return 45;if(c>=51&&c<=55)return 51;if(c===56||c===57)return 56;if(c===61||c===63)return 61;if(c===65)return 65;if(c===66||c===67)return 66;if(c>=71&&c<=77)return 71;if(c>=80&&c<=82)return 80;if(c===85||c===86)return 85;if(c>=95)return 95;return 3;}
+function wxIcon(c){const k=wmoKey(c);const sun=`<circle cx="20" cy="20" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><g stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 4v4M20 32v4M4 20h4M32 20h4M8.7 8.7l2.8 2.8M28.5 28.5l2.8 2.8M8.7 31.3l2.8-2.8M28.5 11.5l2.8-2.8"/></g>`;
+  const cloud=(y=0)=>`<path d="M12 ${30+y}h17a6 6 0 0 0 0-12 9 9 0 0 0-17 2 5 5 0 0 0 0 10z" fill="var(--surface)" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>`;
+  let g;
+  if(k===0)g=sun;
+  else if(k===1||k===2)g=`<g transform="translate(-5 -6) scale(.75)" opacity=".85">${sun}</g>`+cloud(2);
+  else if(k===3)g=cloud(-2);
+  else if(k===45)g=`<g stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 14h26M5 20h30M8 26h24M11 32h18"/></g>`;
+  else if(k===71||k===85)g=cloud(-6)+`<g fill="currentColor"><circle cx="14" cy="33" r="1.8"/><circle cx="21" cy="36" r="1.8"/><circle cx="28" cy="33" r="1.8"/></g>`;
+  else if(k===95)g=cloud(-6)+`<path d="M21 28l-4 7h5l-3 6" fill="none" stroke="var(--race)" stroke-width="2.4" stroke-linejoin="round"/>`;
+  else g=cloud(-6)+`<g stroke="var(--long)" stroke-width="2.4" stroke-linecap="round"><path d="M14 30l-2 5M21 30l-2 5M28 30l-2 5"/></g>`;
+  return `<svg viewBox="0 0 40 40" aria-hidden="true">${g}</svg>`;}
+const hm=s=>String(s).slice(11,16);
+async function wxLoad(force){
+  if(!WX.loc||WX.busy)return;if(!force&&WX.data&&Date.now()-WX.at<30*60e3)return;
+  WX.busy=true;WX.err="";renderWx();
+  const {lat,lon}=WX.loc;
+  const u=`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunset&timezone=auto&forecast_days=1`;
+  try{const r=await fetch(u);if(!r.ok)throw new Error("http "+r.status);WX.data=await r.json();WX.at=Date.now();}
+  catch(_){WX.err="blocked";}
+  WX.busy=false;renderWx();
+}
+async function wxFind(q){
+  q=q.trim();if(!q)return;WX.busy=true;WX.err="";renderWx();
+  try{const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=${LANG}&format=json`);
+    if(!r.ok)throw new Error();const j=await r.json();const h=j.results&&j.results[0];
+    WX.busy=false;
+    if(!h){WX.err="nocity:"+q;renderWx();return;}
+    wxSaveLoc({name:h.name,lat:h.latitude,lon:h.longitude,country:h.country||""});wxLoad(true);
+  }catch(_){WX.busy=false;WX.err="blocked";renderWx();}
+}
+function wxGeo(){
+  const fail=()=>{WX.busy=false;WX.err="geo";renderWx();};
+  if(!navigator.geolocation){fail();return;}
+  WX.busy=true;WX.err="";renderWx();
+  try{navigator.geolocation.getCurrentPosition(p=>{WX.busy=false;wxSaveLoc({name:"",lat:p.coords.latitude,lon:p.coords.longitude,country:""});wxLoad(true);},fail,{timeout:10000,maximumAge:30*60e3});}catch(_){fail();}
+}
+function renderWx(){
+  const el=document.getElementById("wx");if(!el)return;
+  const D=WX.data;
+  const errMsg=WX.err==="blocked"?t("wxBlocked"):WX.err==="geo"?t("wxGeoFail"):WX.err.startsWith("nocity:")?t("wxNoCity",{q:esc(WX.err.slice(7))}):"";
+  const head=`<div class="eyebrow"><b>${t("wxTitle")}</b>${WX.loc&&!WX.editing?`<span>${esc(WX.loc.name||`${WX.loc.lat.toFixed(2)}, ${WX.loc.lon.toFixed(2)}`)}</span>`:""}</div>`;
+  if(!WX.loc||WX.editing){
+    const sug=(S.inputs.race&&S.inputs.race.city)||(WX.loc&&WX.loc.name)||"";
+    el.innerHTML=`${head}<span class="hint">${t("wxSet")}</span>
+      <form id="wxForm"><input id="wxQ" aria-label="${esc(t("wxCity"))}" placeholder="${esc(t("wxCityPh"))}" value="${esc(sug)}" autocomplete="address-level2"><button class="btn sm primary" type="submit" ${WX.busy?"disabled":""}>${t("wxGo")}</button></form>
+      <div class="wxloc">${navigator.geolocation?`<button type="button" class="icon-btn" data-act="wxgeo">${t("wxGeo")}</button>`:""}${WX.busy?`<span>${t("wxLoading")}</span>`:""}</div>
+      ${errMsg?`<span class="hint">${errMsg}</span>`:""}`;
+    return;
+  }
+  const change=`<div class="wxloc">${D?`<span>${t("wxUpd",{t:new Date(WX.at).toLocaleTimeString(LOC(),{hour:"2-digit",minute:"2-digit"})})}</span>`:""}<button type="button" class="icon-btn" data-act="wxedit">${t("wxChange")}</button></div>`;
+  if(!D){el.innerHTML=`${head}<span class="hint">${WX.busy?t("wxLoading"):errMsg}</span>${change}`;return;}
+  const c=D.current||{},dd=D.daily||{},H=D.hourly||{};
+  const nowH=String(c.time||"").slice(0,13);
+  const idx=(H.time||[]).map((tm,i)=>({tm,i})).filter(o=>o.tm.slice(0,13)>=nowH&&+o.tm.slice(11,13)<=22);
+  const step=idx.length>8?2:1;const hrs=idx.filter((_,j)=>j%step===0);
+  let best=null;if(idx.length>1)for(const o of idx){const p=H.precipitation_probability[o.i]??0;if(!best||p<best.p||(p===best.p&&H.temperature_2m[o.i]>best.tp))best={i:o.i,p,tp:H.temperature_2m[o.i]};}
+  const wk=wmoKey(c.weather_code);
+  el.innerHTML=`${head}
+    <div class="wxnow">${wxIcon(c.weather_code)}<span class="tmp">${Math.round(c.temperature_2m)}°</span><span class="dsc"><b>${t("wmo"+wk)}</b><span>${t("wxFeels",{v:Math.round(c.apparent_temperature)})}</span></span></div>
+    <div class="wxfacts"><span>${t("wxHiLo",{h:`<b>${Math.round(dd.temperature_2m_max[0])}</b>`,l:`<b>${Math.round(dd.temperature_2m_min[0])}</b>`})}</span><span>${t("wxRain",{p:`<b>${dd.precipitation_probability_max[0]??0}</b>`})}</span><span>${t("wxWind",{w:`<b>${Math.round(c.wind_speed_10m)}</b>`})}</span>${dd.sunset?`<span>${t("wxSun",{t:`<b>${hm(dd.sunset[0])}</b>`})}</span>`:""}</div>
+    ${hrs.length?`<div class="wxhours">${hrs.map(o=>`<div class="wxh ${best&&best.i===o.i?"best":""}"><span class="hr">${hm(o.tm)}</span><span class="tp">${Math.round(H.temperature_2m[o.i])}°</span><span class="pp">${H.precipitation_probability[o.i]??0}%</span></div>`).join("")}</div>`:""}
+    ${best?`<span class="wxbest">${t("wxBest",{h:hm(H.time[best.i]),p:best.p,tp:Math.round(best.tp)})}</span>`:""}
+    ${change}`;
+}
+function renderToday(){
+  const P=S.plan;if(!P||!P.weeks.length)return "";
+  const today=new Date();today.setHours(12,0,0,0);const td=dow(today);
+  const st0=parseISO(P.weeks[0].start),end=addDays(st0,7*P.weeks.length-1);
+  const wi=P.weeks.findIndex(w=>{const st=parseISO(w.start);return today>=st&&today<addDays(st,7);});
+  const whenOf=(w,s)=>fmtDay(sessionDate(w,s));
+  const nextAfter=(wi0,d0)=>{for(let i=Math.max(wi0,0);i<P.weeks.length;i++){const ss=P.weeks[i].sessions.filter(s=>i>wi0||s.day>d0).sort((a,b)=>a.day-b.day);if(ss.length)return {w:P.weeks[i],s:ss[0]};}return null;};
+  let eb=`<b>${t("tdToday")}</b><span>${cap(fmtDay(today))}</span>`,body="";
+  if(today<st0){const n=nextAfter(0,-1);
+    body=`<div class="rest"><b>${t("tdBefore",{d:fmtDate(st0)})}</b>${n?`<p class="tnext">${t("tdBeforeT",{when:whenOf(n.w,n.s),name:esc(n.s.name.toLowerCase()),km:n.s.km})}</p>`:""}</div>`;}
+  else if(wi<0||today>end){body=`<div class="rest"><b>${t("tdDone")}</b><p>${t("tdDoneT",{d:fmtDate(end)})}</p></div>`;}
+  else{const w=P.weeks[wi];eb+=`<span style="color:${phaseText(w.phase)}">${t("tdWeek",{n:w.n,phase:phaseLbl(w.phase)})}</span>`;
+    const ss=w.sessions.filter(s=>s.day===td);
+    if(ss.length)body=ss.map(s=>`<div class="tses" style="--k:${kindColor(s.kind)};--kt:${kindText(s.kind)}"><div class="tn"><b>${esc(s.name)}</b><span>${s.km} km</span></div>${s.desc?`<p>${esc(s.desc)}</p>`:""}
+      <div class="acts"><button type="button" class="btn sm" data-act="tedit" data-w="${wi}" data-s="${s.id}">${t("tdEdit")}</button><button type="button" class="btn sm" data-act="twatch" data-w="${wi}" data-s="${s.id}">${t("sendWatch")}</button></div></div>`).join("");
+    else{const n=nextAfter(wi,td);body=`<div class="rest"><b>${t("tdRest")}</b><p>${t("tdRestT")}</p></div>${n?`<p class="tnext">${t("tdNext",{when:whenOf(n.w,n.s),name:esc(n.s.name.toLowerCase()),km:n.s.km})}</p>`:""}`;}
+  }
+  return `<section class="today" aria-label="${esc(t("tdToday"))}"><div><div class="eyebrow">${eb}</div>${body}</div><div class="wxp" id="wx" aria-live="polite"></div></section>`;
+}
+$("#plan").addEventListener("submit",e=>{if(e.target.id!=="wxForm")return;e.preventDefault();const q=$("#wxQ");if(q)wxFind(q.value);});
 
 /* ---------- race picker (optional) ---------- */
 function finishersUrl(I){const m=Math.round(distKm(I)*1000);return `https://www.finishers.com/courses?discipline=road&dmin=${m}&dmax=${m}&distanceUnit=meters`;}
@@ -974,6 +1122,10 @@ $("#plan").addEventListener("click",e=>{
   const act=a.dataset.act;
   if(act==="regen"||act==="rebuild"){if(act==="rebuild"&&S.edited){confirmBox(t("rebuildQ"),t("rebuildT"),t("rebuild"),()=>{S.pendingRegen=false;regen();renderPlan();markDirty();});return;}S.pendingRegen=false;regen();renderPlan();markDirty();}
   else if(act==="keep"){S.pendingRegen=false;renderPlan();}
+  else if(act==="tedit"){openEditor(+a.dataset.w,a.dataset.s);}
+  else if(act==="twatch"){const w=S.plan.weeks[+a.dataset.w],s=w.sessions.find(x=>x.id===a.dataset.s);if(s)sendToWatch([{w,s}],t("tdWatchTitle",{name:s.name,d:fmtDay(sessionDate(w,s))}),`${slug(S.name)}-${iso(sessionDate(w,s))}`);}
+  else if(act==="wxedit"){WX.editing=true;WX.err="";renderWx();const q=$("#wxQ");q&&q.focus();}
+  else if(act==="wxgeo"){wxGeo();}
   else if(act==="add"){addSession(+a.dataset.w,+a.dataset.d);}
   else if(act==="wwatch"){const w=S.plan.weeks[+a.dataset.w];sendToWatch(w.sessions.map(s=>({w,s})),t("sendTitleWeek",{n:w.n,c:w.sessions.length}),`${slug(S.name)}-week-${String(w.n).padStart(2,"0")}`);}
   else if(act==="allwatch"){sendToWatch(S.plan.weeks.flatMap(w=>w.sessions.map(s=>({w,s}))),t("sendTitleAll",{c:S.plan.weeks.reduce((a,w)=>a+w.sessions.length,0)}),`${slug(S.name)}-all`);}
