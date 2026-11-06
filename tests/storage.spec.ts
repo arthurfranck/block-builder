@@ -100,5 +100,5 @@ test('New plan asks before discarding unsaved changes', async ({ app, page }) =>
   await page.locator('#btnNew').click();
   await page.locator('#cYes').click();
   await expect(page.locator('#planName')).toHaveValue('Half marathon block');
-  await expect(page.locator('#plan .banner.info')).toBeVisible();
+  await expect(page.locator('#plan .banner.info')).toContainText('Fill in the setup');
 });

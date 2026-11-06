@@ -14,6 +14,10 @@ test.describe('default example plan', () => {
     await expect(page.locator('#saveStatus')).toHaveText('Not saved');
   });
 
+  test('the footer shows the version', async ({ page }) => {
+    await expect(page.locator('#appVersion')).toHaveText('Block Builder v1.1.0');
+  });
+
   test('summary numbers match the grid', async ({ app }) => {
     const weeks = await app.plan();
     const totals = weeks.map((w) => w.sessions.reduce((a, s) => a + s.km, 0));
@@ -81,7 +85,7 @@ test.describe('plan length and dates', () => {
 });
 
 test.describe('runs per week', () => {
-  for (const runs of [3, 4, 5, 6, 7]) {
+  for (const runs of [1, 2, 3, 4, 5, 6, 7]) {
     test(`${runs} runs a week`, async ({ app }) => {
       await app.configure({ runs });
       for (const w of await app.plan()) {
