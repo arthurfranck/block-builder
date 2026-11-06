@@ -151,6 +151,10 @@ main.plan{min-width:0;display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
 
 .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .toolbar .spacer{flex:1}
+.exp{display:inline-flex;align-items:stretch}
+.exp select{border:1px solid var(--line);border-right:0;background:var(--surface);border-radius:6px 0 0 6px;padding:4px 6px;font-size:13px;font-weight:600;cursor:pointer;min-width:0}
+.exp .btn{border-radius:0 6px 6px 0}
+.exp select:hover,.exp select:hover+.btn{border-color:var(--ink)}
 .grid-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
 table.grid{border-collapse:collapse;width:100%;min-width:900px;table-layout:fixed}
 .grid th{font-family:var(--f-display);font-weight:600;text-transform:uppercase;letter-spacing:.07em;font-size:13px;color:var(--muted);padding:8px 6px;text-align:left;border-bottom:1px solid var(--line);background:var(--surface)}
@@ -333,7 +337,8 @@ pendingBanner:"You edited sessions by hand, so new settings aren't applied yet."
 stWeeks:"weeks",stTotal:"total km",stPeak:"peak week km",stLongest:"longest run km",stEquiv:"{lbl} equivalent",
 loadProfile:"Load profile",longRunLeg:"long run",
 notesAll:"Write coach notes for all weeks",notesStop:"Stop writing notes",notesNoAccess:"Coach notes need Claude access, which this view doesn't have.",connecting:"Connecting…",
-sendAll:"Send all runs to watch",exportCal:"Export calendar",exportCsv:"Export CSV",rebuildFrom:"Rebuild from settings",
+sendAll:"Send all runs to watch",exportCal:"Export calendar",exportCsv:"Export CSV",exportFmt:"Export format",fmtCsv:"CSV (spreadsheet)",fmtPdf:"PDF (printable)",exportGo:"Export",
+pdfBuilding:"Building PDF…",pdfLoadFail:"Couldn't load the PDF builder. Check your connection and try again.",pdfFail:"Couldn't build the PDF: {m}",pdfGenerated:"Generated {d}",pdfPage:"Page {p} of {n}",pdfRace:"Race",rebuildFrom:"Rebuild from settings",
 week:"Week",wAbbr:"W",rewriteNotes:"Rewrite notes",coachNotes:"Coach notes",sendWatch:"Send to watch",sendWatchWeek:"Send week {n} to watch",watchShort:"Watch",rest:"Rest",tabPlan:"Plan",tabSetup:"Settings",seePlan:"See the plan",editSettings:"Edit settings",addRun:"+ Add run",noteBadge:"NOTE",coach:"Coach",
 svgTitle:"Week {n}: {km} km, {phase}",svgAria:"Weekly kilometres by week",
 editRace:"Edit race",removeRace:"Remove race",raceOptional:"Optional: name your race so it shows in the header with a countdown.",
@@ -419,7 +424,8 @@ pendingBanner:"Vous avez modifié des séances à la main, les nouveaux réglage
 stWeeks:"semaines",stTotal:"km au total",stPeak:"km semaine max",stLongest:"km sortie la plus longue",stEquiv:"équivalent {lbl}",
 loadProfile:"Profil de charge",longRunLeg:"sortie longue",
 notesAll:"Rédiger les conseils du coach pour toutes les semaines",notesStop:"Arrêter la rédaction",notesNoAccess:"Les conseils du coach nécessitent l'accès à Claude, indisponible dans cette vue.",connecting:"Connexion…",
-sendAll:"Envoyer toutes les séances à la montre",exportCal:"Exporter le calendrier",exportCsv:"Exporter en CSV",rebuildFrom:"Recalculer depuis les réglages",
+sendAll:"Envoyer toutes les séances à la montre",exportCal:"Exporter le calendrier",exportCsv:"Exporter en CSV",exportFmt:"Format d'export",fmtCsv:"CSV (tableur)",fmtPdf:"PDF (imprimable)",exportGo:"Exporter",
+pdfBuilding:"Création du PDF…",pdfLoadFail:"Impossible de charger le générateur de PDF. Vérifiez votre connexion et réessayez.",pdfFail:"Impossible de créer le PDF : {m}",pdfGenerated:"Créé le {d}",pdfPage:"Page {p} sur {n}",pdfRace:"Course",rebuildFrom:"Recalculer depuis les réglages",
 week:"Semaine",wAbbr:"S",rewriteNotes:"Réécrire les conseils",coachNotes:"Conseils du coach",sendWatch:"Envoyer à la montre",sendWatchWeek:"Envoyer la semaine {n} à la montre",watchShort:"Montre",rest:"Repos",tabPlan:"Plan",tabSetup:"Réglages",seePlan:"Voir le plan",editSettings:"Modifier les réglages",addRun:"+ Ajouter une sortie",noteBadge:"NOTE",coach:"Coach",
 svgTitle:"Semaine {n} : {km} km, {phase}",svgAria:"Kilomètres par semaine",
 editRace:"Modifier la course",removeRace:"Retirer la course",raceOptional:"Facultatif : indiquez votre course pour l'afficher en haut de page avec un compte à rebours.",
@@ -851,7 +857,7 @@ function renderPlan(){
     <span class="spacer"></span>
     <button class="btn sm" data-act="allwatch">${t("sendAll")}</button>
     <button class="btn sm" data-act="ics">${t("exportCal")}</button>
-    <button class="btn sm" data-act="csv">${t("exportCsv")}</button>
+    <span class="exp"><select id="expFmt" aria-label="${esc(t("exportFmt"))}"><option value="csv" ${S.exportFmt==="csv"?"selected":""}>${t("fmtCsv")}</option><option value="pdf" ${S.exportFmt==="pdf"?"selected":""}>${t("fmtPdf")}</option></select><button class="btn sm" data-act="export">${t("exportGo")}</button></span>
     <button class="btn sm ghost" data-act="rebuild">${t("rebuildFrom")}</button>
   </div>`;
   h+=`<div class="grid-wrap"><table class="grid"><thead><tr><th class="wk">${t("week")}</th>${DAYS.map(d=>`<th>${d}</th>`).join("")}</tr></thead><tbody>`;
@@ -973,7 +979,9 @@ $("#plan").addEventListener("click",e=>{
   else if(act==="allwatch"){sendToWatch(S.plan.weeks.flatMap(w=>w.sessions.map(s=>({w,s}))),t("sendTitleAll",{c:S.plan.weeks.reduce((a,w)=>a+w.sessions.length,0)}),`${slug(S.name)}-all`);}
   else if(act==="ics")exportICS();
   else if(act==="csv")exportCSV();
+  else if(act==="export"){const f=$("#expFmt");S.exportFmt=f?f.value:"csv";if(S.exportFmt==="pdf")exportPDF(a);else exportCSV();}
 });
+$("#plan").addEventListener("change",e=>{if(e.target.id==="expFmt"){S.exportFmt=e.target.value;try{localStorage.setItem("bb-export-fmt",S.exportFmt);}catch(_){}}});
 $("#plan").addEventListener("keydown",e=>{const a=e.target.closest(".empty");if(a&&(e.key==="Enter"||e.key===" ")){e.preventDefault();addSession(+a.dataset.w,+a.dataset.d);}});
 let drag=null;
 $("#plan").addEventListener("dragstart",e=>{const s=e.target.closest(".ses");if(!s)return;drag={w:+s.dataset.w,id:s.dataset.s};s.classList.add("dragging");e.dataTransfer.effectAllowed="move";try{e.dataTransfer.setData("text/plain",s.dataset.s);}catch(_){}});
@@ -1178,6 +1186,79 @@ function exportCSV(){
   const rows=[t("csvHead").split("|")];
   for(const w of S.plan.weeks)for(const s of w.sessions)rows.push([w.n,phaseLbl(w.phase),iso(sessionDate(w,s)),DAYS[s.day],s.name,s.km,s.desc,s.note]);
   saveFile(fname("csv"),new Blob(["\ufeff"+rows.map(r=>r.map(q).join(",")).join("\r\n")],{type:"text/csv"}));
+}
+S.exportFmt=(()=>{try{return localStorage.getItem("bb-export-fmt");}catch(_){return null;}})()==="pdf"?"pdf":"csv";
+
+/* PDF: jsPDF + AutoTable, loaded on first use only */
+let PDFLIB=null;
+function loadScript(src){return new Promise((ok,ko)=>{const s=document.createElement("script");s.src=src;s.async=true;s.onload=ok;s.onerror=()=>ko(new Error("load "+src));document.head.appendChild(s);});}
+function loadPDF(){
+  if(!PDFLIB)PDFLIB=(async()=>{
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js");
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.9/jspdf.plugin.autotable.min.js");
+    const J=window.jspdf&&window.jspdf.jsPDF;if(!J)throw new Error("jsPDF missing");
+    const P=window.jspdf_autotable||{};
+    if(!J.API.autoTable&&typeof P.applyPlugin==="function")P.applyPlugin(J);
+    const run=(doc,o)=>typeof doc.autoTable==="function"?doc.autoTable(o):typeof P.autoTable==="function"?P.autoTable(doc,o):(()=>{throw new Error("AutoTable missing");})();
+    return {J,run};
+  })().catch(e=>{PDFLIB=null;throw e;});
+  return PDFLIB;
+}
+/* built-in PDF fonts are Latin-1: map the typographic characters the plan uses, drop the rest */
+const pdfTxt=v=>String(v??"").replace(/[–—−]/g,"-").replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/…/g,"...").replace(/→/g,"->").replace(/≈/g,"~").replace(/≤/g,"<=").replace(/≥/g,">=").replace(/[   ]/g," ").replace(/[^\n\x20-\xFF]/g,"");
+const PDF_KIND={easy:[43,135,104],recovery:[125,144,140],hard:[181,56,79],long:[52,86,166],race:[168,122,6]};
+const PDF_PHASE={base:[143,178,165],build:[108,147,200],peak:[212,84,44],taper:[201,164,71]};
+async function exportPDF(btn){
+  if(btn)btn.disabled=true;
+  let lib;
+  try{toast(t("pdfBuilding"));lib=await loadPDF();}
+  catch(_){if(btn)btn.disabled=false;toast(t("pdfLoadFail"));return;}
+  try{
+    const {J,run}=lib, I=S.inputs, W=S.plan.weeks;
+    const doc=new J({orientation:"landscape",unit:"mm",format:"a4"});
+    const pw=doc.internal.pageSize.getWidth(), ph=doc.internal.pageSize.getHeight(), M=10;
+    const totals=W.map(w=>w.sessions.reduce((a,s)=>a+s.km,0));
+    const longest=Math.max(0,...W.flatMap(w=>w.sessions.filter(s=>s.kind==="long").map(s=>s.km)));
+    const start=parseISO(W[0].start), end=addDays(start,7*W.length-1);
+    doc.setFont("helvetica","bold");doc.setFontSize(18);doc.setTextColor(20,32,39);
+    doc.text(pdfTxt(S.name),M,M+6);
+    const R=I.race&&I.race.name?I.race:null;
+    const line1=[distLabel(I), R?`${t("pdfRace")}: ${R.name}${R.city?" ("+R.city+")":""}`:"", I.goal!=="fitness"?fmtDay(parseISO(I.raceDate)):"", `${fmtDate(start)} - ${fmtDate(end)}`].filter(Boolean).join("  ·  ");
+    const line2=[`${W.length} ${t("stWeeks")}`,`${Math.round(totals.reduce((a,b)=>a+b,0))} ${t("stTotal")}`,`${Math.round(Math.max(...totals))} ${t("stPeak")}`,`${longest} ${t("stLongest")}`].join("  ·  ");
+    doc.setFont("helvetica","normal");doc.setFontSize(9.5);doc.setTextColor(90,106,111);
+    doc.text(pdfTxt(line1),M,M+12);doc.text(pdfTxt(line2),M,M+16.5);
+    const body=[], meta=[];
+    W.forEach((w,wi)=>{
+      const st=parseISO(w.start);
+      const row=[`${t("wAbbr")}${w.n}\n${fmtShort(st)} - ${fmtShort(addDays(st,6))}\n${phaseLbl(w.phase)}${w.cutback?" · "+t("cutback"):""}\n${totals[wi].toFixed(1)} km`];
+      const kinds=[w.phase];
+      for(let d=0;d<7;d++){const ss=w.sessions.filter(s=>s.day===d);
+        row.push(ss.map(s=>`${s.name} · ${s.km} km\n${s.desc}${s.note?"\n"+t("coach")+": "+s.note:""}`).join("\n\n"));
+        kinds.push(ss.length?ss[0].kind:null);}
+      body.push(row.map(pdfTxt));meta.push({type:"week",kinds});
+      if(w.note){body.push([{content:pdfTxt(`${t("coach")}: ${w.note}`),colSpan:8}]);meta.push({type:"note"});}
+    });
+    const dayW=(pw-2*M-30)/7;
+    run(doc,{
+      startY:M+21, margin:{left:M,right:M,top:M,bottom:M+5},
+      head:[[t("week"),...DAYS].map(pdfTxt)], body,
+      theme:"grid", showHead:"everyPage", rowPageBreak:"avoid",
+      styles:{font:"helvetica",fontSize:7.2,cellPadding:{top:1.6,right:1.6,bottom:1.6,left:2.6},valign:"top",lineColor:[213,221,219],lineWidth:.2,textColor:[20,32,39],overflow:"linebreak"},
+      headStyles:{fillColor:[20,32,39],textColor:255,fontStyle:"bold",fontSize:8},
+      columnStyles:{0:{cellWidth:30,fontStyle:"bold"},...Object.fromEntries([1,2,3,4,5,6,7].map(i=>[i,{cellWidth:dayW}]))},
+      didParseCell:h=>{if(h.section!=="body")return;const m=meta[h.row.index];if(!m)return;
+        if(m.type==="note"){h.cell.styles.fillColor=[233,238,236];h.cell.styles.fontStyle="italic";return;}
+        if(h.column.index>0&&m.kinds[h.column.index]==="race")h.cell.styles.fillColor=[246,238,214];},
+      didDrawCell:h=>{if(h.section!=="body")return;const m=meta[h.row.index];if(!m||m.type!=="week")return;
+        const k=m.kinds[h.column.index];const c=h.column.index===0?PDF_PHASE[k]:PDF_KIND[k];if(!c)return;
+        doc.setFillColor(...c);doc.rect(h.cell.x+.4,h.cell.y+.6,1.1,h.cell.height-1.2,"F");}
+    });
+    const n=doc.internal.getNumberOfPages(), gen=t("pdfGenerated",{d:fmtDate(new Date())});
+    for(let p=1;p<=n;p++){doc.setPage(p);doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(90,106,111);
+      doc.text(pdfTxt(`Block Builder · ${gen}`),M,ph-5);doc.text(pdfTxt(t("pdfPage",{p,n})),pw-M,ph-5,{align:"right"});}
+    saveFile(fname("pdf"),doc.output("blob"));
+  }catch(e){toast(t("pdfFail",{m:(e&&e.message)||t("unknownErr")}));}
+  finally{if(btn)btn.disabled=false;}
 }
 
 /* ---------- persistence ---------- */
