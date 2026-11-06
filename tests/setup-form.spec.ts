@@ -66,10 +66,18 @@ test.describe('run types', () => {
     expect((await app.plan()).flatMap((w) => w.sessions).some((s) => s.kind === 'hard')).toBe(false);
   });
 
-  test('easy and long run types cannot be turned off', async ({ app, page }) => {
+  test('easy cannot be turned off, long can', async ({ app, page }) => {
     await app.showSetup();
     await expect(page.locator('#t-on-easy')).toBeDisabled();
-    await expect(page.locator('#t-on-long')).toBeDisabled();
+    await expect(page.locator('#t-on-long')).toBeEnabled();
+  });
+
+  test('with the long run type off, no run is a long run', async ({ app }) => {
+    await app.typeToggle('long');
+    await app.showPlan();
+    const sessions = (await app.plan()).flatMap((w) => w.sessions);
+    expect(sessions.some((s) => s.kind === 'long')).toBe(false);
+    await expect(app.warnings()).toHaveCount(0);
   });
 
   test('a renamed run type shows in the plan', async ({ app, page }) => {
@@ -124,5 +132,53 @@ test.describe('warnings', () => {
     await expect(page.locator('#plan .banner.info')).toBeVisible();
     await app.configure({ curVol: 35 });
     await expect(page.locator('#plan .banner.info')).toHaveCount(0);
+  });
+});
+
+test.describe('New plan starts blank', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.locator('#btnNew').click();
+  });
+
+  test('the setup is empty and only Easy is ticked', async ({ app, page }) => {
+    await app.showSetup();
+    await expect(page.locator('#runsSeg button[aria-pressed="true"]')).toHaveCount(0);
+    await expect(page.locator('#runsSeg [data-runs="1"]')).toBeVisible();
+    await expect(page.locator('#runsSeg [data-runs="2"]')).toBeVisible();
+    await expect(page.locator('#daysSeg button[aria-pressed="true"]')).toHaveCount(0);
+    await expect(page.locator('#longDay')).toHaveValue('-1');
+    for (const id of ['curVol', 'curLong', 'recTime']) await expect(page.locator('#' + id)).toHaveValue('');
+    await expect(page.locator('#recDist')).toHaveValue('0');
+    const ticked = await page.locator('#types input[type=checkbox]:checked').evaluateAll((els) => els.map((e) => e.id));
+    expect(ticked).toEqual(['t-on-easy']);
+  });
+
+  test('no plan until runs per week, weekly volume and longest run are set', async ({ app, page }) => {
+    await app.showPlan();
+    await expect(page.locator('table.grid')).toHaveCount(0);
+    await expect(page.locator('#plan .banner.info')).toContainText('Fill in the setup');
+    await expect(page.locator('#plan .banner.info li')).toHaveCount(3);
+    await app.configure({ runs: 3, curVol: 25 });
+    await app.showPlan();
+    await expect(page.locator('table.grid')).toHaveCount(0);
+    await expect(page.locator('#plan .banner.info li')).toHaveCount(1);
+    await app.configure({ curLong: 10 });
+    await app.showPlan();
+    await expect(page.locator('table.grid')).toBeVisible();
+    expect(await app.plan()).toHaveLength(12);
+  });
+
+  test('Save plan is refused while the setup is incomplete', async ({ app, page }) => {
+    await page.locator('#btnSave').click();
+    await expect(app.toast()).toContainText('Fill in the setup');
+    await expect(page.locator('#saveStatus')).toHaveText('Not saved');
+  });
+
+  test('a plan built from the blank setup has only easy runs', async ({ app }) => {
+    await app.configure({ runs: 2, curVol: 20, curLong: 8 });
+    await app.showPlan();
+    const weeks = await app.plan();
+    expect(weeks.flatMap((w) => w.sessions).filter((s) => s.kind !== 'race').every((s) => s.kind === 'easy' || s.kind === 'long')).toBe(true);
+    for (const w of weeks.slice(0, -1)) expect.soft(w.sessions, `week ${w.n}`).toHaveLength(2);
   });
 });

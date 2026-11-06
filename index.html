@@ -206,6 +206,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 .plans-list .pl .info b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .plans-list .pl .info span{font-size:12.5px;color:var(--muted)}
 .plans-list .pl.cur{border-color:var(--accent)}
+.ver{max-width:1500px;margin:0 auto;padding:0 16px calc(24px + env(safe-area-inset-bottom,0px));font-family:var(--f-mono);font-size:12px;color:var(--muted)}
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:14px;z-index:60}
 @media (prefers-reduced-motion:no-preference){.ses{transition:border-color .15s}}
 /* today: session of the day beside the local forecast */
@@ -320,11 +321,14 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
   </div>
 </div>
 <div id="modalRoot"></div>
+<footer class="ver" id="appVersion"></footer>
 
 <script>
 (() => {
 "use strict";
+const VERSION = "1.1.0";
 const $ = s => document.querySelector(s);
+$("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
 const I18N={
 en:{
@@ -365,7 +369,7 @@ wa_mLong:"A longest recent run under 14 km makes 32 km long runs hard to reach s
 wa_days:"You picked {d} running days for {r} runs a week. Using a default pattern until those match.",
 wa_tooMany:"{h} quality run types with {r} runs a week leaves room for {m} {sess} per week. Types will rotate, so each appears less often.",
 sessOne:"hard session",sessMany:"hard sessions",
-wa_noHard:"No quality run types are ticked, so every run except the long run is easy.",
+wa_noHard:"No quality run types are ticked, so the plan has no hard sessions.",
 wa_noPace:"Without a recent race time, sessions use effort descriptions instead of paces.",
 wa_past:"With this race date and length, week 1 started on {d}. Shorten the block or move the race date.",
 blockName:"{lbl} block",trainingBlock:"Training block",
@@ -461,7 +465,7 @@ wa_mLong:"Avec une plus longue sortie récente sous 14 km, atteindre des sorties
 wa_days:"Vous avez choisi {d} jours pour {r} sorties par semaine. Une répartition par défaut s'applique tant que les deux ne correspondent pas.",
 wa_tooMany:"{h} types de séances de qualité pour {r} sorties par semaine : la place ne permet que {m} {sess} par semaine. Les types tournent, chacun revient donc moins souvent.",
 sessOne:"séance difficile",sessMany:"séances difficiles",
-wa_noHard:"Aucun type de séance de qualité n'est coché : toutes les sorties sauf la longue sont faciles.",
+wa_noHard:"Aucun type de séance de qualité n'est coché : le plan n'a aucune séance difficile.",
 wa_noPace:"Sans temps de course récent, les séances sont décrites en effort plutôt qu'en allure.",
 wa_past:"Avec cette date et cette durée, la semaine 1 a commencé le {d}. Raccourcissez le plan ou déplacez la date.",
 blockName:"Plan {lbl}",trainingBlock:"Plan d'entraînement",
@@ -519,6 +523,8 @@ wxGeoFail:"La position n'est pas disponible ici. Saisissez une ville.",wxFeels:"
 wxSun:"coucher {t}",wxBest:"Créneau le plus sec aujourd'hui : <b>{h}</b>, {p} % de pluie, {tp}°",wxUpd:"Mis à jour à {t}",
 wmo0:"Ciel clair",wmo1:"Plutôt dégagé",wmo2:"Partiellement nuageux",wmo3:"Couvert",wmo45:"Brouillard",wmo51:"Bruine",wmo56:"Bruine verglaçante",wmo61:"Pluie",wmo65:"Forte pluie",wmo66:"Pluie verglaçante",wmo71:"Neige",wmo80:"Averses",wmo85:"Averses de neige",wmo95:"Orage"
 }};
+Object.assign(I18N.en,{needTitle:"Fill in the setup to build your plan:",needRuns:"Choose how many runs per week.",needVol:"Enter your current weekly volume.",needLong:"Enter your longest recent run."});
+Object.assign(I18N.fr,{needTitle:"Complétez les réglages pour créer votre plan :",needRuns:"Choisissez le nombre de sorties par semaine.",needVol:"Indiquez votre volume hebdo actuel.",needLong:"Indiquez votre plus longue sortie récente."});
 let LANG=(()=>{try{const s=localStorage.getItem("bb-lang");if(s==="fr"||s==="en")return s;}catch(_){}return /^fr/i.test(navigator.language||"")?"fr":"en";})();
 function t(k,v){let s=(I18N[LANG]&&I18N[LANG][k]);if(s==null)s=I18N.en[k]!=null?I18N.en[k]:k;return v?s.replace(/\{(\w+)\}/g,(m,x)=>v[x]!==undefined?v[x]:m):s;}
 const cap=x=>String(x).charAt(0).toUpperCase()+String(x).slice(1);
@@ -529,13 +535,13 @@ const KINDS_KEYS={easy:"kEasy",recovery:"kRecovery",long:"kLong",hard:"kHard"};
 const kindLbl=k=>t(KINDS_KEYS[k]||"kHard");
 const DISTS = [{k:"5k",km:5},{k:"10k",km:10},{k:"hm",km:21.0975},{k:"m",km:42.195},{k:"custom",km:null}];
 const PHASES = ["base","build","peak","taper"];
-const DEFAULT_DAYS = {3:[1,3,6],4:[1,2,4,6],5:[0,1,3,4,6],6:[0,1,2,4,5,6],7:[0,1,2,3,4,5,6]};
+const DEFAULT_DAYS = {1:[6],2:[3,6],3:[1,3,6],4:[1,2,4,6],5:[0,1,3,4,6],6:[0,1,2,4,5,6],7:[0,1,2,3,4,5,6]};
 const uid = () => Math.random().toString(36).slice(2,10);
 const clamp = (v,a,b) => Math.min(b,Math.max(a,v));
 const r05 = v => Math.round(v*2)/2;
 const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-const TYPE_DEFS=[["easy","easy",true,true,null],["long","long",true,true,null],["recovery","recovery",true,false,null],["strides","easy",true,false,null],["tempo","hard",true,false,["build","peak"]],["intervals","hard",true,false,["build","peak"]],["hills","hard",true,false,["base","build"]],["fartlek","hard",false,false,["base","build"]],["progression","hard",false,false,["base","build","peak"]],["racepace","hard",true,false,["peak","taper"]]];
+const TYPE_DEFS=[["easy","easy",true,true,null],["long","long",true,false,null],["recovery","recovery",true,false,null],["strides","easy",true,false,null],["tempo","hard",true,false,["build","peak"]],["intervals","hard",true,false,["build","peak"]],["hills","hard",true,false,["base","build"]],["fartlek","hard",false,false,["base","build"]],["progression","hard",false,false,["base","build","peak"]],["racepace","hard",true,false,["peak","taper"]]];
 const DEFAULT_TYPES = () => TYPE_DEFS.map(([id,kind,on,locked,ph])=>({id,name:t("ty_"+id),kind,on,...(locked?{locked:true}:{}),phases:ph?ph.slice():PHASES.slice(),tpl:t("tp_"+id)}));
 function translateTypes(types,from,to){
   for(const ty of types){const id=TYPE_DEFS.some(d=>d[0]===ty.id)?ty.id:"custom";
@@ -566,7 +572,12 @@ function raceTimeMin(vd,m){let lo=3,hi=900;for(let i=0;i<60;i++){const mid=(lo+h
 const fmtPace = sec => {const s=Math.round(sec);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")+"/km";};
 function fmtDur(sec){sec=Math.round(sec);const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;return (h?h+":"+String(m).padStart(2,"0"):m)+":"+String(s).padStart(2,"0");}
 function distKm(inp){const d=DISTS.find(x=>x.k===inp.dist);return d&&d.km?d.km:clamp(+inp.customKm||10,3,100);}
-function distLabel(inp){return inp.dist==="custom"?(+inp.customKm||10)+" km":t("l"+inp.dist);}
+/* New plan starts empty; the plan only builds once runs per week, weekly volume and longest run are filled in. */
+const BLANK_INPUTS = () => ({...DEFAULT_INPUTS(),curVol:"",curLong:"",recDist:"0",recTime:"",runs:0,days:[],longDay:-1,race:null});
+const BLANK_TYPES = () => DEFAULT_TYPES().map(x=>({...x,on:x.id==="easy"}));
+function missingSetup(I){const m=[];if(!(+I.runs>=1))m.push("needRuns");if(!(+I.curVol>0))m.push("needVol");if(!(+I.curLong>0))m.push("needLong");return m;}
+function genInputs(I){return {...I,runs:+I.runs>=1?+I.runs:5,days:+I.runs>=1?I.days:[],curVol:+I.curVol>0?I.curVol:30,curLong:+I.curLong>0?I.curLong:12};}
+function distLabel(inp){if(!inp.dist)return "";return inp.dist==="custom"?(+inp.customKm||10)+" km":t("l"+inp.dist);}
 function cat(D){return D<=6?"5k":D<=12?"10k":D<=25?"hm":"m";}
 
 function paces(inp){
@@ -649,7 +660,7 @@ function watchPlan(kind,km,w){
 function generate(inp,types){
   const D=distKm(inp), c=cat(D), P=paces(inp);
   const W=clamp(Math.round(+inp.weeks||12),3,30);
-  const runs=clamp(+inp.runs||5,3,7);
+  const runs=clamp(+inp.runs||5,1,7);
   const noRace=inp.goal==="fitness";
   const taperN=noRace?0:Math.min({"5k":1,"10k":1,"hm":2,"m":3}[c],Math.max(1,Math.floor(W/4)));
   const nb=W-taperN;
@@ -700,8 +711,9 @@ function generate(inp,types){
       if(phase==="taper"){longKm=Lpk*[0.75,0.6][i-nb]||Lpk*0.6;}
       else{const nbNC=Math.max(1,nb-1);longKm=L0+(Lpk-L0)*Math.min(1,i/nbNC);longKm=Math.min(longKm,Math.max(L0*0.9,target*lfrac));if(isCut)longKm*=0.75;}
       longKm=r05(Math.max(longKm,4));
-      const w=workFor(longT,ctxBase);
-      sessions.push({id:uid(),day:longD,typeId:"long",name:longT.name,kind:"long",km:longKm,desc:fill(longT.tpl,{...P.txt,km:longKm,work:fill(w.text,P.txt)}),note:"",watch:watchPlan("long",longKm,w)});
+      const lt=longT.on?longT:easyT; /* long run type unticked: that day is a plain easy run */
+      const w=longT.on?workFor(longT,ctxBase):{text:""};
+      sessions.push({id:uid(),day:longD,typeId:lt.id,name:lt.name,kind:lt.kind,km:longKm,desc:fill(lt.tpl,{...P.txt,km:longKm,work:fill(w.text,P.txt)}),note:"",watch:watchPlan(lt.kind,longKm,w)});
     }
     // hard
     const elig=hardTypes.filter(t=>t.phases.includes(phase));
@@ -782,7 +794,7 @@ function warnings(inp,types,plan){
 
 /* ---------- state ---------- */
 const S={nameAuto:true,inputs:DEFAULT_INPUTS(),types:DEFAULT_TYPES(),plan:null,planId:uid(),name:cap(t("blockName",{lbl:t("lhm")})),edited:false,savedAt:null,isExample:true,saved:[],store:null,saving:false,dirty:false};
-function regen(){const g=generate(S.inputs,S.types);S.plan=g;S.edited=false;}
+function regen(){const g=generate(genInputs(S.inputs),S.types);S.plan=g;S.edited=false;}
 
 /* ---------- setup UI ---------- */
 function renderSetup(){
@@ -796,10 +808,10 @@ function renderSetup(){
   $("#raceDateF").hidden=fit;$("#startDateF").hidden=!fit;$("#raceBox").hidden=fit;$("#focusHint").hidden=!fit;
   $("#distLbl").textContent=t(fit?"focusDist":"distance");$("#focusHint").textContent=t("focusHint");
   $("#curVol").value=I.curVol;$("#curLong").value=I.curLong;$("#recDist").value=I.recDist;$("#recTime").value=I.recTime;
-  $("#runsSeg").innerHTML=[3,4,5,6,7].map(n=>`<button type="button" data-runs="${n}" aria-pressed="${+I.runs===n}">${n}</button>`).join("");
+  $("#runsSeg").innerHTML=[1,2,3,4,5,6,7].map(n=>`<button type="button" data-runs="${n}" aria-pressed="${+I.runs===n}">${n}</button>`).join("");
   $("#daysSeg").innerHTML=DAYS1.map((d,i)=>`<button type="button" data-day="${i}" aria-label="${DAYS[i]}" aria-pressed="${I.days.includes(i)}" class="${+I.longDay===i?"long":""}">${d}</button>`).join("");
-  $("#daysCount").textContent=t("daysCount",{a:I.days.length,b:I.runs});
-  $("#longDay").innerHTML=DAYS.map((d,i)=>`<option value="${i}" ${+I.longDay===i?"selected":""}>${d}</option>`).join("");
+  $("#daysCount").textContent=t("daysCount",{a:I.days.length,b:I.runs||"-"});
+  $("#longDay").innerHTML=(+I.longDay<0?`<option value="-1" selected>-</option>`:"")+DAYS.map((d,i)=>`<option value="${i}" ${+I.longDay===i?"selected":""}>${d}</option>`).join("");
   renderTypes();renderHints();renderRaceBox();
 }
 function renderHints(){
@@ -822,7 +834,7 @@ function renderTypes(){
     </div>
     <details><summary>${kindLbl(t.kind)}${t.kind==="hard"?" · "+t.phases.map(phaseLbl).join(", "):""} · ${tt("editDesc")}</summary>
       <div class="opts">
-        ${t.locked?"":`<div class="field"><label for="t-kind-${t.id}">${tt("kind")}</label><select id="t-kind-${t.id}" data-f="kind">${["easy","recovery","hard"].map(k=>`<option value="${k}" ${t.kind===k?"selected":""}>${kindLbl(k)}</option>`).join("")}</select></div>`}
+        ${t.locked||t.id==="long"?"":`<div class="field"><label for="t-kind-${t.id}">${tt("kind")}</label><select id="t-kind-${t.id}" data-f="kind">${["easy","recovery","hard"].map(k=>`<option value="${k}" ${t.kind===k?"selected":""}>${kindLbl(k)}</option>`).join("")}</select></div>`}
         ${t.kind==="hard"?`<div class="field"><span class="lbl">${tt("usedPhases")}</span><div class="chips">${PHASES.map(p=>`<button type="button" class="chip" data-phase="${p}" aria-pressed="${t.phases.includes(p)}">${phaseLbl(p)}</button>`).join("")}</div></div>`:""}
         <div class="field"><label for="t-tpl-${t.id}">${tt("tplLbl")}</label><textarea id="t-tpl-${t.id}" data-f="tpl" rows="3">${esc(t.tpl)}</textarea></div>
       </div>
@@ -855,7 +867,7 @@ $("#setup").addEventListener("change",e=>{
     if(el.id==="startDate"&&!el.value){el.value=I.startDate;return;}
     const prevName=defaultName();
     I[map[el.id]]=el.type==="number"||el.id==="longDay"?+el.value:el.value;
-    if(el.id==="longDay"&&!I.days.includes(+el.value)){I.days=[...I.days.filter(d=>d!==I.days[I.days.length-1]),+el.value].sort((a,b)=>a-b);}
+    if(el.id==="longDay"&&+el.value>=0&&!I.days.includes(+el.value)){I.days=[...I.days.filter(d=>d!==I.days[I.days.length-1]),+el.value].sort((a,b)=>a-b);}
     if(el.id==="longDay")renderSetup();
     if(S.name===prevName){S.name=defaultName();$("#planName").value=S.name;}
     inputsChanged();return;
@@ -893,6 +905,8 @@ function drawProfile(){const el=$("#profileChart");if(!el||!S.plan)return;chartW
 try{new ResizeObserver(()=>{const el=$("#profileChart");if(el&&Math.abs(el.clientWidth-chartW)>4)drawProfile();}).observe($("#plan"));}catch(_){}
 function renderPlan(){
   const P=S.plan, I=S.inputs; if(!P)return;
+  const miss=missingSetup(I);
+  if(miss.length){const h0=$("#hello");if(h0)h0.innerHTML="";$("#plan").innerHTML=`<div class="banner info"><span>${esc(t("needTitle"))}</span><ul>${miss.map(k=>`<li>${esc(t(k))}</li>`).join("")}</ul><button class="btn sm m-only" type="button" data-tabgo="setup">${t("editSettings")}</button></div>`;return;}
   renderHello();
   const weeks=P.weeks;
   const totals=weeks.map(w=>w.sessions.reduce((a,s)=>a+s.km,0));
@@ -1419,6 +1433,7 @@ function setStatus(t){$("#saveStatus").textContent=t;}
 let saveTimer=null;
 function markDirty(){S.dirty=true;if(S.savedAt){setStatus(t("unsaved"));clearTimeout(saveTimer);saveTimer=setTimeout(()=>savePlan(true),1500);}}
 async function savePlan(auto){
+  if(missingSetup(S.inputs).length){if(!auto)toast(t("needTitle"));return;}
   const st=S.store;if(!st){toast(t("storageConnecting"));return;}
   const data=snapshot();
   try{
@@ -1458,7 +1473,7 @@ function openPlans(){
   });
 }
 function newPlan(){
-  const go=()=>{S.nameAuto=true;S.inputs=DEFAULT_INPUTS();S.types=DEFAULT_TYPES();S.planId=uid();S.savedAt=null;S.isExample=true;S.pendingRegen=false;S.name=cap(t("blockName",{lbl:t("lhm")}));$("#planName").value=S.name;regen();renderSetup();renderPlan();setStatus(t("notSaved"));};
+  const go=()=>{S.nameAuto=true;S.inputs=BLANK_INPUTS();S.types=BLANK_TYPES();S.planId=uid();S.savedAt=null;S.isExample=false;S.dirty=false;S.pendingRegen=false;S.name=cap(t("blockName",{lbl:t("lhm")}));$("#planName").value=S.name;regen();renderSetup();renderPlan();setStatus(t("notSaved"));};
   if(S.dirty&&S.savedAt===null&&!S.isExample)confirmBox(t("newQ"),t("newT"),t("startNew"),go);else go();
 }
 function initStore(){S.store={mode:"local"};refreshLocalList();}

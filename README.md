@@ -9,7 +9,9 @@ Block Builder creates a running training block in the browser. You pick a race o
 - **Goals:** train for a race (5K, 10K, half marathon, marathon, or a custom distance) or get in shape over a set number of weeks.
 - **Phases:** base, build, peak and taper, with cutback weeks. A load profile chart shows weekly volume and the long run.
 - **Paces:** worked out from a recent race result (easy, tempo, intervals, race pace).
-- **Run types:** easy, recovery, long, tempo, intervals, hill repeats, fartlek, progression and race pace. You can add custom types and edit their description templates and the phases they're used in.
+- **Runs per week:** 1 to 7.
+- **New plan:** starts empty. Pick runs per week, enter your weekly volume and longest run, and the plan builds. Only Easy run is ticked until you add more types.
+- **Run types:** easy, recovery, long, tempo, intervals, hill repeats, fartlek, progression and race pace. You can untick the long run (that day becomes an easy run), add custom types, and edit their description templates and the phases they're used in.
 - **Editing:** edit, move (drag and drop), add or delete any run, with a personal note per run.
 - **Today:** above the load profile, a card shows today's run with Edit and Send to watch (or, on a rest day, the next run and its date; before the plan starts, the start date and first run). Next to it, the local forecast: current conditions and feels-like temperature, high and low, rain chance, wind, sunset, and an hourly strip to 22:00 that marks the driest slot left in the day. Type a city or use your location; the choice is remembered in your browser.
 - **Race countdown:** optional, with the race name, city and a link to its page (Finishers search built in).
@@ -69,7 +71,7 @@ Every test starts on a frozen date (Friday 6 November 2026, Paris time) with emp
 |---|---|
 | `plan-generation.spec.ts` | distances, weeks, dates, runs per week, fitness goal |
 | `plan-rules.spec.ts` | phase order, taper length, cutback and taper volume, one race on race day, long-run day, weekly increase |
-| `setup-form.spec.ts` | paces, running days, run types, warnings |
+| `setup-form.spec.ts` | paces, running days, run types, warnings, New plan starting blank |
 | `editing.spec.ts` | edit, add, delete and move runs (drag and drop on desktop), hand edits vs settings |
 | `today.spec.ts` | Today card before the plan, on a run day and on a rest day, Edit from the card, forecast and driest slot (Open-Meteo mocked), unknown city, failed request |
 | `race.spec.ts` | race name, Finishers link, countdown, race passed or today |
@@ -107,6 +109,7 @@ All three depend on the claude.ai artifact runtime, so they were removed here. T
 
 ## Changelog
 
+- **2026-11-06 (v1.1.0):** New plan starts blank instead of from example settings: no runs per week, running days or long run day selected, and only Easy ticked. 1 and 2 runs per week are available. The long run type can be unticked. The page footer shows the version.
 - **2026-11-06:** Today card above the load profile: today's run (or the next one) and the local forecast with the driest slot left in the day.
 - **2026-11-06:** Export the plan as PDF or CSV from a format dropdown (replaces the Export CSV button).
 - **2026-11-06:** First standalone release:
