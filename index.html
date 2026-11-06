@@ -103,7 +103,10 @@ aside.setup{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto
 .sec{border-top:1px solid var(--line);padding-block:14px;display:grid;gap:10px}
 .sec:first-child{border-top:0;padding-top:0}
 .sec h3{margin:0;font-family:var(--f-display);font-weight:600;font-size:15px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+/* iOS WebKit gives date inputs an intrinsic min width that overflows grid cells */
+.field input[type=date]{-webkit-appearance:none;appearance:none;max-width:100%;min-height:36px}
+.field input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0;min-height:1.2em}
 .field{display:grid;gap:4px;min-width:0}
 .field label,.lbl{font-size:12.5px;color:var(--muted);font-weight:500}
 .field input,.field select,textarea{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:7px 9px;width:100%;min-width:0}
@@ -192,6 +195,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 
 .modal-bg{position:fixed;inset:0;background:rgb(0 0 0 / .42);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
 .modal{background:var(--surface);color:var(--ink);border-radius:12px;width:min(560px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:18px;display:grid;gap:12px;border:1px solid var(--line)}
+.modal:focus{outline:none}
 .modal h2{margin:0;font-family:var(--f-display);font-size:22px;text-transform:uppercase;letter-spacing:.03em}
 .modal .actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}
 .modal .actions .left{margin-right:auto}
@@ -326,7 +330,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.0";
+const VERSION = "1.1.1";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -1159,7 +1163,7 @@ function touched(){S.edited=true;renderPlan();markDirty();}
 function addSession(wi,d){const t=S.types.find(x=>x.id==="easy");const P=paces(S.inputs);const s={id:uid(),day:d,typeId:"easy",name:t.name,kind:"easy",km:5,desc:fill(t.tpl,{...P.txt,km:5,work:""}),note:""};S.plan.weeks[wi].sessions.push(s);S.plan.weeks[wi].sessions.sort((a,b)=>a.day-b.day);touched();openEditor(wi,s.id);}
 
 /* ---------- modal helpers ---------- */
-function modal(html,onMount){const root=$("#modalRoot");root.innerHTML=`<div class="modal-bg"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;const bg=root.firstChild;bg.addEventListener("click",e=>{if(e.target===bg)closeModal();});const m=bg.firstChild;onMount&&onMount(m);const f=m.querySelector("input,select,textarea,button");f&&f.focus();return m;}
+function modal(html,onMount){const root=$("#modalRoot");root.innerHTML=`<div class="modal-bg"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;const bg=root.firstChild;bg.addEventListener("click",e=>{if(e.target===bg)closeModal();});const m=bg.firstChild;onMount&&onMount(m);m.tabIndex=-1;m.focus({preventScroll:true});return m;}
 function closeModal(){$("#modalRoot").innerHTML="";}
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("#modalRoot").firstChild)closeModal();});
 function confirmBox(title,text,okLabel,ok){modal(`<h2>${esc(title)}</h2><p style="margin:0">${esc(text)}</p><div class="actions"><button class="btn" id="cNo">${t("cancel")}</button><button class="btn primary" id="cYes">${esc(okLabel)}</button></div>`,m=>{m.querySelector("#cNo").onclick=closeModal;m.querySelector("#cYes").onclick=()=>{closeModal();ok();};});}

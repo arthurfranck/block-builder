@@ -2,6 +2,13 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.1] - 2026-11-06
+
+### Fixed
+- iPhone (Safari and Chrome): the race date field no longer overflows onto Weeks of training. Date inputs drop the native iOS styling that forced a minimum width, and setup rows use columns that can shrink.
+- iPhone: opening a run no longer pops the run type picker open. Popups now focus the dialog itself instead of their first field.
+- Tests: the footer version test and the "New plan starts blank" tests never opened the page, so they always failed.
+
 ## [1.1.0] - 2026-11-06
 
 ### Added

@@ -79,6 +79,21 @@ test.describe('phone layout', () => {
     await expect(page.locator('#eOk')).toBeVisible();
   });
 
+  test('opening the run editor does not focus a field, so no picker or keyboard pops up', async ({ app, page }) => {
+    await app.session(0, 0).tap();
+    await expect(app.modal()).toBeVisible();
+    const focused = await page.evaluate(() => document.activeElement?.tagName);
+    expect(['INPUT', 'SELECT', 'TEXTAREA']).not.toContain(focused);
+  });
+
+  test('race date and weeks of training sit side by side without overlapping', async ({ app, page }) => {
+    await app.showSetup();
+    const date = (await page.locator('#raceDate').boundingBox())!;
+    const weeks = (await page.locator('#weeks').boundingBox())!;
+    expect(date.x + date.width).toBeLessThanOrEqual(weeks.x);
+    expect(date.x + date.width).toBeLessThanOrEqual((await page.locator('#raceDateF').boundingBox())!.x + (await page.locator('#raceDateF').boundingBox())!.width + 0.5);
+  });
+
   test('tapping a rest day adds a run', async ({ app, page }) => {
     await app.cell(0, 2).locator('.empty').tap();
     await page.locator('#eOk').tap();

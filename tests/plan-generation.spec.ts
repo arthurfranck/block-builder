@@ -14,8 +14,8 @@ test.describe('default example plan', () => {
     await expect(page.locator('#saveStatus')).toHaveText('Not saved');
   });
 
-  test('the footer shows the version', async ({ page }) => {
-    await expect(page.locator('#appVersion')).toHaveText('Block Builder v1.1.0');
+  test('the footer shows the version', async ({ app, page }) => {
+    await expect(page.locator('#appVersion')).toHaveText('Block Builder v1.1.1');
   });
 
   test('summary numbers match the grid', async ({ app }) => {

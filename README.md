@@ -109,6 +109,7 @@ All three depend on the claude.ai artifact runtime, so they were removed here. T
 
 ## Changelog
 
+- **2026-11-06 (v1.1.1):** iPhone fixes: the race date field no longer overlaps Weeks of training, and opening a run no longer pops the run type picker open.
 - **2026-11-06 (v1.1.0):** New plan starts blank instead of from example settings: no runs per week, running days or long run day selected, and only Easy ticked. 1 and 2 runs per week are available. The long run type can be unticked. The page footer shows the version.
 - **2026-11-06:** Today card above the load profile: today's run (or the next one) and the local forecast with the driest slot left in the day.
 - **2026-11-06:** Export the plan as PDF or CSV from a format dropdown (replaces the Export CSV button).

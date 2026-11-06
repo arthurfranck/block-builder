@@ -136,7 +136,7 @@ test.describe('warnings', () => {
 });
 
 test.describe('New plan starts blank', () => {
-  test.beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ app, page }) => {
     await page.locator('#btnNew').click();
   });
 
