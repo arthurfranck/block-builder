@@ -82,11 +82,19 @@ Every test starts on a frozen date (Friday 6 November 2026, Paris time) with emp
 
 GitHub Actions runs every setup on each push and pull request (`.github/workflows/tests.yml`) and keeps each setup's HTML report for 14 days. Results are reports only: GitHub Pages publishes `main` whether or not the tests pass.
 
-Two tests are marked as known failures (`test.fail`) and pass while the issue exists:
+### Known issues
+
+The suite found these when it was written. The tests let them through so that new problems still stand out, and they flag it when one gets fixed.
+
+Marked `test.fail` (the test passes while the issue exists, and reports an unexpected pass once it's fixed: then remove the `test.fail` line):
 - **Weekly increase over 10%:** some weeks rise 13 to 19% after rounding and the 4 km minimum per run.
 - **Text areas under 16px on touch screens:** the run-type templates and the run editor's description and note fields are 13.5px, so iOS zooms in when they are tapped.
 
-When one of these is fixed, the test reports an unexpected pass: remove its `test.fail` line.
+Listed in `KNOWN` in `a11y.spec.ts` (once fixed, "the known issues are still there" fails: remove the id from `KNOWN`):
+- **`color-contrast`:** the summary line of a run type that is switched off (Fartlek and Progression by default) is dimmed below the 4.5:1 contrast minimum.
+- **`label-content-name-mismatch`:** rest-day cells show "Rest + Add run" but screen readers only hear "+ Add run".
+
+Remove the matching bullet here as well.
 
 ## Origin and differences from the claude.ai version
 

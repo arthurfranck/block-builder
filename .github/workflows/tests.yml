@@ -27,8 +27,14 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-audit --no-fund
+      # apt mirrors on the runners sometimes stall: cap each attempt and retry.
       - name: Install browser
-        run: npx playwright install --with-deps ${{ matrix.project == 'desktop-chrome' && 'chromium' || 'webkit' }}
+        run: |
+          for i in 1 2 3; do
+            timeout 300 npx playwright install --with-deps ${{ matrix.project == 'desktop-chrome' && 'chromium' || 'webkit' }} && exit 0
+            echo "Browser install attempt $i failed or stalled, retrying"
+          done
+          exit 1
       - run: npx playwright test --project=${{ matrix.project }}
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

@@ -16,7 +16,7 @@ Before every commit that changes `index.html`, run `npm test` and make sure it p
 
 - A change to what the page does needs a test change in the same commit: add or update tests in `tests/` for the new or changed behaviour.
 - Never delete or loosen a failing test to make the suite pass; fix the page, or ask.
-- If you fix a known issue marked with `test.fail`, remove that line and the matching bullet in the README's Tests section.
+- If you fix a known issue (a `test.fail` line, or an id in `KNOWN` in `tests/a11y.spec.ts`), remove it and the matching bullet under Known issues in the README.
 - If you change the saved-plan format, keep `tests/fixtures/plans-v1.json` importing, and add a new fixture for the new version.
 
 ## Project facts
