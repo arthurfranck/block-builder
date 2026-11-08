@@ -90,7 +90,6 @@ The suite found these when it was written. The tests let them through so that ne
 
 Marked `test.fail` (the test passes while the issue exists, and reports an unexpected pass once it's fixed: then remove the `test.fail` line):
 - **Weekly increase over 10%:** some weeks rise 13 to 19% after rounding and the 4 km minimum per run.
-- **Text areas under 16px on touch screens:** the run-type templates and the run editor's description and note fields are 13.5px, so iOS zooms in when they are tapped.
 
 Listed in `KNOWN` in `a11y.spec.ts` (once fixed, "the known issues are still there" fails: remove the id from `KNOWN`):
 - **`color-contrast`:** the summary line of a run type that is switched off (Fartlek and Progression by default) is dimmed below the 4.5:1 contrast minimum.
@@ -109,6 +108,7 @@ All three depend on the claude.ai artifact runtime, so they were removed here. T
 
 ## Changelog
 
+- **2026-11-08 (v1.1.4):** On iPhone, tapping a run-type template, a run's description or note, or the export format no longer zooms the page in: those fields use 16px text on touch screens.
 - **2026-11-08 (v1.1.3):** Finish times are read to fit the race: "1:45" for a half marathon now means 1 h 45 min instead of being ignored, and a time that can't fit the race says so.
 - **2026-11-07 (v1.1.2):** Imported plan files are checked before use, so a shared file can't run script on the page; a broken file still opens. Changes made just before New plan, opening another plan or closing the tab are saved. Leaving with a never-saved plan asks first.
 - **2026-11-06 (v1.1.1):** iPhone fixes: the race date field no longer overlaps Weeks of training, and opening a run no longer pops the run type picker open.

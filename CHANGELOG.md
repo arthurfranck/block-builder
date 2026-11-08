@@ -2,6 +2,12 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.4] - 2026-11-08
+
+### Fixed
+- iPhone: tapping a run-type template, a run's description or note, or the export format dropdown no longer zooms the page in. Those fields were 13.5px and 13px on touch screens because their own font rules came after the 16px touch-screen rule; a later rule now sets them to 16px.
+- Tests: the text-area check is no longer an expected failure, and it now covers the export dropdown too.
+
 ## [1.1.3] - 2026-11-08
 
 ### Fixed
