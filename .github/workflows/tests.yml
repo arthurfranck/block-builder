@@ -26,7 +26,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --no-audit --no-fund
+          cache: npm
+      # Exact versions from package-lock.json: a new Playwright or axe release can't change CI on its own.
+      - run: npm ci --no-audit --no-fund
       # System libraries go through apt. Never kill apt mid-run: a killed apt-get leaves the dpkg lock held
       # and every retry then fails with "Could not get lock". Instead, let apt wait for the lock
       # (the runner's own apt jobs can hold it at start-up) and cap the step as a whole.

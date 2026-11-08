@@ -34,7 +34,7 @@ Plans are saved in the visitor's browser (`localStorage`) only. The weather city
   - [Open-Meteo](https://open-meteo.com) forecast and geocoding APIs (free, no key), called only once a city or location is set
   - [jsPDF](https://github.com/parallax/jsPDF) 4.2.1 and [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable) 5.0.9 from cdnjs, loaded only when exporting a PDF
 - Hosted on GitHub Pages from the `main` branch, root folder.
-- `package.json`, `playwright.config.ts` and `tests/` are for the automated tests only; the page doesn't use them.
+- `package.json`, `package-lock.json`, `playwright.config.ts` and `tests/` are for the automated tests only; the page doesn't use them. The lockfile pins the exact test tool versions, so CI and a local run use the same Playwright and axe-core. To move to newer versions, run `npm update` and commit the changed lockfile in a pull request.
 
 ## Run locally
 
@@ -58,7 +58,7 @@ Every iOS browser, Chrome included, runs on WebKit, so the iPhone Chrome setup c
 Run them:
 
 ```sh
-npm install
+npm ci                 # exact versions from package-lock.json
 npx playwright install chromium webkit
 npm test               # all six setups
 npm run test:desktop   # or test:mobile, test:chrome
