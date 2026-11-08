@@ -20,11 +20,12 @@ async function mockWeather(page: Page, ok = true) {
   await page.route('https://api.open-meteo.com/**', (r) => (ok ? r.fulfill({ json: FORECAST }) : r.abort()));
 }
 
+/* Dates with a weekday come from toLocaleDateString: Chromium writes "Mon 9 Nov", WebKit "Mon, 9 Nov". */
 test('before the plan starts, the Today card names the start date and the first run', async ({ app, page }) => {
   await app.showPlan();
   const card = page.locator('#plan .today');
   await expect(card).toContainText('Plan starts 9 Nov');
-  await expect(card).toContainText('First run: Mon 9 Nov');
+  await expect(card).toContainText(/First run: Mon,? 9 Nov/);
 });
 
 test('the Today card sits above the load profile', async ({ app, page }) => {
@@ -55,7 +56,7 @@ test('on a rest day the Today card names the next run', async ({ app, page }) =>
   await app.showPlan();
   const card = page.locator('#plan .today');
   await expect(card).toContainText('Rest day');
-  await expect(card).toContainText('Next: Sun 8 Nov');
+  await expect(card).toContainText(/Next: Sun,? 8 Nov/);
 });
 
 test('a city shows the forecast, the driest slot and is remembered', async ({ app, page }) => {
