@@ -27,12 +27,20 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-audit --no-fund
-      # apt mirrors on the runners sometimes stall: cap each attempt and retry.
+      # System libraries go through apt. Never kill apt mid-run: a killed apt-get leaves the dpkg lock held
+      # and every retry then fails with "Could not get lock". Instead, let apt wait for the lock
+      # (the runner's own apt jobs can hold it at start-up) and cap the step as a whole.
+      - name: Install browser system libraries
+        timeout-minutes: 12
+        run: |
+          echo 'DPkg::Lock::Timeout "600";' | sudo tee /etc/apt/apt.conf.d/99-lock-timeout
+          npx playwright install-deps ${{ matrix.project == 'desktop-chrome' && 'chromium' || 'webkit' }}
+      # The browser download itself touches no lock, so it is safe to cap and retry.
       - name: Install browser
         run: |
           for i in 1 2 3; do
-            timeout 300 npx playwright install --with-deps ${{ matrix.project == 'desktop-chrome' && 'chromium' || 'webkit' }} && exit 0
-            echo "Browser install attempt $i failed or stalled, retrying"
+            timeout 300 npx playwright install ${{ matrix.project == 'desktop-chrome' && 'chromium' || 'webkit' }} && exit 0
+            echo "Browser download attempt $i failed or stalled, retrying"
           done
           exit 1
       - run: npx playwright test --project=${{ matrix.project }}

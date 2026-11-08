@@ -2,6 +2,17 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.2] - 2026-11-07
+
+### Security
+- Imported plan files are checked field by field before they are stored or shown: numbers must be numbers, phases, run kinds and ids come from fixed lists, and race links must be http(s). A shared file can no longer run script on the page. Plans already in the browser are checked the same way when read.
+
+### Fixed
+- A change made in the 1.5 seconds before New plan, opening another plan, closing the tab or switching apps is now saved instead of lost.
+- Leaving the page with a plan that was never saved asks first.
+- A plan file with missing or broken parts (a week without runs, a run on an unknown day, a broken watch workout) opens instead of breaking the page.
+- Tests: CI no longer kills apt while it installs browser libraries, which left the package lock held and failed every retry. The Today card tests accept WebKit's "Mon, 9 Nov" date format.
+
 ## [1.1.1] - 2026-11-06
 
 ### Fixed

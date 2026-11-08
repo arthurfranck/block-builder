@@ -330,7 +330,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.1";
+const VERSION = "1.1.2";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -940,11 +940,11 @@ function renderPlan(){
   weeks.forEach((w,wi)=>{
     const st=parseISO(w.start),en=addDays(st,6);
     h+=`<tr class="${w.cutback?"cutback":""}"><td class="wk"><div class="wkcell"><span class="bar" style="background:${phaseColor(w.phase)}"></span><div>
-      <div class="n">${t("wAbbr")}${w.n}</div><div class="meta"><span>${fmtShort(st)} – ${fmtShort(en)}</span><span class="ph" data-cut="${t("cutback")}" style="color:${phaseText(w.phase)}">${phaseLbl(w.phase)}</span><span class="km">${totals[wi].toFixed(1)} km</span></div>
+      <div class="n">${t("wAbbr")}${esc(w.n)}</div><div class="meta"><span>${fmtShort(st)} – ${fmtShort(en)}</span><span class="ph" data-cut="${t("cutback")}" style="color:${phaseText(w.phase)}">${phaseLbl(w.phase)}</span><span class="km">${totals[wi].toFixed(1)} km</span></div>
       <button class="btn sm ghost notes-btn wbtn" data-act="wwatch" data-w="${wi}" aria-label="${esc(t("sendWatchWeek",{n:w.n}))}" title="${esc(t("sendWatchWeek",{n:w.n}))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3M12 10v2l1.5 1"/></svg>${t("watchShort")}</button></div></div></td>`;
     for(let d=0;d<7;d++){
       const ss=w.sessions.filter(s=>s.day===d);
-      h+=`<td class="day" data-w="${wi}" data-d="${d}">${ss.length?ss.map(s=>`<button type="button" class="ses ${s.kind==="race"?"race":""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${kindColor(s.kind)};--kt:${kindText(s.kind)}"><span class="t">${esc(s.name)}</span><span class="k">${s.km} km</span><span class="d">${esc(s.desc)}</span>${s.note?`<span class="nb">${t("noteBadge")}</span>`:""}</button>`).join(""):`<div class="empty" tabindex="0" role="button" aria-label="${esc(t("addRun"))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t("rest")}</span><span class="plus">${t("addRun")}</span></div>`}</td>`;
+      h+=`<td class="day" data-w="${wi}" data-d="${d}">${ss.length?ss.map(s=>`<button type="button" class="ses ${s.kind==="race"?"race":""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${kindColor(s.kind)};--kt:${kindText(s.kind)}"><span class="t">${esc(s.name)}</span><span class="k">${esc(s.km)} km</span><span class="d">${esc(s.desc)}</span>${s.note?`<span class="nb">${t("noteBadge")}</span>`:""}</button>`).join(""):`<div class="empty" tabindex="0" role="button" aria-label="${esc(t("addRun"))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t("rest")}</span><span class="plus">${t("addRun")}</span></div>`}</td>`;
     }
     h+=`</tr>`;
     if(w.note)h+=`<tr class="wnote"><td colspan="8"><p><b>${t("coach")}</b>${esc(w.note)}</p></td></tr>`;
@@ -1037,7 +1037,7 @@ function renderToday(){
   else if(wi<0||today>end){body=`<div class="rest"><b>${t("tdDone")}</b><p>${t("tdDoneT",{d:fmtDate(end)})}</p></div>`;}
   else{const w=P.weeks[wi];eb+=`<span style="color:${phaseText(w.phase)}">${t("tdWeek",{n:w.n,phase:phaseLbl(w.phase)})}</span>`;
     const ss=w.sessions.filter(s=>s.day===td);
-    if(ss.length)body=ss.map(s=>`<div class="tses" style="--k:${kindColor(s.kind)};--kt:${kindText(s.kind)}"><div class="tn"><b>${esc(s.name)}</b><span>${s.km} km</span></div>${s.desc?`<p>${esc(s.desc)}</p>`:""}
+    if(ss.length)body=ss.map(s=>`<div class="tses" style="--k:${kindColor(s.kind)};--kt:${kindText(s.kind)}"><div class="tn"><b>${esc(s.name)}</b><span>${esc(s.km)} km</span></div>${s.desc?`<p>${esc(s.desc)}</p>`:""}
       <div class="acts"><button type="button" class="btn sm" data-act="tedit" data-w="${wi}" data-s="${s.id}">${t("tdEdit")}</button><button type="button" class="btn sm" data-act="twatch" data-w="${wi}" data-s="${s.id}">${t("sendWatch")}</button></div></div>`).join("");
     else{const n=nextAfter(wi,td);body=`<div class="rest"><b>${t("tdRest")}</b><p>${t("tdRestT")}</p></div>${n?`<p class="tnext">${t("tdNext",{when:whenOf(n.w,n.s),name:esc(n.s.name.toLowerCase()),km:n.s.km})}</p>`:""}`;}
   }
@@ -1079,8 +1079,7 @@ $("#raceBox").addEventListener("click",e=>{
   else if(a==="cancel"){S.raceEditing=false;renderRaceBox();}
   else if(a==="clear"){S.inputs.race=null;S.raceEditing=false;renderRaceBox();renderHello();markDirty();}
   else if(a==="save"){
-    const name=$("#rName").value.trim(),city=$("#rCity").value.trim();let url=$("#rUrl").value.trim();
-    if(url&&!/^https?:\/\//i.test(url))url="https://"+url;
+    const name=$("#rName").value.trim(),city=$("#rCity").value.trim(),url=safeUrl($("#rUrl").value);
     if(!name){$("#rName").focus();toast(t("needName"));return;}
     S.inputs.race={name,city,url};S.raceEditing=false;
     if(S.isExample||!S.savedAt){S.name=name;$("#planName").value=name;}
@@ -1171,11 +1170,11 @@ function toast(msg){const t=document.createElement("div");t.className="toast";t.
 
 function openEditor(wi,id){
   const w=S.plan.weeks[wi];const s=w.sessions.find(x=>x.id===id);if(!s)return;
-  const opts=[...S.types.filter(t=>t.on||t.id===s.typeId).map(t=>`<option value="${t.id}" ${t.id===s.typeId?"selected":""}>${esc(t.name)}</option>`),`<option value="race" ${s.typeId==="race"?"selected":""}>${t("raceDay")}</option>`].join("");
+  const opts=[...S.types.filter(t=>t.on||t.id===s.typeId).map(t=>`<option value="${esc(t.id)}" ${t.id===s.typeId?"selected":""}>${esc(t.name)}</option>`),`<option value="race" ${s.typeId==="race"?"selected":""}>${t("raceDay")}</option>`].join("");
   modal(`<h2>${t("eTitle",{n:w.n,day:DAYS[s.day]})}</h2>
     <div class="row"><div class="field"><label for="eType">${t("runType")}</label><select id="eType">${opts}</select></div>
     <div class="field"><label for="eDay">${t("dayLbl")}</label><select id="eDay">${DAYS.map((d,i)=>`<option value="${i}" ${i===s.day?"selected":""}>${d}</option>`).join("")}</select></div></div>
-    <div class="row"><div class="field"><label for="eKm">${t("distKm")}</label><input id="eKm" type="number" min="0" step="0.5" value="${s.km}"></div><div></div></div>
+    <div class="row"><div class="field"><label for="eKm">${t("distKm")}</label><input id="eKm" type="number" min="0" step="0.5" value="${esc(s.km)}"></div><div></div></div>
     <div class="field"><label for="eDesc">${t("desc")}</label><textarea id="eDesc" rows="4">${esc(s.desc)}</textarea></div>
     <div class="field"><span class="lbl">${t("watchWorkout")}</span><div class="watchsum" id="eWatch">${esc(watchSummary(s.watch||watchPlan(s.kind,s.km)))}</div><div class="hint">${t("watchHint")}</div></div>
     <div class="field"><label for="eNote">${t("coachNote")}</label><textarea id="eNote" rows="3" placeholder="${esc(t("notePhOwn"))}">${esc(s.note)}</textarea></div>
@@ -1432,13 +1431,71 @@ async function exportPDF(btn){
 }
 
 /* ---------- persistence ---------- */
+/* Every plan read from storage or an imported file goes through normalizeSaved before it reaches the page:
+   numbers become numbers, names come from fixed lists, links must be http(s). A file that someone else made
+   can then never inject markup or script, and a half-broken file can't crash the page when opened. */
+const KINDS=["easy","recovery","hard","long","race"], PACES=["easy","tempo","interval","rep","race","mp"];
+const nNum=(v,a,b,d)=>{if(v===""||v==null||typeof v==="boolean")return d;v=+v;return isFinite(v)?clamp(v,a,b):d;};
+const nStr=(v,n)=>(typeof v==="string"?v:typeof v==="number"&&isFinite(v)?String(v):"").slice(0,n);
+const nIso=(v,d)=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&!isNaN(parseISO(v))?v:d;
+const nId=v=>typeof v==="string"&&/^[\w-]{1,64}$/.test(v)?v:null;
+function safeUrl(v){v=nStr(v,500).trim();if(!v)return "";if(!/^[a-z][\w+.-]*:/i.test(v))v="https://"+v;try{const u=new URL(v);return u.protocol==="https:"||u.protocol==="http:"?u.href:"";}catch(_){return "";}}
+function nGoal(g){return Array.isArray(g)&&(g[0]==="d"||g[0]==="t")&&isFinite(+g[1])&&+g[1]>0?[g[0],clamp(+g[1],0.01,g[0]==="d"?500:86400)]:null;}
+function nWatch(wp){
+  if(!wp||typeof wp!=="object"||!Array.isArray(wp.blocks)||!wp.blocks.length)return undefined;
+  const blocks=[];
+  for(const b of wp.blocks.slice(0,50)){
+    if(!b||!Array.isArray(b.steps)||!b.steps.length)return undefined;
+    const steps=[];
+    for(const x of b.steps.slice(0,20)){const g=x&&nGoal(x.g);if(!g)return undefined;steps.push({p:x.p==="recovery"?"recovery":"work",g,pace:PACES.includes(x.pace)?x.pace:null});}
+    blocks.push({n:Math.round(nNum(b.n,1,50,1)),steps});
+  }
+  const out={blocks};const wu=nGoal(wp.wu),cd=nGoal(wp.cd);if(wu)out.wu=wu;if(cd)out.cd=cd;return out;
+}
+function normalizeSaved(p){
+  if(!p||typeof p!=="object"||!p.inputs||typeof p.inputs!=="object"||!Array.isArray(p.types)||!p.plan||!Array.isArray(p.plan.weeks))return null;
+  const d=DEFAULT_INPUTS(),I=p.inputs;
+  const opt=(v,a,b)=>v===""?"":nNum(v,a,b,"");
+  const inputs={...d,goal:I.goal==="fitness"?"fitness":"race",startDate:nIso(I.startDate,d.startDate),dist:DISTS.some(x=>x.k===I.dist)?I.dist:d.dist,
+    customKm:nNum(I.customKm,3,100,d.customKm),raceDate:nIso(I.raceDate,d.raceDate),weeks:Math.round(nNum(I.weeks,3,30,d.weeks)),
+    curVol:opt(I.curVol,0,200),curLong:opt(I.curLong,0,45),recDist:["0","5","10","21.0975","42.195"].includes(String(I.recDist))?String(I.recDist):"0",
+    recTime:nStr(I.recTime,12),runs:Math.round(nNum(I.runs,0,7,0)),
+    days:Array.isArray(I.days)?[...new Set(I.days.map(Number).filter(x=>Number.isInteger(x)&&x>=0&&x<7))].sort((a,b)=>a-b):[],
+    longDay:Math.round(nNum(I.longDay,-1,6,-1)),race:null};
+  if(I.race&&typeof I.race==="object"&&nStr(I.race.name,200).trim())inputs.race={name:nStr(I.race.name,200).trim(),city:nStr(I.race.city,200).trim(),url:safeUrl(I.race.url)};
+  const seenT=new Set(),types=[];
+  for(const x of p.types){if(!x||typeof x!=="object")continue;let id=nId(x.id);if(!id||seenT.has(id))id="c"+uid();seenT.add(id);
+    const kind=["easy","recovery","hard","long"].includes(x.kind)?x.kind:"hard";const ph=Array.isArray(x.phases)?PHASES.filter(q=>x.phases.includes(q)):[];
+    types.push({id,name:nStr(x.name,80).trim()||t("ty_custom"),kind,on:id==="easy"||!!x.on,...(x.locked?{locked:true}:{}),phases:ph.length?ph:PHASES.slice(),tpl:nStr(x.tpl,2000)});}
+  for(const def of DEFAULT_TYPES())if((def.id==="easy"||def.id==="long")&&!seenT.has(def.id))types.unshift({...def,on:def.id==="easy"});
+  const weeks=[],seenS=new Set();
+  for(const w of p.plan.weeks.slice(0,30)){
+    if(!w||typeof w!=="object")return null;
+    const start=nIso(w.start,weeks.length?iso(addDays(parseISO(weeks[weeks.length-1].start),7)):null);if(!start)return null;
+    const sessions=[];
+    for(const s of Array.isArray(w.sessions)?w.sessions.slice(0,14):[]){
+      const day=+(s&&s.day);if(!Number.isInteger(day)||day<0||day>6)continue;
+      let id=nId(s.id);if(!id||seenS.has(id))id=uid();seenS.add(id);
+      const typeId=s.typeId==="race"?"race":nId(s.typeId)||"easy";const watch=nWatch(s.watch);
+      sessions.push({id,day,typeId,name:nStr(s.name,80)||t("ty_easy"),kind:KINDS.includes(s.kind)?s.kind:"easy",km:Math.round(nNum(s.km,0,500,0)*100)/100,desc:nStr(s.desc,4000),note:nStr(s.note,4000),...(watch?{watch}:{})});
+    }
+    sessions.sort((a,b)=>a.day-b.day);
+    weeks.push({n:weeks.length+1,phase:PHASES.includes(w.phase)?w.phase:"base",cutback:!!w.cutback,start,target:Math.round(nNum(w.target,0,2000,0)),note:nStr(w.note,4000),sessions});
+  }
+  if(!weeks.length)return null;
+  const M=p.plan.meta&&typeof p.plan.meta==="object"?p.plan.meta:{};const vdot=nNum(M.vdot,15,90,null),raceSec=nNum(M.raceSec,60,86400,null);
+  const meta={noRace:inputs.goal==="fitness",D:distKm(inputs),c:["5k","10k","hm","m"].includes(M.c)?M.c:cat(distKm(inputs)),taperN:Math.round(nNum(M.taperN,0,3,0)),
+    peakV:Math.round(nNum(M.peakV,0,2000,0)),start:nIso(M.start,weeks[0].start),vdot,raceSec,racePace:vdot&&raceSec?nStr(M.racePace,16):null};
+  return {name:nStr(p.name,120).trim()||t("trainingBlock"),inputs,types,plan:{weeks,meta},edited:!!p.edited,updatedAt:nNum(p.updatedAt,0,8.64e15,0)};
+}
 function snapshot(){return {name:S.name,inputs:S.inputs,types:S.types,plan:S.plan,edited:S.edited,updatedAt:Date.now()};}
 function setStatus(t){$("#saveStatus").textContent=t;}
 let saveTimer=null;
-function markDirty(){S.dirty=true;if(S.savedAt){setStatus(t("unsaved"));clearTimeout(saveTimer);saveTimer=setTimeout(()=>savePlan(true),1500);}}
+function markDirty(){S.dirty=true;if(S.savedAt){setStatus(t("unsaved"));clearTimeout(saveTimer);saveTimer=setTimeout(()=>{saveTimer=null;savePlan(true);},1500);}}
 async function savePlan(auto){
   if(missingSetup(S.inputs).length){if(!auto)toast(t("needTitle"));return;}
   const st=S.store;if(!st){toast(t("storageConnecting"));return;}
+  cancelSave();
   const data=snapshot();
   try{
     setStatus(t("saving"));
@@ -1449,7 +1506,13 @@ async function savePlan(auto){
   }catch(e){setStatus(t("notSaved"));toast(e&&e.code==="permission_denied"?t("noPerm"):t("saveFail"));}
 }
 function lsAll(){try{return JSON.parse(localStorage.getItem("bb-plans")||"{}")||{};}catch(_){return {};}}
-function refreshLocalList(){const all=lsAll();S.saved=Object.entries(all).map(([id,d])=>({id,...d})).sort((a,b)=>b.updatedAt-a.updatedAt);}
+function refreshLocalList(){const all=lsAll();S.saved=Object.entries(all).filter(([id])=>nId(id)).map(([id,d])=>{const n=normalizeSaved(d);return n&&{id,...n};}).filter(Boolean).sort((a,b)=>b.updatedAt-a.updatedAt);}
+/* autosave waits 1.5 s after the last change: write it now before anything replaces the current plan */
+function flushSave(){if(!saveTimer)return;clearTimeout(saveTimer);saveTimer=null;if(S.savedAt&&S.dirty)savePlan(true);}
+function cancelSave(){clearTimeout(saveTimer);saveTimer=null;}
+addEventListener("pagehide",flushSave);
+document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")flushSave();});
+addEventListener("beforeunload",e=>{flushSave();if(S.dirty&&!S.savedAt&&!S.isExample&&!missingSetup(S.inputs).length){e.preventDefault();e.returnValue="";}});
 function loadPlan(p){
   S.planId=p.id;S.name=p.name;S.nameAuto=false;S.inputs={...DEFAULT_INPUTS(),...JSON.parse(JSON.stringify(p.inputs))};S.types=JSON.parse(JSON.stringify(p.types));S.plan=JSON.parse(JSON.stringify(p.plan));S.edited=!!p.edited;S.savedAt=p.updatedAt;S.isExample=false;S.pendingRegen=false;S.dirty=false;
   $("#planName").value=S.name;renderSetup();renderPlan();setStatus(t("savedLocal")+" · "+new Date(p.updatedAt).toLocaleDateString(LOC(),{day:"numeric",month:"short"}));
@@ -1464,19 +1527,20 @@ function openPlans(){
     m.querySelector("#pImport").onclick=()=>{const inp=document.createElement("input");inp.type="file";inp.accept=".json,application/json";
       inp.onchange=async()=>{const f=inp.files&&inp.files[0];if(!f)return;
         try{const j=JSON.parse(await f.text());const src=j&&j.app==="block-builder"&&j.plans&&typeof j.plans==="object"?j.plans:null;if(!src)throw 0;
-          const all=lsAll();let n=0;for(const [id,p] of Object.entries(src)){if(p&&p.plan&&Array.isArray(p.plan.weeks)&&p.inputs&&Array.isArray(p.types)){all[/^[\w-]{1,64}$/.test(id)?id:uid()]=p;n++;}}
+          const all=lsAll();let n=0;for(const [id,p] of Object.entries(src)){const c=normalizeSaved(p);if(c){all[nId(id)||uid()]=c;n++;}}
           if(!n)throw 0;localStorage.setItem("bb-plans",JSON.stringify(all));refreshLocalList();closeModal();toast(t("imported",{n}));openPlans();}
         catch(_){toast(t("importFail"));}};
       inp.click();};
     m.addEventListener("click",e=>{const o=e.target.closest("[data-open]"),d=e.target.closest("[data-delp]");
-      if(o){const p=S.saved.find(x=>x.id===o.dataset.open);closeModal();if(p)loadPlan(p);}
+      if(o){flushSave();const p=S.saved.find(x=>x.id===o.dataset.open);closeModal();if(p)loadPlan(p);}
       if(d){const p=S.saved.find(x=>x.id===d.dataset.delp);closeModal();confirmBox(t("delQ"),t("delT",{name:p.name}),t("del"),async()=>{
-        try{{const all=lsAll();delete all[p.id];localStorage.setItem("bb-plans",JSON.stringify(all));refreshLocalList();}
+        try{if(p.id===S.planId)cancelSave();{const all=lsAll();delete all[p.id];localStorage.setItem("bb-plans",JSON.stringify(all));refreshLocalList();}
           if(p.id===S.planId){S.savedAt=null;S.planId=uid();setStatus(t("notSaved"));}toast(t("deleted"));}catch(_){toast(t("delFail"));}});}
     });
   });
 }
 function newPlan(){
+  flushSave();
   const go=()=>{S.nameAuto=true;S.inputs=BLANK_INPUTS();S.types=BLANK_TYPES();S.planId=uid();S.savedAt=null;S.isExample=false;S.dirty=false;S.pendingRegen=false;S.name=cap(t("blockName",{lbl:t("lhm")}));$("#planName").value=S.name;regen();renderSetup();renderPlan();setStatus(t("notSaved"));};
   if(S.dirty&&S.savedAt===null&&!S.isExample)confirmBox(t("newQ"),t("newT"),t("startNew"),go);else go();
 }

@@ -23,7 +23,7 @@ Block Builder creates a running training block in the browser. You pick a race o
 
 ## Where plans are stored
 
-Plans are saved in the visitor's browser (`localStorage`) only. The weather city is stored there too (`bb-wx`). There are no accounts and no server. **My plans → Export** downloads every plan as one JSON file, and **Import** loads it back on any device or browser.
+Plans are saved in the visitor's browser (`localStorage`) only. The weather city is stored there too (`bb-wx`). There are no accounts and no server. **My plans → Export** downloads every plan as one JSON file, and **Import** loads it back on any device or browser. Imported files are checked field by field and cleaned before they are stored, so a file from someone else can't inject anything into the page. A saved plan saves itself 1.5 seconds after each change, and right away before another plan replaces it or the tab closes; leaving with a plan that was never saved asks first.
 
 ## Tech
 
@@ -75,7 +75,7 @@ Every test starts on a frozen date (Friday 6 November 2026, Paris time) with emp
 | `editing.spec.ts` | edit, add, delete and move runs (drag and drop on desktop), hand edits vs settings |
 | `today.spec.ts` | Today card before the plan, on a run day and on a rest day, Edit from the card, forecast and driest slot (Open-Meteo mocked), unknown city, failed request |
 | `race.spec.ts` | race name, Finishers link, countdown, race passed or today |
-| `storage.spec.ts` | save, autosave, rename, delete, JSON export, import of a version 1 file (`tests/fixtures/plans-v1.json`) |
+| `storage.spec.ts` | save, autosave (also just before New plan or Open), warning on leaving unsaved, rename, delete, JSON export, import of a version 1 file (`tests/fixtures/plans-v1.json`), imported files with markup or broken parts |
 | `exports.spec.ts` | CSV, PDF, calendar, Garmin and Apple Watch zips |
 | `i18n.spec.ts` | every string in English and French with matching placeholders, language switch |
 | `mobile.spec.ts` | Plan/Settings tabs, 16px fields, tap targets, sideways grid scroll; side-by-side layout on desktop |
@@ -109,6 +109,7 @@ All three depend on the claude.ai artifact runtime, so they were removed here. T
 
 ## Changelog
 
+- **2026-11-07 (v1.1.2):** Imported plan files are checked before use, so a shared file can't run script on the page; a broken file still opens. Changes made just before New plan, opening another plan or closing the tab are saved. Leaving with a never-saved plan asks first.
 - **2026-11-06 (v1.1.1):** iPhone fixes: the race date field no longer overlaps Weeks of training, and opening a run no longer pops the run type picker open.
 - **2026-11-06 (v1.1.0):** New plan starts blank instead of from example settings: no runs per week, running days or long run day selected, and only Easy ticked. 1 and 2 runs per week are available. The long run type can be unticked. The page footer shows the version.
 - **2026-11-06:** Today card above the load profile: today's run (or the next one) and the local forecast with the driest slot left in the day.
