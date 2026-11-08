@@ -1,6 +1,6 @@
 name: Tests
 
-# Reports only: GitHub Pages publishes main whether or not these pass.
+# Required checks: main is protected, so all six jobs must pass before anything merges. Pages publishes main.
 on:
   push:
   pull_request:
