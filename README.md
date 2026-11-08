@@ -82,7 +82,7 @@ Every test starts on a frozen date (Friday 6 November 2026, Paris time) with emp
 | `layout.spec.ts` | nothing sticks out of the page, dark mode, no script errors |
 | `a11y.spec.ts` | WCAG 2.1 A/AA checks on each view and dialog, light and dark |
 
-GitHub Actions runs every setup on each push and pull request (`.github/workflows/tests.yml`) and keeps each setup's HTML report for 14 days. Results are reports only: GitHub Pages publishes `main` whether or not the tests pass.
+GitHub Actions runs every setup on each push and pull request (`.github/workflows/tests.yml`) and keeps each setup's HTML report for 14 days. `main` is protected: all six setups must pass before a pull request can merge or a push can land, admins included, and force-pushes are blocked. GitHub Pages publishes `main` as soon as it changes, so only tested code goes live.
 
 ### Known issues
 

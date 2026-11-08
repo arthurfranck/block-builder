@@ -23,5 +23,6 @@ Before every commit that changes `index.html`, run `npm test` and make sure it p
 
 - The whole app is `index.html`. There is no build step.
 - It is served by GitHub Pages from `main`, root folder: https://arthurfranck.github.io/block-builder/
+- `main` is protected: the six Tests jobs must pass before anything lands. Work on a branch and open a pull request; don't try to push to `main` directly.
 - Plans live in `localStorage` under the key `bb-plans`. The export format is `{app:"block-builder", version:1, plans:{…}}`. Keep import backward compatible.
 - Every user-facing string exists in both English and French (`I18N.en` / `I18N.fr`). Add both.
