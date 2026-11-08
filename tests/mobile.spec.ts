@@ -38,18 +38,13 @@ test.describe('phone layout', () => {
     expect(await smallFields(page, '#setup .sec:not(:has(#types))')).toEqual([]);
   });
 
-  /*
-   * Known issue, found when this suite was written: the generic `textarea { font-size: 13.5px }`
-   * rule comes after the touch-screen 16px rule and overrides it, so the run-type templates and
-   * the run editor's description and note fields are 13.5px and iOS zooms in when they are tapped.
-   * Remove test.fail() once fixed.
-   */
-  test('text areas use at least 16px text too', async ({ app, page }) => {
-    test.fail(true, 'known issue: textareas are 13.5px on touch screens');
+  /* Text areas and the export dropdown have their own smaller font rules; a later touch-screen rule lifts them to 16px. */
+  test('text areas and the export dropdown use at least 16px text too', async ({ app, page }) => {
     await app.showSetup();
     await page.locator('#types details').first().evaluate((d: HTMLDetailsElement) => (d.open = true));
     expect(await smallFields(page, '#types')).toEqual([]);
     await app.showPlan();
+    expect(await smallFields(page, '#plan .toolbar')).toEqual([]);
     await app.session(0, 0).tap();
     expect(await smallFields(page, '#modalRoot')).toEqual([]);
   });
