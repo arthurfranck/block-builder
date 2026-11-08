@@ -27,9 +27,53 @@ test.describe('paces', () => {
     expect((await app.plan())[0].sessions.some((s) => /conversational pace/.test(s.desc))).toBe(true);
   });
 
-  test('an unreadable time is treated as no time', async ({ app }) => {
+  test('an unreadable time says so instead of quietly dropping the paces', async ({ app, page }) => {
     await app.configure({ recTime: 'fast' });
-    await expect(app.warnings()).toContainText(['Without a recent race time']);
+    await expect(app.warnings()).toContainText(["Couldn't read fast as a 10K finish time"]);
+    await expect(app.warnings()).not.toContainText(['Without a recent race time']);
+    await app.showSetup();
+    await expect(page.locator('#paceHint')).toContainText('for example 52:00');
+  });
+
+  /* "1:45" for a half means 1 h 45 min, not 1 min 45 s: the reading that fits the distance wins. */
+  const paceHint = async (app: import('./helpers').App, page: import('@playwright/test').Page) => {
+    await app.showSetup();
+    return page.locator('#paceHint').textContent();
+  };
+  for (const c of [
+    { recDist: '21.0975', short: '1:45', full: '1:45:00' },
+    { recDist: '42.195', short: '3:30', full: '3:30:00' },
+    { recDist: '10', short: '52', full: '52:00' },
+  ]) {
+    test(`${c.short} for a ${c.recDist} km race reads as ${c.full}`, async ({ app, page }) => {
+      await app.configure({ recDist: c.recDist, recTime: c.full });
+      const expected = await paceHint(app, page);
+      expect(expected).toMatch(/^Paces: easy/);
+      await app.configure({ recTime: c.short });
+      expect(await paceHint(app, page)).toBe(expected);
+      await expect(page.locator('#recTime')).toHaveValue(c.full);
+      await expect(app.warnings()).not.toContainText(['Without a recent race time']);
+    });
+  }
+
+  test('mm:ss stays minutes and seconds when that fits', async ({ app, page }) => {
+    await app.configure({ recDist: '5', recTime: '25:00' });
+    await app.showSetup();
+    await expect(page.locator('#recTime')).toHaveValue('25:00');
+    await expect(page.locator('#paceHint')).toContainText(/Paces: easy \d:\d\d\/km/);
+  });
+
+  test('picking the race after typing the time applies the right reading', async ({ app, page }) => {
+    await app.configure({ recDist: '0', recTime: '1:45' });
+    await app.configure({ recDist: '21.0975' });
+    await app.showSetup();
+    await expect(page.locator('#recTime')).toHaveValue('1:45:00');
+    await expect(page.locator('#paceHint')).toContainText(/Paces: easy/);
+  });
+
+  test('a time that fits no reading for the distance is flagged', async ({ app }) => {
+    await app.configure({ recDist: '5', recTime: '1:30' });
+    await expect(app.warnings()).toContainText(["Couldn't read 1:30 as a 5K finish time"]);
   });
 });
 
