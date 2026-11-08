@@ -2,6 +2,12 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.3] - 2026-11-08
+
+### Fixed
+- Recent race finish time is read to fit the race distance. "1:45" for a half marathon and "3:30" for a marathon mean hours and minutes, a lone number means minutes ("52" for a 10K), and mm:ss stays mm:ss when it fits ("25:00" for a 5K). The field then shows the reading in full (1:45:00). Before, "1:45" was read as 1 min 45 s and the paces silently fell back to effort descriptions.
+- A time that fits no reading for the chosen race is flagged in the warnings and the pace hint, with an example, instead of being treated as no time.
+
 ## [1.1.2] - 2026-11-07
 
 ### Security

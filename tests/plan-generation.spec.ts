@@ -15,7 +15,7 @@ test.describe('default example plan', () => {
   });
 
   test('the footer shows the version', async ({ app, page }) => {
-    await expect(page.locator('#appVersion')).toHaveText('Block Builder v1.1.2');
+    await expect(page.locator('#appVersion')).toHaveText('Block Builder v1.1.3');
   });
 
   test('summary numbers match the grid', async ({ app }) => {
