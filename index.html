@@ -326,12 +326,13 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
   </div>
 </div>
 <div id="modalRoot"></div>
+<div id="toastRoot" role="status" aria-live="polite"></div>
 <footer class="ver" id="appVersion"></footer>
 
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.5";
+const VERSION = "1.1.6";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -1177,11 +1178,27 @@ function touched(){S.edited=true;renderPlan();markDirty();}
 function addSession(wi,d){const t=S.types.find(x=>x.id==="easy");const P=paces(S.inputs);const s={id:uid(),day:d,typeId:"easy",name:t.name,kind:"easy",km:5,desc:fill(t.tpl,{...P.txt,km:5,work:""}),note:""};S.plan.weeks[wi].sessions.push(s);S.plan.weeks[wi].sessions.sort((a,b)=>a.day-b.day);touched();openEditor(wi,s.id);}
 
 /* ---------- modal helpers ---------- */
-function modal(html,onMount){const root=$("#modalRoot");root.innerHTML=`<div class="modal-bg"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;const bg=root.firstChild;bg.addEventListener("click",e=>{if(e.target===bg)closeModal();});const m=bg.firstChild;onMount&&onMount(m);m.tabIndex=-1;m.focus({preventScroll:true});return m;}
-function closeModal(){$("#modalRoot").innerHTML="";}
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("#modalRoot").firstChild)closeModal();});
+/* dialogs: named by their heading, Tab stays inside, focus goes back to the opener on close */
+let modalOpener=null,lastTrigger=null;
+/* Safari doesn't focus a button on click, so remember the last control pressed */
+document.addEventListener("pointerdown",e=>{const c=e.target.closest&&e.target.closest("button,a[href],[tabindex]");if(c&&!c.closest("#modalRoot"))lastTrigger=c;},true);
+function openerKey(el){if(el.id)return "#"+CSS.escape(el.id);const at=["data-act","data-w","data-s","data-d"].filter(a=>el.hasAttribute(a));return at.length?at.map(a=>`[${a}="${CSS.escape(el.getAttribute(a))}"]`).join(""):null;}
+function modal(html,onMount){const root=$("#modalRoot");if(!root.firstChild){const a=document.activeElement;const o=a&&a!==document.body&&!a.closest("#modalRoot")?a:lastTrigger;modalOpener=o?{el:o,key:openerKey(o)}:null;}
+  root.innerHTML=`<div class="modal-bg"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;const bg=root.firstChild;bg.addEventListener("click",e=>{if(e.target===bg)closeModal();});const m=bg.firstChild;
+  const h=m.querySelector("h2");if(h){h.id="modalTitle";m.setAttribute("aria-labelledby","modalTitle");}
+  onMount&&onMount(m);m.tabIndex=-1;m.focus({preventScroll:true});return m;}
+function closeModal(){$("#modalRoot").innerHTML="";const o=modalOpener;modalOpener=null;if(!o)return;
+  /* wait until the caller has redrawn the page, and skip if another dialog opened meanwhile */
+  queueMicrotask(()=>{if($("#modalRoot").firstChild)return;const el=o.el.isConnected?o.el:(o.key&&document.querySelector(o.key));if(el&&typeof el.focus==="function")el.focus({preventScroll:true});});}
+function modalFocusables(m){return [...m.querySelectorAll('a[href],button,input,select,textarea,[tabindex]:not([tabindex="-1"])')].filter(el=>!el.disabled&&el.getClientRects().length);}
+document.addEventListener("keydown",e=>{const m=$("#modalRoot .modal");if(!m)return;
+  if(e.key==="Escape"){closeModal();return;}
+  if(e.key!=="Tab")return;const f=modalFocusables(m);if(!f.length){e.preventDefault();m.focus();return;}
+  /* move focus ourselves: Safari skips buttons on Tab, which would let focus leave the dialog */
+  e.preventDefault();const i=f.indexOf(document.activeElement);
+  const n=i<0?(e.shiftKey?f.length-1:0):(i+(e.shiftKey?-1:1)+f.length)%f.length;f[n].focus();});
 function confirmBox(title,text,okLabel,ok){modal(`<h2>${esc(title)}</h2><p style="margin:0">${esc(text)}</p><div class="actions"><button class="btn" id="cNo">${t("cancel")}</button><button class="btn primary" id="cYes">${esc(okLabel)}</button></div>`,m=>{m.querySelector("#cNo").onclick=closeModal;m.querySelector("#cYes").onclick=()=>{closeModal();ok();};});}
-function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),Math.max(2600,msg.length*60));}
+function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;$("#toastRoot").appendChild(t);setTimeout(()=>t.remove(),Math.max(2600,msg.length*60));}
 
 function openEditor(wi,id){
   const w=S.plan.weeks[wi];const s=w.sessions.find(x=>x.id===id);if(!s)return;

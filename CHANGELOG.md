@@ -2,6 +2,15 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.6] - 2026-11-09
+
+### Added
+- Messages (saved, exported, errors) appear in a polite status region, so screen readers announce them. Before, they were silent.
+- Dialogs are named by their heading (for example "My plans", "Week 1 · Mon").
+- Tab and Shift+Tab cycle inside an open dialog instead of reaching the page behind it, including in Safari, which skips buttons on Tab by default.
+- Closing a dialog (Escape, Cancel, Save, clicking outside) puts focus back on the control that opened it. After saving a run, focus lands on that run even though the grid is redrawn.
+- Tests: five checks for the status region, dialog names, the Tab trap and focus return.
+
 ## [1.1.5] - 2026-11-09
 
 ### Changed

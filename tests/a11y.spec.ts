@@ -63,3 +63,48 @@ test('the known issues are still there', async ({ app, page }) => {
   const found = KNOWN.filter((id) => details.some((d) => d.startsWith(id + ' ')));
   expect(found, 'a known issue is fixed: remove it from KNOWN and from the README').toEqual(KNOWN);
 });
+
+/* Screen reader and keyboard basics that axe can't see (BB-6). */
+test.describe('dialogs and messages', () => {
+  test('messages are announced: toasts appear inside a polite status region', async ({ app, page }) => {
+    await page.locator('#btnSave').click();
+    await expect(page.getByRole('status').locator('.toast').last()).toHaveText('Plan saved.');
+    await expect(page.locator('#toastRoot')).toHaveAttribute('aria-live', 'polite');
+  });
+
+  test('a dialog is named by its heading', async ({ app, page }) => {
+    await page.locator('#btnPlans').click();
+    await expect(page.getByRole('dialog', { name: 'My plans' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await app.session(0, 0).click();
+    await expect(page.getByRole('dialog', { name: 'Week 1 · Mon' })).toBeVisible();
+  });
+
+  test('Tab and Shift+Tab stay inside the open dialog', async ({ app, page }) => {
+    await app.session(0, 0).click();
+    const inModal = () => page.evaluate(() => !!document.activeElement?.closest('#modalRoot .modal'));
+    const last = app.modal().locator('button').last();
+    await last.focus();
+    await page.keyboard.press('Tab');
+    expect(await inModal()).toBe(true);
+    await expect(last).not.toBeFocused();
+    await page.keyboard.press('Shift+Tab');
+    await expect(last).toBeFocused();
+    for (let i = 0; i < 25; i++) { await page.keyboard.press('Tab'); expect(await inModal()).toBe(true); }
+  });
+
+  test('closing a dialog puts focus back on what opened it', async ({ app, page }) => {
+    await page.locator('#btnPlans').click();
+    await expect(app.modal()).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#btnPlans')).toBeFocused();
+  });
+
+  test('saving a run puts focus back on that run, even though the grid is redrawn', async ({ app, page }) => {
+    const id = await app.session(0, 0).getAttribute('data-s');
+    await app.session(0, 0).click();
+    await app.modal().getByRole('button', { name: 'Save changes' }).click();
+    await expect(app.modal()).toHaveCount(0);
+    await expect(page.locator(`button.ses[data-s="${id}"]`)).toBeFocused();
+  });
+});
