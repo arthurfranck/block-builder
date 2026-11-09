@@ -27,6 +27,13 @@ test.describe('translations', () => {
     expect(bad).toEqual([]);
   });
 
+  test('no claude.ai leftovers: no string mentions Claude or a coach', () => {
+    const { en, fr } = loadI18N();
+    for (const L of [en, fr]) {
+      expect(Object.entries(L).filter(([, v]) => /claude|coach/i.test(String(v))).map(([k]) => k)).toEqual([]);
+    }
+  });
+
   test('day names come in sevens, CSV headers in eights', () => {
     const { en, fr } = loadI18N();
     for (const L of [en, fr]) {

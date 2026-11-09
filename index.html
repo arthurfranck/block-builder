@@ -46,7 +46,6 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;padding-
 .hello{display:flex;align-items:center;gap:16px;padding-block:2px 14px}
 .hello p.lead{margin:0;font-size:17px;color:var(--ink);max-width:70ch}
 .hello p.lead b{color:var(--ink)}
-.hello img{width:52px;height:52px;border-radius:50%;flex:none;object-fit:cover;box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--hc,var(--accent))}
 .hello h1{margin:0;font-family:var(--f-display);font-weight:700;font-size:clamp(34px,6vw,52px);line-height:.95;text-transform:uppercase;letter-spacing:.005em;text-wrap:balance}
 .hello h1 span{color:var(--accent)}
 
@@ -172,7 +171,7 @@ table.grid{border-collapse:collapse;width:100%;min-width:900px;table-layout:fixe
 .wkcell .meta{font-size:12px;color:var(--muted);display:grid;gap:1px}
 .wkcell .km{font-family:var(--f-mono);font-size:12.5px;color:var(--ink)}
 .wkcell .ph{font-size:11px;text-transform:uppercase;letter-spacing:.04em;font-weight:600}
-.notes-btn{margin-top:6px}
+.wbtn{margin-top:6px}
 .wbtn{display:inline-flex;align-items:center;gap:5px;max-width:100%}
 .wbtn svg{width:14px;height:14px;flex:none}
 td.day{height:1px;min-height:84px}
@@ -332,7 +331,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.4";
+const VERSION = "1.1.5";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -385,10 +384,10 @@ exampleBanner:"Example settings. Change the race, your current running and the r
 pendingBanner:"You edited sessions by hand, so new settings aren't applied yet.",rebuildPlan:"Rebuild plan",keepEdits:"Keep my edits",
 stWeeks:"weeks",stTotal:"total km",stPeak:"peak week km",stLongest:"longest run km",stEquiv:"{lbl} equivalent",
 loadProfile:"Load profile",longRunLeg:"long run",
-notesAll:"Write coach notes for all weeks",notesStop:"Stop writing notes",notesNoAccess:"Coach notes need Claude access, which this view doesn't have.",connecting:"Connecting…",
+
 sendAll:"Send all runs to watch",exportCal:"Export calendar",exportCsv:"Export CSV",exportFmt:"Export format",fmtCsv:"CSV (spreadsheet)",fmtPdf:"PDF (printable)",exportGo:"Export",
 pdfBuilding:"Building PDF…",pdfLoadFail:"Couldn't load the PDF builder. Check your connection and try again.",pdfFail:"Couldn't build the PDF: {m}",pdfGenerated:"Generated {d}",pdfPage:"Page {p} of {n}",pdfRace:"Race",rebuildFrom:"Rebuild from settings",
-week:"Week",wAbbr:"W",rewriteNotes:"Rewrite notes",coachNotes:"Coach notes",sendWatch:"Send to watch",sendWatchWeek:"Send week {n} to watch",watchShort:"Watch",rest:"Rest",tabPlan:"Plan",tabSetup:"Settings",seePlan:"See the plan",editSettings:"Edit settings",addRun:"+ Add run",noteBadge:"NOTE",coach:"Coach",
+week:"Week",wAbbr:"W",sendWatch:"Send to watch",sendWatchWeek:"Send week {n} to watch",watchShort:"Watch",rest:"Rest",tabPlan:"Plan",tabSetup:"Settings",seePlan:"See the plan",editSettings:"Edit settings",addRun:"+ Add run",noteBadge:"NOTE",
 svgTitle:"Week {n}: {km} km, {phase}",svgAria:"Weekly kilometres by week",
 editRace:"Edit race",removeRace:"Remove race",raceOptional:"Optional: name your race so it shows in the header with a countdown.",
 findOn:"Find {lbl} races on Finishers",addMyRace:"Add my race",raceUrl:"Race page link (optional)",raceUrlPh:"Paste the race's Finishers page",
@@ -401,11 +400,11 @@ hStarts:"Week 1 starts Monday {d}.",hInWeek:"You're in week {n} of {t}, {phase} 
 hNext:" Next up {when}: <b>{name}, {km} km</b>.",today:"today",dayOne:"day",dayMany:"days",
 eTitle:"Week {n} · {day}",runType:"Run type",dayLbl:"Day",distKm:"Distance (km)",desc:"Description",watchWorkout:"Watch workout",
 watchHint:"Built from the session structure. Changing the distance updates it; editing the description does not.",
-coachNote:"Note",notePhClaude:"Use Coach notes on the week to have Claude write these",notePhOwn:"Your own note",deleteRun:"Delete run",saveChanges:"Save changes",
+note:"Note",notePhOwn:"Your own note",deleteRun:"Delete run",saveChanges:"Save changes",
 sendTitleRun:"Week {n}, {day}: {name}, {km} km",sendTitleWeek:"Week {n}: {c} runs",sendTitleAll:"Whole plan: {c} runs",
-rebuildQ:"Rebuild the plan?",rebuildT:"This replaces your hand edits and coach notes with a fresh plan from the current settings.",rebuild:"Rebuild",
-notesLang:"English",writing:"Writing…",writingWeek:"Writing week {i} of {n}…",notesDone:"Coach notes written for {n} weeks.",
-nDeclined:"Claude access was declined for this page.",nRate:"Claude is rate limited right now. Try again in a few minutes.",nStopped:"Stopped.",nFail:"Couldn't write notes: {m}",unknownErr:"unknown error",
+rebuildQ:"Rebuild the plan?",rebuildT:"This replaces your hand edits and notes with a fresh plan from the current settings.",rebuild:"Rebuild",
+
+unknownErr:"unknown error",
 pl_easy:"easy",pl_tempo:"tempo",pl_interval:"interval",pl_rep:"rep",pl_race:"race pace",pl_mp:"marathon pace",
 recoverySfx:" recovery",warmup:"Warm-up",cooldown:"Cool-down",recover:"Recover",run:"Run",
 devOther:"Other watch or app",devFiles:".{ext} files",
@@ -415,10 +414,10 @@ helpOther:"Structured .fit workout files. Import them into an app that accepts w
 sendTitle:"Send to your watch",device:"Device",download:"Download",
 noDownloads:"Downloads aren't available in this view.",wkLoadFail:"Couldn't load the Apple Watch workout builder. Check your connection and try again.",
 buildFail:"Couldn't build the workout for {name}: {m}",savedOne:"Saved 1 {dev} workout. {help}",savedMany:"Saved {n} {dev} workouts. {help}",
-dlRate:"Another save is still open. Finish it, then try again.",dlUnavail:"Saving files isn't available in this view.",dlFail:"Couldn't save the file.",dlFailM:"Couldn't save the file: {m}",
-icsDesc:"Week {n} ({phase}). {desc}",icsCoach:"Coach: ",csvHead:"Week|Phase|Date|Day|Run|Km|Description|Coach note",
-unsaved:"Unsaved changes",storageConnecting:"Storage is still connecting.",saving:"Saving…",saved:"Saved",savedLocal:"Saved in this browser",planSaved:"Plan saved.",notSaved:"Not saved",
-noPerm:"You can't save to this page.",saveFail:"Save failed. Your plan is still here; try again.",
+dlFail:"Couldn't save the file.",dlFailM:"Couldn't save the file: {m}",
+icsDesc:"Week {n} ({phase}). {desc}",icsNote:"Note: ",csvHead:"Week|Phase|Date|Day|Run|Km|Description|Note",
+unsaved:"Unsaved changes",saving:"Saving…",saved:"Saved",savedLocal:"Saved in this browser",planSaved:"Plan saved.",notSaved:"Not saved",
+saveFail:"Save failed. Your plan is still here; try again.",
 localOnly:"Plans are kept in this browser only. Use Export to keep a copy or move them to another device.",exportPlans:"Export",importPlans:"Import…",imported:"Imported {n} plan(s).",importFail:"That file isn't a Block Builder export.",planMeta:"{lbl} · {w} weeks · race {d}",
 open:"Open",del:"Delete",noPlans:"No saved plans yet. Build one and press Save plan.",close:"Close",delQ:"Delete plan?",delT:"\"{name}\" will be removed for good.",
 deleted:"Plan deleted.",delFail:"Couldn't delete that plan.",newQ:"Start a new plan?",newT:"This plan hasn't been saved.",startNew:"Start new",
@@ -481,10 +480,10 @@ exampleBanner:"Réglages d'exemple. Modifiez la course, votre niveau et les type
 pendingBanner:"Vous avez modifié des séances à la main, les nouveaux réglages ne sont donc pas encore appliqués.",rebuildPlan:"Recalculer le plan",keepEdits:"Garder mes modifications",
 stWeeks:"semaines",stTotal:"km au total",stPeak:"km semaine max",stLongest:"km sortie la plus longue",stEquiv:"équivalent {lbl}",
 loadProfile:"Profil de charge",longRunLeg:"sortie longue",
-notesAll:"Rédiger les conseils du coach pour toutes les semaines",notesStop:"Arrêter la rédaction",notesNoAccess:"Les conseils du coach nécessitent l'accès à Claude, indisponible dans cette vue.",connecting:"Connexion…",
+
 sendAll:"Envoyer toutes les séances à la montre",exportCal:"Exporter le calendrier",exportCsv:"Exporter en CSV",exportFmt:"Format d'export",fmtCsv:"CSV (tableur)",fmtPdf:"PDF (imprimable)",exportGo:"Exporter",
 pdfBuilding:"Création du PDF…",pdfLoadFail:"Impossible de charger le générateur de PDF. Vérifiez votre connexion et réessayez.",pdfFail:"Impossible de créer le PDF : {m}",pdfGenerated:"Créé le {d}",pdfPage:"Page {p} sur {n}",pdfRace:"Course",rebuildFrom:"Recalculer depuis les réglages",
-week:"Semaine",wAbbr:"S",rewriteNotes:"Réécrire les conseils",coachNotes:"Conseils du coach",sendWatch:"Envoyer à la montre",sendWatchWeek:"Envoyer la semaine {n} à la montre",watchShort:"Montre",rest:"Repos",tabPlan:"Plan",tabSetup:"Réglages",seePlan:"Voir le plan",editSettings:"Modifier les réglages",addRun:"+ Ajouter une sortie",noteBadge:"NOTE",coach:"Coach",
+week:"Semaine",wAbbr:"S",sendWatch:"Envoyer à la montre",sendWatchWeek:"Envoyer la semaine {n} à la montre",watchShort:"Montre",rest:"Repos",tabPlan:"Plan",tabSetup:"Réglages",seePlan:"Voir le plan",editSettings:"Modifier les réglages",addRun:"+ Ajouter une sortie",noteBadge:"NOTE",
 svgTitle:"Semaine {n} : {km} km, {phase}",svgAria:"Kilomètres par semaine",
 editRace:"Modifier la course",removeRace:"Retirer la course",raceOptional:"Facultatif : indiquez votre course pour l'afficher en haut de page avec un compte à rebours.",
 findOn:"Trouver des courses ({lbl}) sur Finishers",addMyRace:"Ajouter ma course",raceUrl:"Lien de la page de la course (facultatif)",raceUrlPh:"Collez la page Finishers de la course",
@@ -497,11 +496,11 @@ hStarts:"La semaine 1 commence le lundi {d}.",hInWeek:"Vous êtes en semaine {n}
 hNext:" Prochaine séance {when} : <b>{name}, {km} km</b>.",today:"aujourd'hui",dayOne:"jour",dayMany:"jours",
 eTitle:"Semaine {n} · {day}",runType:"Type de séance",dayLbl:"Jour",distKm:"Distance (km)",desc:"Description",watchWorkout:"Séance pour la montre",
 watchHint:"Construite à partir de la structure de la séance. Changer la distance la met à jour, modifier la description non.",
-coachNote:"Note",notePhClaude:"Utilisez « Conseils du coach » sur la semaine pour que Claude les rédige",notePhOwn:"Votre note",deleteRun:"Supprimer la sortie",saveChanges:"Enregistrer",
+note:"Note",notePhOwn:"Votre note",deleteRun:"Supprimer la sortie",saveChanges:"Enregistrer",
 sendTitleRun:"Semaine {n}, {day} : {name}, {km} km",sendTitleWeek:"Semaine {n} : {c} sorties",sendTitleAll:"Plan complet : {c} sorties",
-rebuildQ:"Recalculer le plan ?",rebuildT:"Cela remplace vos modifications et les conseils du coach par un nouveau plan basé sur les réglages actuels.",rebuild:"Recalculer",
-notesLang:"French",writing:"Rédaction…",writingWeek:"Rédaction de la semaine {i} sur {n}…",notesDone:"Conseils rédigés pour {n} semaines.",
-nDeclined:"L'accès à Claude a été refusé pour cette page.",nRate:"Claude est temporairement limité. Réessayez dans quelques minutes.",nStopped:"Arrêté.",nFail:"Impossible de rédiger les conseils : {m}",unknownErr:"erreur inconnue",
+rebuildQ:"Recalculer le plan ?",rebuildT:"Cela remplace vos modifications et vos notes par un nouveau plan basé sur les réglages actuels.",rebuild:"Recalculer",
+
+unknownErr:"erreur inconnue",
 pl_easy:"facile",pl_tempo:"tempo",pl_interval:"fractionné",pl_rep:"vitesse",pl_race:"allure course",pl_mp:"allure marathon",
 recoverySfx:" récup",warmup:"Échauffement",cooldown:"Retour au calme",recover:"Récup",run:"Course",
 devOther:"Autre montre ou appli",devFiles:"fichiers .{ext}",
@@ -511,10 +510,10 @@ helpOther:"Fichiers de séances structurées .fit. Importez-les dans une appli q
 sendTitle:"Envoyer à votre montre",device:"Appareil",download:"Télécharger",
 noDownloads:"Les téléchargements ne sont pas disponibles dans cette vue.",wkLoadFail:"Impossible de charger le générateur de séances Apple Watch. Vérifiez votre connexion et réessayez.",
 buildFail:"Impossible de créer la séance « {name} » : {m}",savedOne:"1 séance {dev} enregistrée. {help}",savedMany:"{n} séances {dev} enregistrées. {help}",
-dlRate:"Un autre enregistrement est en cours. Terminez-le puis réessayez.",dlUnavail:"L'enregistrement de fichiers n'est pas disponible dans cette vue.",dlFail:"Impossible d'enregistrer le fichier.",dlFailM:"Impossible d'enregistrer le fichier : {m}",
-icsDesc:"Semaine {n} ({phase}). {desc}",icsCoach:"Coach : ",csvHead:"Semaine|Phase|Date|Jour|Séance|Km|Description|Conseil du coach",
-unsaved:"Modifications non enregistrées",storageConnecting:"Connexion au stockage en cours.",saving:"Enregistrement…",saved:"Enregistré",savedLocal:"Enregistré dans ce navigateur",planSaved:"Plan enregistré.",notSaved:"Non enregistré",
-noPerm:"Vous ne pouvez pas enregistrer sur cette page.",saveFail:"Échec de l'enregistrement. Votre plan est toujours là, réessayez.",
+dlFail:"Impossible d'enregistrer le fichier.",dlFailM:"Impossible d'enregistrer le fichier : {m}",
+icsDesc:"Semaine {n} ({phase}). {desc}",icsNote:"Note : ",csvHead:"Semaine|Phase|Date|Jour|Séance|Km|Description|Note",
+unsaved:"Modifications non enregistrées",saving:"Enregistrement…",saved:"Enregistré",savedLocal:"Enregistré dans ce navigateur",planSaved:"Plan enregistré.",notSaved:"Non enregistré",
+saveFail:"Échec de l'enregistrement. Votre plan est toujours là, réessayez.",
 localOnly:"Les plans sont conservés dans ce navigateur uniquement. Utilisez Exporter pour en garder une copie ou les passer sur un autre appareil.",exportPlans:"Exporter",importPlans:"Importer…",imported:"{n} plan(s) importé(s).",importFail:"Ce fichier n'est pas un export Block Builder.",planMeta:"{lbl} · {w} semaines · course le {d}",
 open:"Ouvrir",del:"Supprimer",noPlans:"Aucun plan enregistré. Créez-en un puis cliquez sur Enregistrer.",close:"Fermer",delQ:"Supprimer le plan ?",delT:"« {name} » sera supprimé définitivement.",
 deleted:"Plan supprimé.",delFail:"Impossible de supprimer ce plan.",newQ:"Commencer un nouveau plan ?",newT:"Ce plan n'a pas été enregistré.",startNew:"Nouveau plan",
@@ -815,7 +814,7 @@ function warnings(inp,types,plan){
 }
 
 /* ---------- state ---------- */
-const S={nameAuto:true,inputs:DEFAULT_INPUTS(),types:DEFAULT_TYPES(),plan:null,planId:uid(),name:cap(t("blockName",{lbl:t("lhm")})),edited:false,savedAt:null,isExample:true,saved:[],store:null,saving:false,dirty:false};
+const S={nameAuto:true,inputs:DEFAULT_INPUTS(),types:DEFAULT_TYPES(),plan:null,planId:uid(),name:cap(t("blockName",{lbl:t("lhm")})),edited:false,savedAt:null,isExample:true,saved:[],saving:false,dirty:false};
 function regen(){const g=generate(genInputs(S.inputs),S.types);S.plan=g;S.edited=false;}
 
 /* ---------- setup UI ---------- */
@@ -960,13 +959,13 @@ function renderPlan(){
     const st=parseISO(w.start),en=addDays(st,6);
     h+=`<tr class="${w.cutback?"cutback":""}"><td class="wk"><div class="wkcell"><span class="bar" style="background:${phaseColor(w.phase)}"></span><div>
       <div class="n">${t("wAbbr")}${esc(w.n)}</div><div class="meta"><span>${fmtShort(st)} – ${fmtShort(en)}</span><span class="ph" data-cut="${t("cutback")}" style="color:${phaseText(w.phase)}">${phaseLbl(w.phase)}</span><span class="km">${totals[wi].toFixed(1)} km</span></div>
-      <button class="btn sm ghost notes-btn wbtn" data-act="wwatch" data-w="${wi}" aria-label="${esc(t("sendWatchWeek",{n:w.n}))}" title="${esc(t("sendWatchWeek",{n:w.n}))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3M12 10v2l1.5 1"/></svg>${t("watchShort")}</button></div></div></td>`;
+      <button class="btn sm ghost wbtn" data-act="wwatch" data-w="${wi}" aria-label="${esc(t("sendWatchWeek",{n:w.n}))}" title="${esc(t("sendWatchWeek",{n:w.n}))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3M12 10v2l1.5 1"/></svg>${t("watchShort")}</button></div></div></td>`;
     for(let d=0;d<7;d++){
       const ss=w.sessions.filter(s=>s.day===d);
       h+=`<td class="day" data-w="${wi}" data-d="${d}">${ss.length?ss.map(s=>`<button type="button" class="ses ${s.kind==="race"?"race":""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${kindColor(s.kind)};--kt:${kindText(s.kind)}"><span class="t">${esc(s.name)}</span><span class="k">${esc(s.km)} km</span><span class="d">${esc(s.desc)}</span>${s.note?`<span class="nb">${t("noteBadge")}</span>`:""}</button>`).join(""):`<div class="empty" tabindex="0" role="button" aria-label="${esc(t("addRun"))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t("rest")}</span><span class="plus">${t("addRun")}</span></div>`}</td>`;
     }
     h+=`</tr>`;
-    if(w.note)h+=`<tr class="wnote"><td colspan="8"><p><b>${t("coach")}</b>${esc(w.note)}</p></td></tr>`;
+    if(w.note)h+=`<tr class="wnote"><td colspan="8"><p><b>${t("note")}</b>${esc(w.note)}</p></td></tr>`;
   });
   h+=`</tbody></table></div>`;
   $("#plan").innerHTML=h;
@@ -1110,7 +1109,6 @@ $("#raceBox").addEventListener("change",e=>e.stopPropagation());
 /* greeting */
 function renderHello(){
   const el=$("#hello");if(!el)return;
-  const me=S.me, first=me&&me.name?me.name.trim().split(/\s+/)[0]:"";
   const P=S.plan,I=S.inputs;
   const today=new Date();today.setHours(12,0,0,0);
   const race=parseISO(I.raceDate);const days=Math.round((race-today)/864e5);
@@ -1140,14 +1138,12 @@ function renderHello(){
       line=head+" "+t("hInWeek",{n:w.n,t:P.weeks.length,phase:phaseLbl(w.phase),cut:w.cutback?t("hCut"):""})+(next?t("hNext",{when,name:esc(next.name.toLowerCase()),km:next.km}):"");
     }
   }
-  const avatar=me&&me.avatarUrl?`<img src="${esc(me.avatarUrl)}" alt="">`:"";
-  el.style.setProperty("--hc",me&&me.color?me.color:"var(--accent)");
   const R=I.race;let cd="";
   if(I.goal!=="fitness"&&R&&R.name&&days>=0){
     const nm=R.url?`<a class="rn" href="${esc(R.url)}" target="_blank" rel="noopener">${esc(R.name)}</a>`:`<span class="rn">${esc(R.name)}</span>`;
     cd=`<div class="countdown"><div class="num">${days}<small>${days===1?t("dayOne"):t("dayMany")}</small></div>${nm}<span class="rm">${R.city?esc(R.city)+" · ":""}${fmtDay(race)} · ${esc(lbl)}</span></div>`;
   }
-  el.innerHTML=`${avatar}<div class="txt"><p class="lead">${line}</p></div>${cd}`;
+  el.innerHTML=`<div class="txt"><p class="lead">${line}</p></div>${cd}`;
 }
 
 /* plan interactions */
@@ -1196,7 +1192,7 @@ function openEditor(wi,id){
     <div class="row"><div class="field"><label for="eKm">${t("distKm")}</label><input id="eKm" type="number" min="0" step="0.5" value="${esc(s.km)}"></div><div></div></div>
     <div class="field"><label for="eDesc">${t("desc")}</label><textarea id="eDesc" rows="4">${esc(s.desc)}</textarea></div>
     <div class="field"><span class="lbl">${t("watchWorkout")}</span><div class="watchsum" id="eWatch">${esc(watchSummary(s.watch||watchPlan(s.kind,s.km)))}</div><div class="hint">${t("watchHint")}</div></div>
-    <div class="field"><label for="eNote">${t("coachNote")}</label><textarea id="eNote" rows="3" placeholder="${esc(t("notePhOwn"))}">${esc(s.note)}</textarea></div>
+    <div class="field"><label for="eNote">${t("note")}</label><textarea id="eNote" rows="3" placeholder="${esc(t("notePhOwn"))}">${esc(s.note)}</textarea></div>
     <div class="actions"><button class="btn ghost left" id="eDel">${t("deleteRun")}</button><button class="btn" id="eWatchBtn">${t("sendWatch")}</button><button class="btn" id="eCancel">${t("cancel")}</button><button class="btn primary" id="eOk">${t("saveChanges")}</button></div>`,m=>{
     m.querySelector("#eCancel").onclick=closeModal;
     m.querySelector("#eDel").onclick=()=>{w.sessions=w.sessions.filter(x=>x.id!==id);closeModal();touched();};
@@ -1346,9 +1342,9 @@ async function exportWorkouts(dev,list,zipBase){
   if(!files.length)return;
   const name=(zipBase||files[0].name.replace(/\.\w+$/,""))+"-"+D.k;
   try{dlSave({filename:name+".zip",data:makeZip(files)});toast(t(files.length>1?"savedMany":"savedOne",{n:files.length,dev:D.name(),help:D.help()}));}
-  catch(e){if(e&&e.code==="declined")return;toast(downloadErr(e));}
+  catch(e){toast(downloadErr(e));}
 }
-function downloadErr(e){const c=e&&e.code;if(c==="rate_limited")return t("dlRate");if(c==="unavailable"||c==="not_granted"||c==="capability_disabled"||c==="capability_removed")return t("dlUnavail");return e&&e.message?t("dlFailM",{m:e.message}):t("dlFail");}
+function downloadErr(e){return e&&e.message?t("dlFailM",{m:e.message}):t("dlFail");}
 
 /* ---------- exports ---------- */
 function dlSave({filename,data}){
@@ -1365,7 +1361,7 @@ function exportICS(){
   const ymd=d=>iso(d).replace(/-/g,"");const stamp=new Date().toISOString().replace(/[-:]/g,"").replace(/\.\d+/,"");
   const lines=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Block Builder//EN","CALSCALE:GREGORIAN","X-WR-CALNAME:"+e(S.name)];
   for(const w of S.plan.weeks)for(const s of w.sessions){const d=sessionDate(w,s);
-    lines.push("BEGIN:VEVENT","UID:"+s.id+"-"+ymd(d)+"@blockbuilder","DTSTAMP:"+stamp,"DTSTART;VALUE=DATE:"+ymd(d),"DTEND;VALUE=DATE:"+ymd(addDays(d,1)),fold("SUMMARY:"+e(`${s.name} · ${s.km} km`)),fold("DESCRIPTION:"+e(t("icsDesc",{n:w.n,phase:phaseLbl(w.phase),desc:s.desc})+(s.note?"\n\n"+t("icsCoach")+s.note:""))),"TRANSP:TRANSPARENT","END:VEVENT");}
+    lines.push("BEGIN:VEVENT","UID:"+s.id+"-"+ymd(d)+"@blockbuilder","DTSTAMP:"+stamp,"DTSTART;VALUE=DATE:"+ymd(d),"DTEND;VALUE=DATE:"+ymd(addDays(d,1)),fold("SUMMARY:"+e(`${s.name} · ${s.km} km`)),fold("DESCRIPTION:"+e(t("icsDesc",{n:w.n,phase:phaseLbl(w.phase),desc:s.desc})+(s.note?"\n\n"+t("icsNote")+s.note:""))),"TRANSP:TRANSPARENT","END:VEVENT");}
   lines.push("END:VCALENDAR");
   saveFile(fname("ics"),new Blob([lines.join("\r\n")],{type:"text/calendar"}));
 }
@@ -1421,10 +1417,10 @@ async function exportPDF(btn){
       const row=[`${t("wAbbr")}${w.n}\n${fmtShort(st)} - ${fmtShort(addDays(st,6))}\n${phaseLbl(w.phase)}${w.cutback?" · "+t("cutback"):""}\n${totals[wi].toFixed(1)} km`];
       const kinds=[w.phase];
       for(let d=0;d<7;d++){const ss=w.sessions.filter(s=>s.day===d);
-        row.push(ss.map(s=>`${s.name} · ${s.km} km\n${s.desc}${s.note?"\n"+t("coach")+": "+s.note:""}`).join("\n\n"));
+        row.push(ss.map(s=>`${s.name} · ${s.km} km\n${s.desc}${s.note?"\n"+t("note")+": "+s.note:""}`).join("\n\n"));
         kinds.push(ss.length?ss[0].kind:null);}
       body.push(row.map(pdfTxt));meta.push({type:"week",kinds});
-      if(w.note){body.push([{content:pdfTxt(`${t("coach")}: ${w.note}`),colSpan:8}]);meta.push({type:"note"});}
+      if(w.note){body.push([{content:pdfTxt(`${t("note")}: ${w.note}`),colSpan:8}]);meta.push({type:"note"});}
     });
     const dayW=(pw-2*M-30)/7;
     run(doc,{
@@ -1513,7 +1509,6 @@ let saveTimer=null;
 function markDirty(){S.dirty=true;if(S.savedAt){setStatus(t("unsaved"));clearTimeout(saveTimer);saveTimer=setTimeout(()=>{saveTimer=null;savePlan(true);},1500);}}
 async function savePlan(auto){
   if(missingSetup(S.inputs).length){if(!auto)toast(t("needTitle"));return;}
-  const st=S.store;if(!st){toast(t("storageConnecting"));return;}
   cancelSave();
   const data=snapshot();
   try{
@@ -1522,7 +1517,7 @@ async function savePlan(auto){
     S.savedAt=Date.now();S.dirty=false;S.isExample=false;
     S.savedLbl=null;setStatus(t("savedLocal")+" · "+new Date().toLocaleTimeString(LOC(),{hour:"2-digit",minute:"2-digit"}));
     if(!auto){toast(t("planSaved"));renderPlan();}
-  }catch(e){setStatus(t("notSaved"));toast(e&&e.code==="permission_denied"?t("noPerm"):t("saveFail"));}
+  }catch(e){setStatus(t("notSaved"));toast(t("saveFail"));}
 }
 function lsAll(){try{return JSON.parse(localStorage.getItem("bb-plans")||"{}")||{};}catch(_){return {};}}
 function refreshLocalList(){const all=lsAll();S.saved=Object.entries(all).filter(([id])=>nId(id)).map(([id,d])=>{const n=normalizeSaved(d);return n&&{id,...n};}).filter(Boolean).sort((a,b)=>b.updatedAt-a.updatedAt);}
@@ -1563,7 +1558,7 @@ function newPlan(){
   const go=()=>{S.nameAuto=true;S.inputs=BLANK_INPUTS();S.types=BLANK_TYPES();S.planId=uid();S.savedAt=null;S.isExample=false;S.dirty=false;S.pendingRegen=false;S.name=cap(t("blockName",{lbl:t("lhm")}));$("#planName").value=S.name;regen();renderSetup();renderPlan();setStatus(t("notSaved"));};
   if(S.dirty&&S.savedAt===null&&!S.isExample)confirmBox(t("newQ"),t("newT"),t("startNew"),go);else go();
 }
-function initStore(){S.store={mode:"local"};refreshLocalList();}
+
 
 /* ---------- header ---------- */
 $("#planName").addEventListener("change",e=>{S.nameAuto=!e.target.value.trim();S.name=e.target.value.trim()||t("trainingBlock");e.target.value=S.name;markDirty();});
@@ -1596,7 +1591,7 @@ $("#langSeg").addEventListener("click",e=>{const b=e.target.closest("[data-lang]
 
 applyStatic();
 regen();renderSetup();$("#planName").value=S.name;renderPlan();setStatus(t("notSaved"));
-initStore();
+refreshLocalList();
 })();
 </script>
 

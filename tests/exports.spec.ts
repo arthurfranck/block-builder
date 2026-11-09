@@ -6,7 +6,7 @@ test.describe('CSV', () => {
     const { name, buf } = await app.exportAs('csv');
     expect(name).toBe('half-marathon-block.csv');
     const rows = parseCSV(buf.toString('utf8'));
-    expect(rows[0]).toEqual(['Week', 'Phase', 'Date', 'Day', 'Run', 'Km', 'Description', 'Coach note']);
+    expect(rows[0]).toEqual(['Week', 'Phase', 'Date', 'Day', 'Run', 'Km', 'Description', 'Note']);
     const body = rows.slice(1);
     expect(body).toHaveLength(weeks.flatMap((w) => w.sessions).length);
     expect(body[0].slice(0, 4)).toEqual(['1', 'base', '2026-11-09', 'Mon']);
