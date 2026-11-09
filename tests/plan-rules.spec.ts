@@ -51,12 +51,10 @@ for (const sc of SCENARIOS) {
 
 test.describe('weekly volume increase', () => {
   /*
-   * Known issue, found when this suite was written: the engine targets at most +10% a week,
-   * but rounding and the 4 km minimum per run push some weeks to +19%
-   * (worst cases: short blocks, 6-7 runs a week). Remove test.fail() once fixed.
+   * The engine targets at most +10% a week, then trims each built week back to that cap
+   * (rounding and the minimum run distances used to push some weeks to +19%, BB-12).
    */
   test('stays within 10% week to week, also after a cutback', async ({ app }) => {
-    test.fail(true, 'known issue: some weeks rise 13-19% after rounding');
     const problems: string[] = [];
     for (const sc of SCENARIOS) {
       const { taper, ...cfg } = sc;
@@ -82,5 +80,25 @@ test.describe('weekly volume increase', () => {
         if (ref) expect.soft(w.km, `${label(sc)}: week ${w.n}`).toBeLessThanOrEqual(ref.km * 1.2);
       });
     }
+  });
+});
+
+test.describe('weeks the 10% cap cannot hold', () => {
+  test('a normal plan shows no steep-week warning', async ({ app }) => {
+    await app.configure({ dist: 'hm', runs: 5, weeks: 12, curVol: 30, curLong: 12 });
+    await expect(app.warnings().filter({ hasText: 'more than 10% bigger' })).toHaveCount(0);
+  });
+
+  test('when every run is already at its shortest, the jump is flagged with the fix', async ({ app }) => {
+    await app.configure({ dist: '5k', runs: 5, weeks: 4, curVol: 10, curLong: 6 });
+    await expect(app.warnings().filter({ hasText: 'more than 10% bigger' })).toContainText(['Week 2 is more than 10% bigger than the last full week before. Every run is already at its shortest: fewer runs per week would keep the build gentler.']);
+  });
+
+  test('a hand edit that makes a week jump is flagged too', async ({ app, page }) => {
+    await app.configure({ dist: 'hm', runs: 5, weeks: 12, curVol: 30, curLong: 12 });
+    await app.session(1, 0).click();
+    await app.modal().locator('#eKm').fill('30');
+    await app.modal().getByRole('button', { name: 'Save changes' }).click();
+    await expect(app.warnings().filter({ hasText: 'more than 10% bigger' })).toContainText(['Week 2 is more than 10% bigger than the last full week before. Shortening a run would keep the build gentler.']);
   });
 });
