@@ -2,6 +2,15 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.5] - 2026-11-09
+
+### Changed
+- Notes are labelled "Note" instead of "Coach" on the plan grid, in the PDF and calendar exports, and in the CSV header ("Note" instead of "Coach note" / "Conseil du coach"). The Rebuild warning says "notes" instead of "coach notes".
+
+### Removed
+- Leftovers from the claude.ai version that could never show here: coach-note and Claude access messages, the "storage connecting" and "can't save to this page" messages, claude.ai download error codes, and the viewer avatar and colour on the Today card.
+- Tests: a translation check fails if any string mentions Claude or a coach.
+
 ## [1.1.4] - 2026-11-08
 
 ### Fixed

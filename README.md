@@ -108,6 +108,7 @@ All three depend on the claude.ai artifact runtime, so they were removed here. T
 
 ## Changelog
 
+- **2026-11-09 (v1.1.5):** Leftovers from the claude.ai version are gone: notes are labelled "Note" (not "Coach") on the plan, in the CSV and PDF exports and in calendar events, and unused Claude messages and error texts were removed.
 - **2026-11-08 (v1.1.4):** On iPhone, tapping a run-type template, a run's description or note, or the export format no longer zooms the page in: those fields use 16px text on touch screens.
 - **2026-11-08 (v1.1.3):** Finish times are read to fit the race: "1:45" for a half marathon now means 1 h 45 min instead of being ignored, and a time that can't fit the race says so.
 - **2026-11-07 (v1.1.2):** Imported plan files are checked before use, so a shared file can't run script on the page; a broken file still opens. Changes made just before New plan, opening another plan or closing the tab are saved. Leaving with a never-saved plan asks first.
