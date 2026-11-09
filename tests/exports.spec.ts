@@ -15,7 +15,7 @@ test.describe('CSV', () => {
   });
 
   test('French headers when the page is in French', async ({ app, page }) => {
-    await page.locator('#langSeg [data-lang="fr"]').click();
+    await page.locator('#langSel').selectOption('fr');
     const { name, buf } = await app.exportAs('csv');
     expect(name).toBe('plan-semi-marathon.csv');
     expect(parseCSV(buf.toString('utf8'))[0][0]).toBe('Semaine');
