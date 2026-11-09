@@ -333,7 +333,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.7";
+const VERSION = "1.1.8";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -376,7 +376,7 @@ wa_mLong:"A longest recent run under 14 km makes 32 km long runs hard to reach s
 wa_days:"You picked {d} running days for {r} runs a week. Using a default pattern until those match.",
 wa_tooMany:"{h} quality run types with {r} runs a week leaves room for {m} {sess} per week. Types will rotate, so each appears less often.",
 sessOne:"hard session",sessMany:"hard sessions",
-wa_noHard:"No quality run types are ticked, so the plan has no hard sessions.",
+wa_noHard:"No quality run types are ticked, so the plan has no hard sessions.",wa_steep:"{w} more than 10% bigger than the last full week before. Every run is already at its shortest: fewer runs per week would keep the build gentler.",wa_steepEdit:"{w} more than 10% bigger than the last full week before. Shortening a run would keep the build gentler.",wkOne:"Week {n} is",wkMany:"Weeks {n} are",
 wa_noPace:"Without a recent race time, sessions use effort descriptions instead of paces.",wa_badTime:"Couldn't read {time} as a {lbl} finish time, so sessions use effort descriptions. Write it as h:mm:ss or mm:ss, for example {ex}.",
 wa_past:"With this race date and length, week 1 started on {d}. Shorten the block or move the race date.",
 blockName:"{lbl} block",trainingBlock:"Training block",
@@ -472,7 +472,7 @@ wa_mLong:"Avec une plus longue sortie récente sous 14 km, atteindre des sorties
 wa_days:"Vous avez choisi {d} jours pour {r} sorties par semaine. Une répartition par défaut s'applique tant que les deux ne correspondent pas.",
 wa_tooMany:"{h} types de séances de qualité pour {r} sorties par semaine : la place ne permet que {m} {sess} par semaine. Les types tournent, chacun revient donc moins souvent.",
 sessOne:"séance difficile",sessMany:"séances difficiles",
-wa_noHard:"Aucun type de séance de qualité n'est coché : le plan n'a aucune séance difficile.",
+wa_noHard:"Aucun type de séance de qualité n'est coché : le plan n'a aucune séance difficile.",wa_steep:"{w} plus de 10 % au-dessus de la dernière semaine complète. Chaque sortie est déjà à sa distance minimale : moins de sorties par semaine rendrait la progression plus douce.",wa_steepEdit:"{w} plus de 10 % au-dessus de la dernière semaine complète. Raccourcir une sortie rendrait la progression plus douce.",wkOne:"La semaine {n} est",wkMany:"Les semaines {n} sont",
 wa_noPace:"Sans temps de course récent, les séances sont décrites en effort plutôt qu'en allure.",wa_badTime:"Impossible de lire {time} comme temps sur {lbl} : les séances sont décrites en effort. Écrivez-le en h:mm:ss ou mm:ss, par exemple {ex}.",
 wa_past:"Avec cette date et cette durée, la semaine 1 a commencé le {d}. Raccourcissez le plan ou déplacez la date.",
 blockName:"Plan {lbl}",trainingBlock:"Plan d'entraînement",
@@ -710,6 +710,7 @@ function generate(inp,types){
   const start=noRace?(d=>addDays(d,(7-dow(d))%7))(parseISO(inp.startDate||nextMonday())):addDays(raceD,-raceDow-7*(W-1));
   const rot={}; const occ={};
   const weeks=[];
+  let refKm=null; /* actual km of the last week that was neither a cutback nor taper */
   for(let i=0;i<W;i++){
     const phase=phaseOf(i), isCut=cut(i), raceWeek=!noRace&&i===W-1;
     const p=nb>1?clamp(i/(nb-1),0,1):1;
@@ -727,7 +728,7 @@ function generate(inp,types){
     const ctxBase={p:phase==="taper"?0.5:p,D,c,taper:phase==="taper",P,phase,cut:isCut};
     const sessions=[];
     // long / race
-    let longKm;
+    let longKm,mkLong=null;
     if(raceWeek){sessions.push({id:uid(),day:longD,typeId:"race",name:t("raceDay"),kind:"race",km:+D.toFixed(1),desc:raceDesc(inp,P),note:"",watch:watchPlan("race",+D.toFixed(1))});}
     else{
       if(phase==="taper"){longKm=Lpk*[0.75,0.6][i-nb]||Lpk*0.6;}
@@ -735,7 +736,8 @@ function generate(inp,types){
       longKm=r05(Math.max(longKm,4));
       const lt=longT.on?longT:easyT; /* long run type unticked: that day is a plain easy run */
       const w=longT.on?workFor(longT,ctxBase):{text:""};
-      sessions.push({id:uid(),day:longD,typeId:lt.id,name:lt.name,kind:lt.kind,km:longKm,desc:fill(lt.tpl,{...P.txt,km:longKm,work:fill(w.text,P.txt)}),note:"",watch:watchPlan(lt.kind,longKm,w)});
+      mkLong=km=>({id:uid(),day:longD,typeId:lt.id,name:lt.name,kind:lt.kind,km,desc:fill(lt.tpl,{...P.txt,km,work:fill(w.text,P.txt)}),note:"",watch:watchPlan(lt.kind,km,w)});
+      sessions.push(mkLong(longKm));
     }
     // hard
     const elig=hardTypes.filter(t=>t.phases.includes(phase));
@@ -759,11 +761,10 @@ function generate(inp,types){
       km=r05(Math.max(km,5));
       return {id:uid(),day:d,typeId:t.id,name:t.name,kind:"hard",km,desc:fill(t.tpl,{...P.txt,km,work:fill(w.text,P.txt)}),note:"",watch:watchPlan("hard",km,w)};
     });
-    let hs=build(1);
+    let hs=build(1),hScale=1;
     let hardKm=hs.reduce((a,x)=>a+x.km,0);
     const room=target*1.04-(longKm||0)-easyN*4;
-    if(!raceWeek&&hardKm>room&&hardKm>0){hs=build(clamp(room/hardKm,0.55,1));hardKm=hs.reduce((a,x)=>a+x.km,0);}
-    sessions.push(...hs);
+    if(!raceWeek&&hardKm>room&&hardKm>0){hScale=clamp(room/hardKm,0.55,1);hs=build(hScale);hardKm=hs.reduce((a,x)=>a+x.km,0);}
     // easy
     const easyDays=others.filter(d=>!hardDays.includes(d));
     const roles=easyDays.map(d=>({d,t:easyT}));
@@ -773,15 +774,32 @@ function generate(inp,types){
     const wt=x=>x.t.kind==="recovery"?0.7:1;
     const sumW=roles.reduce((a,x)=>a+wt(x),0)||1;
     const rem=Math.max(0,target-(longKm||0)-hardKm);
-    for(const x of roles){
+    const minKm=x=>x.t.kind==="recovery"?3:4;
+    const easyKm=roles.map(x=>{
       let km;
       if(raceWeek){km=(x.d===(longD+6)%7)?(c==="m"?5:4):clamp(Math.round(peakV*0.09),4,8);}
-      else km=Math.max(x.t.kind==="recovery"?3:4,rem*wt(x)/sumW);
+      else km=Math.max(minKm(x),rem*wt(x)/sumW);
       if(!raceWeek&&x.t.kind!=="recovery")km=Math.min(km,Math.max(longKm-1,6));
-      km=r05(km);
-      const w=workFor(x.t,ctxBase);
-      sessions.push({id:uid(),day:x.d,typeId:x.t.id,name:x.t.name,kind:x.t.kind,km,desc:fill(x.t.tpl,{...P.txt,km,work:fill(w.text||"",P.txt)}),note:"",watch:watchPlan(x.t.kind,km,w)});
+      return r05(km);
+    });
+    /* Rounding and the minimum distances can push a week well past +10% on the last full week.
+       Trim back to that cap: easy runs first (0.5 km steps, longest first), then the hard runs, then the long run. */
+    if(!raceWeek&&!isCut&&phase!=="taper"&&refKm!=null){
+      const cap=refKm*1.1+0.01;
+      const total=()=>(longKm||0)+hardKm+easyKm.reduce((a,b)=>a+b,0);
+      while(total()>cap){
+        let j=-1;easyKm.forEach((k,i)=>{if(k-0.5>=minKm(roles[i])&&(j<0||k>easyKm[j]))j=i;});
+        if(j<0)break;easyKm[j]-=0.5;
+      }
+      for(let sc=hScale-0.05;total()>cap&&hs.length&&sc>=0.549;sc-=0.05){const h2=build(sc),k2=h2.reduce((a,x)=>a+x.km,0);if(k2<hardKm){hs=h2;hardKm=k2;}}
+      if(total()>cap&&mkLong){const nl=Math.max(4,Math.floor((longKm-(total()-cap))*2)/2);if(nl<longKm){longKm=nl;sessions[0]=mkLong(longKm);}}
     }
+    sessions.push(...hs);
+    roles.forEach((x,i)=>{
+      const km=easyKm[i];const w=workFor(x.t,ctxBase);
+      sessions.push({id:uid(),day:x.d,typeId:x.t.id,name:x.t.name,kind:x.t.kind,km,desc:fill(x.t.tpl,{...P.txt,km,work:fill(w.text||"",P.txt)}),note:"",watch:watchPlan(x.t.kind,km,w)});
+    });
+    if(!isCut&&phase!=="taper")refKm=sessions.reduce((a,x)=>a+x.km,0);
     sessions.sort((a,b)=>a.day-b.day);
     weeks.push({n:i+1,phase,cutback:isCut,start:iso(addDays(start,7*i)),target:Math.round(target),note:"",sessions});
   }
@@ -794,7 +812,7 @@ function raceDesc(inp,P){
 }
 
 /* ---------- warnings ---------- */
-function warnings(inp,types,plan){
+function warnings(inp,types,plan,edited){
   const w=[];const D=distKm(inp),c=cat(D),lbl=distLabel(inp);
   const minW={"5k":6,"10k":8,"hm":10,"m":14}[c];
   if(inp.goal!=="fitness"&&inp.weeks<minW)w.push(t("wa_short",{w:inp.weeks,lbl,min:minW}));
@@ -808,6 +826,10 @@ function warnings(inp,types,plan){
   const maxHard=+inp.runs<=4?1:2;
   if(hard.length>maxHard*2)w.push(t("wa_tooMany",{h:hard.length,r:inp.runs,m:maxHard,sess:t(maxHard>1?"sessMany":"sessOne")}));
   if(!hard.length)w.push(t("wa_noHard"));
+  /* +10% a week on the last full week (cutbacks and taper skipped), checked on the weeks as shown */
+  const wk=plan.weeks.map(x=>x.sessions.reduce((a,s)=>a+(+s.km||0),0));const steep=[];
+  plan.weeks.forEach((x,i)=>{if(i===0||x.cutback||x.phase==="taper")return;const r=plan.weeks[i-1].cutback?wk[i-2]:wk[i-1];if(r>0&&wk[i]>r*1.1+0.05)steep.push(x.n);});
+  if(steep.length)w.push(t(edited?"wa_steepEdit":"wa_steep",{w:t(steep.length>1?"wkMany":"wkOne",{n:steep.join(", ")})}));
   if(badRaceTime(inp))w.push(badTimeMsg(inp));
   else if(!(+inp.recDist>0&&raceTimeSec(inp.recTime,+inp.recDist)))w.push(t("wa_noPace"));
   const startD=parseISO(plan.meta.start);const today=new Date();today.setHours(0,0,0,0);
@@ -935,7 +957,7 @@ function renderPlan(){
   const weeks=P.weeks;
   const totals=weeks.map(w=>w.sessions.reduce((a,s)=>a+s.km,0));
   const longest=Math.max(...weeks.flatMap(w=>w.sessions.filter(s=>s.kind==="long").map(s=>s.km)),0);
-  const warns=warnings(I,S.types,P);
+  const warns=warnings(I,S.types,P,S.edited);
   let h="";
   if(S.isExample)h+=`<div class="banner info"><span>${t("exampleBanner")}</span><button class="btn sm m-only" type="button" data-tabgo="setup">${t("editSettings")}</button></div>`;
   if(S.pendingRegen)h+=`<div class="banner"><span>${t("pendingBanner")}</span><button class="btn sm primary" data-act="regen">${t("rebuildPlan")}</button><button class="btn sm ghost" data-act="keep">${t("keepEdits")}</button></div>`;

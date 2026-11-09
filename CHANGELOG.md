@@ -2,6 +2,15 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.8] - 2026-11-09
+
+### Fixed
+- Weekly mileage could rise 13 to 19% on the week before (worst after a cutback week), because each run is rounded to 0.5 km and has a minimum distance. Each built week is now trimmed back to +10% of the last full week: easy runs first (0.5 km at a time, longest first, down to 4 km, recovery 3 km), then the hard runs, then the long run. Across 3,528 setting combinations, weeks over the cap went from 5,541 (worst +217%) to 159 (worst +31%), all with every run at its minimum.
+
+### Added
+- A warning names the weeks that still rise more than 10%: with every run at its shortest, it suggests fewer runs per week; after a hand edit, it suggests shortening a run.
+- Tests: the +10% check is no longer an expected failure; three new checks for the warning.
+
 ## [1.1.7] - 2026-11-09
 
 ### Fixed
