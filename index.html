@@ -118,7 +118,8 @@ textarea{resize:vertical;font-size:13.5px;line-height:1.4}
 .days button.long{box-shadow:inset 0 -3px 0 var(--long)}
 .types{display:grid;gap:8px}
 .type{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:8px 10px;display:grid;gap:8px}
-.type.off{opacity:.8}
+.type.off{background:var(--surface-2)}
+.type.off .tname{color:var(--muted)}
 .type-head{display:flex;align-items:center;gap:8px}
 .type-head input[type=checkbox]{width:17px;height:17px;accent-color:var(--accent);flex:none}
 .type-head .tname{flex:1;min-width:0;border:1px solid transparent;background:transparent;font-weight:600;padding:2px 4px;border-radius:4px}
@@ -332,7 +333,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.6";
+const VERSION = "1.1.7";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -963,7 +964,7 @@ function renderPlan(){
       <button class="btn sm ghost wbtn" data-act="wwatch" data-w="${wi}" aria-label="${esc(t("sendWatchWeek",{n:w.n}))}" title="${esc(t("sendWatchWeek",{n:w.n}))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3M12 10v2l1.5 1"/></svg>${t("watchShort")}</button></div></div></td>`;
     for(let d=0;d<7;d++){
       const ss=w.sessions.filter(s=>s.day===d);
-      h+=`<td class="day" data-w="${wi}" data-d="${d}">${ss.length?ss.map(s=>`<button type="button" class="ses ${s.kind==="race"?"race":""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${kindColor(s.kind)};--kt:${kindText(s.kind)}"><span class="t">${esc(s.name)}</span><span class="k">${esc(s.km)} km</span><span class="d">${esc(s.desc)}</span>${s.note?`<span class="nb">${t("noteBadge")}</span>`:""}</button>`).join(""):`<div class="empty" tabindex="0" role="button" aria-label="${esc(t("addRun"))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t("rest")}</span><span class="plus">${t("addRun")}</span></div>`}</td>`;
+      h+=`<td class="day" data-w="${wi}" data-d="${d}">${ss.length?ss.map(s=>`<button type="button" class="ses ${s.kind==="race"?"race":""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${kindColor(s.kind)};--kt:${kindText(s.kind)}"><span class="t">${esc(s.name)}</span><span class="k">${esc(s.km)} km</span><span class="d">${esc(s.desc)}</span>${s.note?`<span class="nb">${t("noteBadge")}</span>`:""}</button>`).join(""):`<div class="empty" tabindex="0" role="button" aria-label="${esc(t("rest")+" "+t("addRun")+" · "+t("eTitle",{n:w.n,day:DAYS[d]}))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t("rest")}</span><span class="plus">${t("addRun")}</span></div>`}</td>`;
     }
     h+=`</tr>`;
     if(w.note)h+=`<tr class="wnote"><td colspan="8"><p><b>${t("note")}</b>${esc(w.note)}</p></td></tr>`;
