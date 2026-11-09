@@ -20,6 +20,7 @@ Block Builder creates a running training block in the browser. You pick a race o
 - **Languages:** English and French.
 - **Themes:** light and dark, following the device setting.
 - **Phone layout:** Plan and Settings tabs.
+- **Keyboard and screen readers:** messages such as "Plan saved" are announced, dialogs are named by their title, Tab stays inside an open dialog, and closing it returns to the button or run that opened it.
 
 ## Where plans are stored
 
@@ -108,6 +109,7 @@ All three depend on the claude.ai artifact runtime, so they were removed here. T
 
 ## Changelog
 
+- **2026-11-09 (v1.1.6):** Screen readers now announce messages like "Plan saved" and errors. In dialogs, Tab stays inside, the dialog is announced by its title, and closing it puts you back on the button or run you started from.
 - **2026-11-09 (v1.1.5):** Leftovers from the claude.ai version are gone: notes are labelled "Note" (not "Coach") on the plan, in the CSV and PDF exports and in calendar events, and unused Claude messages and error texts were removed.
 - **2026-11-08 (v1.1.4):** On iPhone, tapping a run-type template, a run's description or note, or the export format no longer zooms the page in: those fields use 16px text on touch screens.
 - **2026-11-08 (v1.1.3):** Finish times are read to fit the race: "1:45" for a half marathon now means 1 h 45 min instead of being ignored, and a time that can't fit the race says so.
