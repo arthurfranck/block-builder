@@ -2,6 +2,12 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.10] - 2026-11-09
+
+### Fixed
+- Taper long runs scale from the longest run actually built before the taper (75%, then 60%), not from the target peak (19 km for a half, 32 km for a marathon). Plans that start from low volume never reach that target, so their taper long run could be longer than any run before it: a half at 3 runs and 15 km/week peaked at 12 km and got 14.5 km in taper week 1 (59% of the week); a marathon at 4 runs and 30 km/week peaked at 22.5 km and got 24 km. They now get 9 km and 17 km. Plans that reach the target peak are unchanged.
+- Tests: new check that taper long runs stay below the peak long run and step down, across the rule scenarios and two low-volume plans. It failed on the previous version for the half above and for the existing 3-run marathon scenario.
+
 ## [1.1.9] - 2026-11-09
 
 ### Security

@@ -333,7 +333,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.9";
+const VERSION = "1.1.10";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -711,6 +711,7 @@ function generate(inp,types){
   const rot={}; const occ={};
   const weeks=[];
   let refKm=null; /* actual km of the last week that was neither a cutback nor taper */
+  let longPk=0; /* longest long run actually built before the taper: the taper scales from it, not from the target peak (BB-39) */
   for(let i=0;i<W;i++){
     const phase=phaseOf(i), isCut=cut(i), raceWeek=!noRace&&i===W-1;
     const p=nb>1?clamp(i/(nb-1),0,1):1;
@@ -731,7 +732,7 @@ function generate(inp,types){
     let longKm,mkLong=null;
     if(raceWeek){sessions.push({id:uid(),day:longD,typeId:"race",name:t("raceDay"),kind:"race",km:+D.toFixed(1),desc:raceDesc(inp,P),note:"",watch:watchPlan("race",+D.toFixed(1))});}
     else{
-      if(phase==="taper"){longKm=Lpk*[0.75,0.6][i-nb]||Lpk*0.6;}
+      if(phase==="taper"){const pk=longPk||Lpk;longKm=pk*([0.75,0.6][i-nb]||0.6);}
       else{const nbNC=Math.max(1,nb-1);longKm=L0+(Lpk-L0)*Math.min(1,i/nbNC);longKm=Math.min(longKm,Math.max(L0*0.9,target*lfrac));if(isCut)longKm*=0.75;}
       longKm=r05(Math.max(longKm,4));
       const lt=longT.on?longT:easyT; /* long run type unticked: that day is a plain easy run */
@@ -800,6 +801,7 @@ function generate(inp,types){
       sessions.push({id:uid(),day:x.d,typeId:x.t.id,name:x.t.name,kind:x.t.kind,km,desc:fill(x.t.tpl,{...P.txt,km,work:fill(w.text||"",P.txt)}),note:"",watch:watchPlan(x.t.kind,km,w)});
     });
     if(!isCut&&phase!=="taper")refKm=sessions.reduce((a,x)=>a+x.km,0);
+    if(phase!=="taper"&&longKm)longPk=Math.max(longPk,longKm);
     sessions.sort((a,b)=>a.day-b.day);
     weeks.push({n:i+1,phase,cutback:isCut,start:iso(addDays(start,7*i)),target:Math.round(target),note:"",sessions});
   }
