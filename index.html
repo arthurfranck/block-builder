@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Block Builder</title><meta name="description" content="Build a running training block: phases, weekly volume, run types, and watch workouts."><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body data-tab="plan">
+<!doctype html><html><head><meta charset=utf8><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src https://api.open-meteo.com https://geocoding-api.open-meteo.com; base-uri 'none'; form-action 'none'; object-src 'none'"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Block Builder</title><meta name="description" content="Build a running training block: phases, weekly volume, run types, and watch workouts."><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body data-tab="plan">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
@@ -333,7 +333,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.8";
+const VERSION = "1.1.9";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -1265,7 +1265,7 @@ function rescaleWatch(wp,delta){wp=JSON.parse(JSON.stringify(wp));
   const st=wp.blocks[0]&&wp.blocks[0].n===1&&wp.blocks[0].steps.find(x=>x.g[0]==='d');
   if(st)st.g=['d',r05(Math.max(0.5,st.g[1]+delta))];return wp;}
 let WK=null;
-function loadWK(){if(!WK)WK=Promise.all([import("https://cdn.jsdelivr.net/npm/@bibixx/workoutkit@0.2.0/dist/index.js"),import("https://cdn.jsdelivr.net/npm/@bibixx/workoutkit@0.2.0/dist/encode.js")]).catch(e=>{WK=null;throw e;});return WK;}
+function loadWK(){if(!WK)WK=Promise.all([import("./vendor/workoutkit-0.2.0/index.js"),import("./vendor/workoutkit-0.2.0/encode.js")]).catch(e=>{WK=null;throw e;});return WK;}
 async function workoutBlob(w,s){
   const [K,E]=await loadWK();const P=paces(S.inputs);const wp=s.watch||watchPlan(s.kind,s.km);
   const plan=new K.WorkoutPlan({referenceId:crypto.randomUUID()});
@@ -1415,11 +1415,11 @@ S.exportFmt=(()=>{try{return localStorage.getItem("bb-export-fmt");}catch(_){ret
 
 /* PDF: jsPDF + AutoTable, loaded on first use only */
 let PDFLIB=null;
-function loadScript(src){return new Promise((ok,ko)=>{const s=document.createElement("script");s.src=src;s.async=true;s.onload=ok;s.onerror=()=>ko(new Error("load "+src));document.head.appendChild(s);});}
+function loadScript(src,integrity){return new Promise((ok,ko)=>{const s=document.createElement("script");s.src=src;s.async=true;s.integrity=integrity;s.crossOrigin="anonymous";s.onload=ok;s.onerror=()=>ko(new Error("load "+src));document.head.appendChild(s);});}
 function loadPDF(){
   if(!PDFLIB)PDFLIB=(async()=>{
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js");
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.9/jspdf.plugin.autotable.min.js");
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js","sha512-plOdviVmws4Y3JAvbnpfKb2hVxKM1lCwsi3vmElYRj+tiDLffZ4FVUj5a8vyKJ9pIgl8JCAHEJ4D1iUKBecswg==");
+    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.9/jspdf.plugin.autotable.min.js","sha512-p73fJ+Q5sCDFsEa54+EWEEWYipUV2Dc7L+E+yp6jSud5Ht1zbEqiI3OuatH5EDdDLxnOW/UN+FwBu8l+4klwLQ==");
     const J=window.jspdf&&window.jspdf.jsPDF;if(!J)throw new Error("jsPDF missing");
     const P=window.jspdf_autotable||{};
     if(!J.API.autoTable&&typeof P.applyPlugin==="function")P.applyPlugin(J);

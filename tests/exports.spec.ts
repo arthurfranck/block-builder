@@ -98,7 +98,6 @@ test.describe('watch export', () => {
   });
 
   test('Apple Watch: a zip of .workout files', async ({ app }) => {
-    test.skip(!ONLINE, 'needs jsDelivr to load the WorkoutKit encoder');
     const n = (await app.plan())[0].sessions.length;
     const { name, buf } = await sendWeek1(app, 'apple');
     expect(name).toBe('half-marathon-block-week-01-apple.zip');
