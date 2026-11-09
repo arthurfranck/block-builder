@@ -2,6 +2,14 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.9] - 2026-11-09
+
+### Security
+- jsPDF and jsPDF-AutoTable load from cdnjs with Subresource Integrity (sha512, matching the hashes cdnjs publishes). A changed or tampered file is refused and the PDF export says it couldn't load.
+- The WorkoutKit encoder (`@bibixx/workoutkit` 0.2.0, MIT) is vendored in `vendor/workoutkit-0.2.0/` instead of being imported from jsDelivr. Apple Watch export no longer needs a CDN.
+- A Content Security Policy in a `<meta>` tag: `default-src 'none'`; scripts from the page and cdnjs; styles from the page and Google Fonts; fonts from Google Fonts; network requests only to the Open-Meteo forecast and geocoding APIs; no plugins, forms or `<base>`. Inline script stays allowed until the app moves out of `index.html` (BB-7).
+- Tests: new `security.spec.ts` (policy present, no violations during load, PDF and Apple Watch export, no jsDelivr request, tampered jsPDF refused). The Apple Watch export test no longer needs a connection.
+
 ## [1.1.8] - 2026-11-09
 
 ### Fixed

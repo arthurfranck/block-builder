@@ -28,12 +28,13 @@ Plans are saved in the visitor's browser (`localStorage`) only. The weather city
 
 ## Tech
 
-- One self-contained file: `index.html` (HTML, CSS and JavaScript, no build step).
+- One file for the app: `index.html` (HTML, CSS and JavaScript, no build step), plus vendored third-party code in `vendor/` (see `vendor/README.md`).
 - External resources:
   - Google Fonts (Barlow, Barlow Condensed, JetBrains Mono)
-  - [`@bibixx/workoutkit`](https://www.npmjs.com/package/@bibixx/workoutkit) from jsDelivr, loaded only when exporting to Apple Watch
   - [Open-Meteo](https://open-meteo.com) forecast and geocoding APIs (free, no key), called only once a city or location is set
-  - [jsPDF](https://github.com/parallax/jsPDF) 4.2.1 and [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable) 5.0.9 from cdnjs, loaded only when exporting a PDF
+  - [jsPDF](https://github.com/parallax/jsPDF) 4.2.1 and [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable) 5.0.9 from cdnjs, loaded only when exporting a PDF, with integrity hashes: if the CDN serves a different file, the browser refuses it
+- Vendored: [`@bibixx/workoutkit`](https://www.npmjs.com/package/@bibixx/workoutkit) 0.2.0 (MIT) in `vendor/workoutkit-0.2.0/`, loaded only when exporting to Apple Watch.
+- Content Security Policy (in a `<meta>` tag): scripts only from the page itself and cdnjs, styles from the page and Google Fonts, network requests only to Open-Meteo, no plugins, forms or `<base>` changes. Inline script is still allowed because the app lives in `index.html`; moving it to its own file would let the policy drop `'unsafe-inline'`.
 - Hosted on GitHub Pages from the `main` branch, root folder.
 - `package.json`, `package-lock.json`, `playwright.config.ts` and `tests/` are for the automated tests only; the page doesn't use them. The lockfile pins the exact test tool versions, so CI and a local run use the same Playwright and axe-core. To move to newer versions, run `npm update` and commit the changed lockfile in a pull request.
 
@@ -66,7 +67,7 @@ npm run test:desktop   # or test:mobile, test:chrome
 npm run test:report    # open the last HTML report
 ```
 
-Every test starts on a frozen date (Friday 6 November 2026, Paris time) with empty storage, so generated plans are the same on every run. Tests that load jsPDF or the WorkoutKit encoder from a CDN are skipped when `OFFLINE=1` is set.
+Every test starts on a frozen date (Friday 6 November 2026, Paris time) with empty storage, so generated plans are the same on every run. Tests that load jsPDF from cdnjs are skipped when `OFFLINE=1` is set.
 
 | File | Covers |
 |---|---|
@@ -81,6 +82,7 @@ Every test starts on a frozen date (Friday 6 November 2026, Paris time) with emp
 | `i18n.spec.ts` | every string in English and French with matching placeholders, language switch |
 | `mobile.spec.ts` | Plan/Settings tabs, 16px fields, tap targets, sideways grid scroll; side-by-side layout on desktop |
 | `layout.spec.ts` | nothing sticks out of the page, dark mode, no script errors |
+| `security.spec.ts` | Content Security Policy present and not broken by the page or either export, WorkoutKit not fetched from a CDN, a tampered jsPDF file refused |
 | `a11y.spec.ts` | WCAG 2.1 A/AA checks on each view and dialog, light and dark |
 
 GitHub Actions runs every setup on each push and pull request (`.github/workflows/tests.yml`) and keeps each setup's HTML report for 14 days. `main` is protected: all six setups must pass before a pull request can merge or a push can land, admins included, and force-pushes are blocked. GitHub Pages publishes `main` as soon as it changes, so only tested code goes live.
@@ -106,6 +108,7 @@ All three depend on the claude.ai artifact runtime, so they were removed here. T
 
 ## Changelog
 
+- **2026-11-09 (v1.1.9):** Safer outside code: the PDF libraries are checked against fixed hashes before they run, the Apple Watch encoder is now served from this site instead of a CDN, and a Content Security Policy limits where scripts and requests can go.
 - **2026-11-09 (v1.1.8):** Weekly mileage now grows at most 10% on the last full week, including after cutback weeks; before, rounding pushed some weeks up 13 to 19%. When the minimum run distances make that impossible, or a hand edit causes a jump, a warning names the weeks.
 - **2026-11-09 (v1.1.7):** Switched-off run types are easier to read: the card turns grey instead of fading the text. Screen readers announce rest days as "Rest + Add run · Week 1 · Wed" instead of just "+ Add run".
 - **2026-11-09 (v1.1.6):** Screen readers now announce messages like "Plan saved" and errors. In dialogs, Tab stays inside, the dialog is announced by its title, and closing it puts you back on the button or run you started from.
