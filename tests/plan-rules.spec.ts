@@ -102,3 +102,28 @@ test.describe('weeks the 10% cap cannot hold', () => {
     await expect(app.warnings().filter({ hasText: 'more than 10% bigger' })).toContainText(['Week 2 is more than 10% bigger than the last full week before. Shortening a run would keep the build gentler.']);
   });
 });
+
+test.describe('taper long runs', () => {
+  /*
+   * The taper used to scale from the target peak long run (19 km for a half, 32 km for a marathon),
+   * so a plan that never reached it got a longer run in the taper than at its peak (BB-39).
+   */
+  const LOW: Scenario[] = [
+    { dist: 'hm', runs: 3, weeks: 12, curVol: 15, curLong: 6, taper: 2 },
+    { dist: 'm', runs: 4, weeks: 16, curVol: 30, curLong: 14, taper: 3 },
+  ];
+  test('are shorter than the longest run before the taper, and get shorter week to week', async ({ app }) => {
+    for (const sc of [...SCENARIOS, ...LOW]) {
+      const { taper, ...cfg } = sc;
+      await app.configure(cfg);
+      const weeks = await app.plan();
+      const longKm = (w: Week) => w.sessions.find((s) => s.kind === 'long')?.km ?? 0;
+      const peak = Math.max(...weeks.filter((w) => w.phase !== 'taper').map(longKm));
+      const taperLongs = weeks.filter((w) => w.phase === 'taper' && w !== weeks.at(-1)).map(longKm);
+      taperLongs.forEach((km, i) => {
+        expect.soft(km, `${label(sc)}: taper week ${i + 1} long run vs peak ${peak} km`).toBeLessThan(peak);
+        if (i > 0) expect.soft(km, `${label(sc)}: taper week ${i + 1} vs taper week ${i}`).toBeLessThanOrEqual(taperLongs[i - 1]);
+      });
+    }
+  });
+});
