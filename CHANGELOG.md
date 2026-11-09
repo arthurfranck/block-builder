@@ -5,7 +5,7 @@ All notable changes to Block Builder. Format: [Keep a Changelog](https://keepach
 ## [1.1.11] - 2026-11-09
 
 ### Changed
-- The language picker in the header is a dropdown (English / Français) instead of two EN/FR buttons. Tests updated, plus a new check that the dropdown shows the current language and switches back to English.
+- The language picker in the header is a dropdown (English / Français) instead of two EN/FR buttons. On phones and tablets it uses 16px text, so iOS doesn't zoom in when you tap it. Tests updated, plus a new check that the dropdown shows the current language and switches back to English.
 
 ## [1.1.10] - 2026-11-09
 

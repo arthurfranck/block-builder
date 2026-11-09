@@ -62,7 +62,7 @@ test.describe('language switch', () => {
     await expect(page.locator('#btnPlans')).toHaveText('Mes plans');
   });
 
-  test('the language dropdown shows the current language and switches back', async ({ page }) => {
+  test('the language dropdown shows the current language and switches back', async ({ app, page }) => {
     const sel = page.locator('#langSel');
     await expect(sel).toHaveValue('en');
     await expect(sel.locator('option')).toHaveText(['English', 'Français']);
