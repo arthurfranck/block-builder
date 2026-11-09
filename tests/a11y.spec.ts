@@ -4,15 +4,12 @@ import type { Page } from '@playwright/test';
 /*
  * Accessibility checks with axe-core (WCAG 2.0 and 2.1, A and AA rules).
  *
- * Known issues, found when this suite was written. Each scan must report exactly these
- * rule ids: a new problem fails the test, and so does fixing one of these (then remove
- * it from the list and from the README's Tests section).
- *  - color-contrast: the summary line of a run type that is switched off (Fartlek and
- *    Progression by default) is dimmed below the 4.5:1 contrast minimum.
- *  - label-content-name-mismatch: rest-day cells show "Rest + Add run" but are
- *    announced only as "+ Add run".
+ * Known issues: rule ids listed here are let through so that new problems still stand out.
+ * Each scan must report exactly these: a new problem fails the test, and so does fixing
+ * one of these (then remove it from the list and from the README's Tests section).
+ * None at the moment (the two found when the suite was written were fixed in BB-14).
  */
-const KNOWN = ['color-contrast', 'label-content-name-mismatch'];
+const KNOWN: string[] = [];
 
 async function scan(page: Page) {
   let AxeBuilder: any;
@@ -62,6 +59,11 @@ test('the known issues are still there', async ({ app, page }) => {
   details.push(...(await scan(page)).details);
   const found = KNOWN.filter((id) => details.some((d) => d.startsWith(id + ' ')));
   expect(found, 'a known issue is fixed: remove it from KNOWN and from the README').toEqual(KNOWN);
+});
+
+test('a rest day is announced with what it shows, plus the week and day', async ({ app, page }) => {
+  await app.showPlan();
+  await expect(app.cell(0, 2).getByRole('button', { name: 'Rest + Add run · Week 1 · Wed' })).toBeVisible();
 });
 
 /* Screen reader and keyboard basics that axe can't see (BB-6). */

@@ -2,6 +2,13 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.7] - 2026-11-09
+
+### Fixed
+- Switched-off run types (Fartlek and Progression by default) are no longer faded to 80% opacity, which put their grey summary line below the 4.5:1 contrast minimum. The card now gets the darker surface and a grey name; all its text stays at 4.8:1 or more in light and dark themes.
+- Rest-day cells were announced as "+ Add run" while showing "Rest + Add run". They are now announced with what they show, plus the week and day ("Rest + Add run · Week 1 · Wed").
+- Tests: no accessibility issues are let through any more (the `KNOWN` list is empty); a new check covers the rest-day name.
+
 ## [1.1.6] - 2026-11-09
 
 ### Added
