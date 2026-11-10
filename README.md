@@ -36,7 +36,7 @@ Plans are saved in the visitor's browser (`localStorage`) only. The weather city
 - Vendored: [`@bibixx/workoutkit`](https://www.npmjs.com/package/@bibixx/workoutkit) 0.2.0 (MIT) in `vendor/workoutkit-0.2.0/`, loaded only when exporting to Apple Watch.
 - Content Security Policy (in a `<meta>` tag): scripts only from the page itself and cdnjs, styles from the page and Google Fonts, network requests only to Open-Meteo, no plugins, forms or `<base>` changes. Inline script is still allowed because the app lives in `index.html`; moving it to its own file would let the policy drop `'unsafe-inline'`.
 - Hosted on GitHub Pages from the `main` branch, root folder.
-- `package.json`, `package-lock.json`, `playwright.config.ts` and `tests/` are for the automated tests only; the page doesn't use them. The lockfile pins the exact test tool versions, so CI and a local run use the same Playwright and axe-core. To move to newer versions, run `npm update` and commit the changed lockfile in a pull request.
+- `package.json`, `package-lock.json`, `playwright.config.ts` and `tests/` are for the automated tests only; the page doesn't use them. The lockfile pins the exact test tool versions, so CI and a local run use the same Playwright and axe-core. To move to newer versions, run `npm update`, set the Playwright container image in `.github/workflows/tests.yml` to the same version (CI stops with a message if they differ), and commit both in a pull request.
 
 ## Run locally
 
@@ -85,7 +85,7 @@ Every test starts on a frozen date (Friday 6 November 2026, Paris time) with emp
 | `security.spec.ts` | Content Security Policy present and not broken by the page or either export, WorkoutKit not fetched from a CDN, a tampered jsPDF file refused |
 | `a11y.spec.ts` | WCAG 2.1 A/AA checks on each view and dialog, dark and light |
 
-GitHub Actions runs every setup on each push and pull request (`.github/workflows/tests.yml`) and keeps each setup's HTML report for 14 days. `main` is protected: all six setups must pass before a pull request can merge or a push can land, admins included, and force-pushes are blocked. GitHub Pages publishes `main` as soon as it changes, so only tested code goes live.
+GitHub Actions runs every setup on each push and pull request (`.github/workflows/tests.yml`) and keeps each setup's HTML report for 14 days. Jobs run inside Playwright's own Docker image, which already has the browsers and their system libraries, so nothing is installed through apt. The tests serve the page with a small Node server (`tests/serve.mjs`). `main` is protected: all six setups must pass before a pull request can merge or a push can land, admins included, and force-pushes are blocked. GitHub Pages publishes `main` as soon as it changes, so only tested code goes live.
 
 ### Known issues
 
