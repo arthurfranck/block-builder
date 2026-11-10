@@ -46,7 +46,7 @@ test.describe('translations', () => {
 
 test.describe('language switch', () => {
   test('French translates the page and the plan', async ({ app, page }) => {
-    await page.locator('#langSeg [data-lang="fr"]').click();
+    await page.locator('#langSel').selectOption('fr');
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
     await expect(page.locator('#btnSave')).toHaveText('Enregistrer');
     await expect(page.locator('table.grid thead th').nth(1)).toHaveText('Lun');
@@ -56,10 +56,21 @@ test.describe('language switch', () => {
   });
 
   test('the choice survives a reload', async ({ app, page }) => {
-    await page.locator('#langSeg [data-lang="fr"]').click();
+    await page.locator('#langSel').selectOption('fr');
     await app.open();
-    await expect(page.locator('#langSeg [data-lang="fr"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#langSel')).toHaveValue('fr');
     await expect(page.locator('#btnPlans')).toHaveText('Mes plans');
+  });
+
+  test('the language dropdown shows the current language and switches back', async ({ app, page }) => {
+    const sel = page.locator('#langSel');
+    await expect(sel).toHaveValue('en');
+    await expect(sel.locator('option')).toHaveText(['English', 'Français']);
+    await sel.selectOption('fr');
+    await expect(sel).toHaveAttribute('aria-label', 'Langue');
+    await sel.selectOption('en');
+    await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+    await expect(page.locator('#btnSave')).toHaveText('Save plan');
   });
 
   test('a French browser opens in French', async ({ browser }) => {
@@ -75,7 +86,7 @@ test.describe('language switch', () => {
     await page.locator('#eNote').fill('x');
     await page.locator('#eOk').click();
     const before = (await app.plan())[0].sessions[0].name;
-    await page.locator('#langSeg [data-lang="fr"]').click();
+    await page.locator('#langSel').selectOption('fr');
     await expect(app.toast()).toContainText('Les séances modifiées à la main gardent leur texte');
     expect((await app.plan())[0].sessions[0].name).toBe(before);
   });

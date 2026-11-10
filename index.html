@@ -42,7 +42,9 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;padding-
 .brand .lanes i{display:block;background:var(--accent);border-radius:2px}
 .brand .lanes i:nth-child(2){width:80%}.brand .lanes i:nth-child(3){width:55%}
 .top .spacer{flex:1}
-.seg.lang button{padding:5px 8px;font-size:12.5px;letter-spacing:.04em}
+.lang-sel{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 8px;font-size:13.5px;font-weight:600;cursor:pointer}
+.lang-sel:hover{border-color:var(--ink)}
+@media (pointer:coarse){.lang-sel{font-size:16px}}
 .hello{display:flex;align-items:center;gap:16px;padding-block:2px 14px}
 .hello p.lead{margin:0;font-size:17px;color:var(--ink);max-width:70ch}
 .hello p.lead b{color:var(--ink)}
@@ -263,7 +265,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
     <input class="plan-name" id="planName" data-i18n-aria="planNameLabel">
     <span class="status" id="saveStatus"></span>
     <span class="spacer"></span>
-    <div class="seg lang" role="group" id="langSeg" data-i18n-aria="language"><button type="button" data-lang="en">EN</button><button type="button" data-lang="fr">FR</button></div>
+    <select class="lang-sel" id="langSel" data-i18n-aria="language"><option value="en" lang="en">English</option><option value="fr" lang="fr">Français</option></select>
     <button class="btn" id="btnPlans" data-i18n="myPlans">My plans</button>
     <button class="btn" id="btnNew" data-i18n="newPlan">New plan</button>
     <button class="btn primary" id="btnSave" data-i18n="savePlan">Save plan</button>
@@ -333,7 +335,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.10";
+const VERSION = "1.1.11";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -1616,7 +1618,7 @@ function applyStatic(){
   document.querySelectorAll("[data-i18n-html]").forEach(el=>{el.innerHTML=t(el.dataset.i18nHtml);});
   document.querySelectorAll("[data-i18n-ph]").forEach(el=>{el.placeholder=t(el.dataset.i18nPh);});
   document.querySelectorAll("[data-i18n-aria]").forEach(el=>{el.setAttribute("aria-label",t(el.dataset.i18nAria));});
-  document.querySelectorAll("#langSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.lang===LANG));
+  $("#langSel").value=LANG;
 }
 function setLang(l){
   if(l===LANG||!I18N[l])return;
@@ -1629,7 +1631,7 @@ function setLang(l){
   applyStatic();renderSetup();renderPlan();
   const st=$("#saveStatus");if(st&&!S.savedAt)setStatus(t("notSaved"));
 }
-$("#langSeg").addEventListener("click",e=>{const b=e.target.closest("[data-lang]");if(b)setLang(b.dataset.lang);});
+$("#langSel").addEventListener("change",e=>setLang(e.target.value));
 
 applyStatic();
 regen();renderSetup();$("#planName").value=S.name;renderPlan();setStatus(t("notSaved"));

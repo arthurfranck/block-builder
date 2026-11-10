@@ -17,7 +17,7 @@ Block Builder creates a running training block in the browser. You pick a race o
 - **Race countdown:** optional, with the race name, city and a link to its page (Finishers search built in).
 - **Watch export:** Apple Watch (`.workout`, through WorkoutKit), Garmin and other devices (`.fit`), per run, per week or for the whole plan.
 - **Other exports:** calendar (`.ics`), plus a format dropdown for the plan itself: spreadsheet (`.csv`) or printable PDF (A4 landscape week-by-day grid with phases, weekly km, run descriptions and plan totals). The dropdown remembers the last format picked.
-- **Languages:** English and French.
+- **Languages:** English and French, picked from a dropdown in the header.
 - **Themes:** light and dark, following the device setting.
 - **Phone layout:** Plan and Settings tabs.
 - **Keyboard and screen readers:** messages such as "Plan saved" are announced, dialogs are named by their title, Tab stays inside an open dialog, and closing it returns to the button or run that opened it.
@@ -108,6 +108,7 @@ All three depend on the claude.ai artifact runtime, so they were removed here. T
 
 ## Changelog
 
+- **2026-11-09 (v1.1.11):** The language picker in the header is now a dropdown (English / Français) instead of two EN/FR buttons.
 - **2026-11-09 (v1.1.10):** Taper long runs no longer come out longer than the longest run before them. Plans that start from low volume never reach the usual peak long run, and the taper used to scale from that usual peak anyway: a beginner half plan peaking at 12 km got 14.5 km in its first taper week.
 - **2026-11-09 (v1.1.9):** Safer outside code: the PDF libraries are checked against fixed hashes before they run, the Apple Watch encoder is now served from this site instead of a CDN, and a Content Security Policy limits where scripts and requests can go.
 - **2026-11-09 (v1.1.8):** Weekly mileage now grows at most 10% on the last full week, including after cutback weeks; before, rounding pushed some weeks up 13 to 19%. When the minimum run distances make that impossible, or a hand edit causes a jump, a warning names the weeks.
