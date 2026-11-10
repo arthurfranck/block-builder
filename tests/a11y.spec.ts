@@ -47,9 +47,12 @@ test('My plans and the watch dialog', async ({ app, page }) => {
   await clean(page, 'watch dialog');
 });
 
-test('dark mode', async ({ app, page }) => {
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await clean(page, 'dark mode');
+test('light theme', async ({ app, page }) => {
+  await page.locator('#themeSel').selectOption('light');
+  await app.showPlan();
+  await clean(page, 'light theme, plan view');
+  await app.showSetup();
+  await clean(page, 'light theme, settings view');
 });
 
 test('the known issues are still there', async ({ app, page }) => {

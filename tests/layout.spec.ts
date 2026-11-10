@@ -30,11 +30,41 @@ test('long names wrap instead of breaking the layout', async ({ app, page }) => 
   expect(await overflowing(page)).toEqual([]);
 });
 
-test('dark mode follows the device setting', async ({ app, page }) => {
-  await page.emulateMedia({ colorScheme: 'dark' });
-  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(14, 20, 23)');
+const NIGHT = 'rgb(11, 15, 16)';
+const DAY = 'rgb(242, 245, 244)';
+const bg = (page: any) => page.locator('body');
+
+test('dark is the default theme, even on a device set to light', async ({ app, page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
-  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(242, 245, 244)');
+  await expect(bg(page)).toHaveCSS('background-color', NIGHT);
+  await expect(page.locator('#themeSel')).toHaveValue('dark');
+});
+
+test('the light theme is kept after a reload', async ({ app, page }) => {
+  await page.locator('#themeSel').selectOption('light');
+  await expect(bg(page)).toHaveCSS('background-color', DAY);
+  await page.reload();
+  await expect(bg(page)).toHaveCSS('background-color', DAY);
+  await expect(page.locator('#themeSel')).toHaveValue('light');
+});
+
+test('Auto follows the device setting', async ({ app, page }) => {
+  await page.locator('#themeSel').selectOption('auto');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await expect(bg(page)).toHaveCSS('background-color', DAY);
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await expect(bg(page)).toHaveCSS('background-color', NIGHT);
+});
+
+test('the volt accent is only on today and the primary button', async ({ app, page }) => {
+  const VOLT = 'rgb(212, 255, 58)';
+  await expect(page.locator('#btnSave')).toHaveCSS('background-color', VOLT);
+  await expect(page.locator('.today')).toHaveCSS('border-top-color', VOLT);
+  const others = await page.evaluate((volt) => [...document.querySelectorAll('body *')]
+    .filter((el) => !el.closest('.today, .btn.primary'))
+    .filter((el) => { const c = getComputedStyle(el); return [c.color, c.backgroundColor, c.borderTopColor].includes(volt); })
+    .map((el) => el.tagName + '.' + el.className), VOLT);
+  expect(others).toEqual([]);
 });
 
 test('the page loads without script errors', async ({ page }) => {
