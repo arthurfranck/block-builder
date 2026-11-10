@@ -2,6 +2,13 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.13] - 2026-11-10
+
+### Changed
+- Theme and language moved out of the header into a gear menu at its end (BB-61). The header now leads with the plan name, My plans, New plan and Save; on phone the brand and gear share the first row and the plan name gets its own line instead of being cut to "Half marat…".
+- Theme is a Dark / Light / Auto switch (one tap, no native picker) with a hint that Auto follows the device; "Auto (device)" shortened to "Auto".
+- The menu closes on Escape (focus back to the gear) or a tap outside; the language select is labelled by a visible "Language" label.
+
 ## [1.1.12] - 2026-11-10
 
 ### Changed

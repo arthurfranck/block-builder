@@ -47,8 +47,13 @@ test('My plans and the watch dialog', async ({ app, page }) => {
   await clean(page, 'watch dialog');
 });
 
+test('display and language panel', async ({ app, page }) => {
+  await app.openPrefs();
+  await clean(page, 'display and language panel');
+});
+
 test('light theme', async ({ app, page }) => {
-  await page.locator('#themeSel').selectOption('light');
+  await app.setTheme('light');
   await app.showPlan();
   await clean(page, 'light theme, plan view');
   await app.showSetup();

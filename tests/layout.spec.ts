@@ -37,19 +37,19 @@ const bg = (page: any) => page.locator('body');
 test('dark is the default theme, even on a device set to light', async ({ app, page }) => {
   await page.emulateMedia({ colorScheme: 'light' });
   await expect(bg(page)).toHaveCSS('background-color', NIGHT);
-  await expect(page.locator('#themeSel')).toHaveValue('dark');
+  await expect(page.locator('#themeSeg [data-theme-v="dark"]')).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('the light theme is kept after a reload', async ({ app, page }) => {
-  await page.locator('#themeSel').selectOption('light');
+  await app.setTheme('light');
   await expect(bg(page)).toHaveCSS('background-color', DAY);
   await page.reload();
   await expect(bg(page)).toHaveCSS('background-color', DAY);
-  await expect(page.locator('#themeSel')).toHaveValue('light');
+  await expect(page.locator('#themeSeg [data-theme-v="light"]')).toHaveAttribute('aria-pressed', 'true');
 });
 
 test('Auto follows the device setting', async ({ app, page }) => {
-  await page.locator('#themeSel').selectOption('auto');
+  await app.setTheme('auto');
   await page.emulateMedia({ colorScheme: 'light' });
   await expect(bg(page)).toHaveCSS('background-color', DAY);
   await page.emulateMedia({ colorScheme: 'dark' });
@@ -73,4 +73,31 @@ test('the page loads without script errors', async ({ page }) => {
   await page.goto('/index.html');
   await expect(page.locator('table.grid')).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+test.describe('display and language panel', () => {
+  test('theme and language stay behind the gear until it is opened', async ({ app, page }) => {
+    await expect(page.locator('#btnSave')).toBeVisible();
+    await expect(page.locator('#langSel')).toBeHidden();
+    await expect(page.locator('#themeSeg')).toBeHidden();
+    await expect(page.locator('#btnPrefs')).toHaveAttribute('aria-expanded', 'false');
+    await app.openPrefs();
+    await expect(page.locator('#btnPrefs')).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.locator('#themeSeg [data-theme-v="dark"]')).toBeFocused();
+    expect(await overflowing(page)).toEqual([]);
+  });
+
+  test('Escape closes the panel and puts focus back on the gear', async ({ app, page }) => {
+    await app.openPrefs();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#prefsPanel')).toBeHidden();
+    await expect(page.locator('#btnPrefs')).toBeFocused();
+  });
+
+  test('a tap outside closes the panel, a tap inside keeps it open', async ({ app, page }) => {
+    await app.setTheme('light');
+    await expect(page.locator('#prefsPanel')).toBeVisible();
+    await page.locator('.brand').click();
+    await expect(page.locator('#prefsPanel')).toBeHidden();
+  });
 });
