@@ -10,6 +10,12 @@ jobs:
   test:
     name: ${{ matrix.project }}
     runs-on: ubuntu-latest
+    # Playwright's own image ships the browsers and every system library they need, so no job
+    # runs apt (apt install-deps used to hang on the runner's dpkg lock and time out at 12 min, BB-60).
+    # The tag must match playwright-core in package-lock.json, or the browsers won't be found.
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.0-noble
+      options: --user 1001 --ipc=host
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -29,22 +35,11 @@ jobs:
           cache: npm
       # Exact versions from package-lock.json: a new Playwright or axe release can't change CI on its own.
       - run: npm ci --no-audit --no-fund
-      # System libraries go through apt. Never kill apt mid-run: a killed apt-get leaves the dpkg lock held
-      # and every retry then fails with "Could not get lock". Instead, let apt wait for the lock
-      # (the runner's own apt jobs can hold it at start-up) and cap the step as a whole.
-      - name: Install browser system libraries
-        timeout-minutes: 12
+      # Fails fast with a clear message if package-lock.json moved to another Playwright than the image.
+      - name: Check Playwright matches the image
         run: |
-          echo 'DPkg::Lock::Timeout "600";' | sudo tee /etc/apt/apt.conf.d/99-lock-timeout
-          npx playwright install-deps ${{ matrix.project == 'desktop-chrome' && 'chromium' || 'webkit' }}
-      # The browser download itself touches no lock, so it is safe to cap and retry.
-      - name: Install browser
-        run: |
-          for i in 1 2 3; do
-            timeout 300 npx playwright install ${{ matrix.project == 'desktop-chrome' && 'chromium' || 'webkit' }} && exit 0
-            echo "Browser download attempt $i failed or stalled, retrying"
-          done
-          exit 1
+          want=$(node -p "require('./package-lock.json').packages['node_modules/playwright-core'].version")
+          grep -q "mcr.microsoft.com/playwright:v$want-" .github/workflows/tests.yml || { echo "::error::package-lock.json has Playwright $want: set the container image in tests.yml to v$want"; exit 1; }
       - run: npx playwright test --project=${{ matrix.project }}
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}

@@ -33,7 +33,7 @@ export default defineConfig({
     { name: 'iphone-17-pro-max-safari', use: { ...devices['iPhone 17 Pro Max'] } },
   ],
   webServer: {
-    command: `python3 -m http.server ${PORT} --bind 127.0.0.1`,
+    command: `node tests/serve.mjs ${PORT}`,
     url: `http://127.0.0.1:${PORT}/index.html`,
     reuseExistingServer: !process.env.CI,
   },
