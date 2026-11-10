@@ -45,6 +45,21 @@ export class App {
     await expect(this.page.locator('#plan')).toBeVisible();
   }
 
+  /* ---------- display and language panel (gear at the end of the header) ---------- */
+  async openPrefs() {
+    const panel = this.page.locator('#prefsPanel');
+    if (await panel.isHidden()) await this.page.locator('#btnPrefs').click();
+    await expect(panel).toBeVisible();
+  }
+  async setLang(l: 'en' | 'fr') {
+    await this.openPrefs();
+    await this.page.locator('#langSel').selectOption(l);
+  }
+  async setTheme(v: 'dark' | 'light' | 'auto') {
+    await this.openPrefs();
+    await this.page.locator(`#themeSeg [data-theme-v="${v}"]`).click();
+  }
+
   /* ---------- setup form ---------- */
   async setField(id: string, value: string | number) {
     await this.showSetup();

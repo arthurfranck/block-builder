@@ -46,6 +46,17 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;padding-
 .top .spacer{flex:1}
 .lang-sel{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:6px 8px;font-size:13.5px;font-weight:600;cursor:pointer}
 .lang-sel:hover{border-color:var(--ink)}
+/* Display and language: secondary settings behind one icon at the end of the header (BB-61) */
+.prefs{position:relative}
+.icon-btn{display:grid;place-items:center;width:36px;height:36px;border:1px solid var(--line);background:var(--surface);border-radius:8px;cursor:pointer;color:var(--ink);padding:0}
+.icon-btn:hover,.icon-btn[aria-expanded="true"]{border-color:var(--ink)}
+@media (pointer:coarse){.icon-btn{width:44px;height:44px}}
+.prefs-panel{position:absolute;right:0;top:calc(100% + 6px);z-index:30;width:240px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px;box-shadow:0 12px 30px rgba(0,0,0,.35);display:grid;gap:6px}
+.prefs-lbl{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.prefs-panel .seg{display:grid;grid-template-columns:repeat(3,1fr)}
+.prefs-panel .seg button{padding:7px 4px}
+.prefs-hint{margin:0 0 6px;font-size:12px;color:var(--muted)}
+.prefs-panel .lang-sel{width:100%}
 @media (pointer:coarse){.lang-sel{font-size:16px}}
 .hello{display:flex;align-items:center;gap:16px;padding-block:2px 14px}
 .hello p.lead{margin:0;font-size:17px;color:var(--ink);max-width:70ch}
@@ -75,10 +86,13 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;padding-
 }
 @media (max-width:640px){
   header.top{gap:10px 8px;padding-bottom:10px;margin-bottom:12px}
-  .brand{font-size:24px;flex:1 1 100%}
+  .brand{font-size:24px;flex:1 1 auto}
+  .prefs{order:1}
+  .plan-name{order:2}
+  #saveStatus{order:3}
+  .top .btn{order:4}
   .top .spacer{display:none}
-  .plan-name{order:5;flex:1 1 0;width:auto;font-size:18px;padding-left:0}
-  #saveStatus{order:6}
+  .plan-name{flex:1 1 200px;width:auto;font-size:18px;padding-left:0}
   .top .btn{padding:7px 10px}
   #btnSave{margin-left:auto}
   .hello p.lead{font-size:15.5px}
@@ -267,11 +281,19 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
     <input class="plan-name" id="planName" data-i18n-aria="planNameLabel">
     <span class="status" id="saveStatus"></span>
     <span class="spacer"></span>
-    <select class="lang-sel" id="themeSel" data-i18n-aria="theme"><option value="dark" data-i18n="thDark">Dark</option><option value="light" data-i18n="thLight">Light</option><option value="auto" data-i18n="thAuto">Auto</option></select>
-    <select class="lang-sel" id="langSel" data-i18n-aria="language"><option value="en" lang="en">English</option><option value="fr" lang="fr">Français</option></select>
     <button class="btn" id="btnPlans" data-i18n="myPlans">My plans</button>
     <button class="btn" id="btnNew" data-i18n="newPlan">New plan</button>
     <button class="btn primary" id="btnSave" data-i18n="savePlan">Save plan</button>
+    <div class="prefs" id="prefs">
+      <button type="button" class="icon-btn" id="btnPrefs" aria-expanded="false" aria-controls="prefsPanel" data-i18n-aria="prefs"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+      <div class="prefs-panel" id="prefsPanel" role="group" data-i18n-aria="prefs" hidden>
+        <span class="prefs-lbl" id="themeLbl" data-i18n="theme">Theme</span>
+        <div class="seg" id="themeSeg" role="group" aria-labelledby="themeLbl"><button type="button" data-theme-v="dark" data-i18n="thDark">Dark</button><button type="button" data-theme-v="light" data-i18n="thLight">Light</button><button type="button" data-theme-v="auto" data-i18n="thAuto">Auto</button></div>
+        <p class="prefs-hint" data-i18n="thHint">Auto follows your device.</p>
+        <label class="prefs-lbl" for="langSel" data-i18n="language">Language</label>
+        <select class="lang-sel" id="langSel"><option value="en" lang="en">English</option><option value="fr" lang="fr">Français</option></select>
+      </div>
+    </div>
   </header>
 
   <div class="mtabs" role="tablist" id="mtabs"><button type="button" role="tab" data-tab="plan" aria-selected="true" data-i18n="tabPlan">Plan</button><button type="button" role="tab" data-tab="setup" aria-selected="false" data-i18n="tabSetup">Settings</button></div>
@@ -338,13 +360,13 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.12";
+const VERSION = "1.1.13";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
 const I18N={
 en:{
-planNameLabel:"Plan name",secGoal:"Goal",goalRace:"Train for a race",goalFit:"Get in shape",focusDist:"Focus distance",startDate:"Start date",focusHint:"Sets the paces and how long the long runs get. No race, no taper: the plan just builds week by week.",fitHint:"Starts Monday {s}, ends Sunday {e}.",fitBlock:"{n}-week fitness block",hFitStarts:"Your {n}-week plan starts Monday {d}.",hFitIn:"Week {n} of {t}, {phase} phase{cut}.",hFitDone:"Your {n}-week plan finished on {d}. Set a new start date to plan the next block.",wa_pastFit:"Week 1 started on {d}. Move the start date if you want the plan to begin now.",planMetaFit:"{lbl} focus · {w} weeks · starts {d}",myPlans:"My plans",newPlan:"New plan",savePlan:"Save plan",language:"Language",theme:"Theme",thDark:"Dark",thLight:"Light",thAuto:"Auto (device)",
+planNameLabel:"Plan name",secGoal:"Goal",goalRace:"Train for a race",goalFit:"Get in shape",focusDist:"Focus distance",startDate:"Start date",focusHint:"Sets the paces and how long the long runs get. No race, no taper: the plan just builds week by week.",fitHint:"Starts Monday {s}, ends Sunday {e}.",fitBlock:"{n}-week fitness block",hFitStarts:"Your {n}-week plan starts Monday {d}.",hFitIn:"Week {n} of {t}, {phase} phase{cut}.",hFitDone:"Your {n}-week plan finished on {d}. Set a new start date to plan the next block.",wa_pastFit:"Week 1 started on {d}. Move the start date if you want the plan to begin now.",planMetaFit:"{lbl} focus · {w} weeks · starts {d}",myPlans:"My plans",newPlan:"New plan",savePlan:"Save plan",language:"Language",theme:"Theme",thDark:"Dark",thLight:"Light",thAuto:"Auto",thHint:"Auto follows your device.",prefs:"Display and language",
 secRace:"Race",distance:"Distance",customKm:"Custom distance (km)",raceDate:"Race date",weeks:"Weeks of training",
 secNow:"Your running now",curVol:"Weekly volume (km)",curLong:"Longest recent run (km)",recDist:"Recent race",none:"None",
 halfMarathon:"Half marathon",marathon:"Marathon",recTime:"Finish time",recTimePh:"h:mm:ss or mm:ss",
@@ -440,7 +462,7 @@ wxSun:"sunset {t}",wxBest:"Driest slot left today: <b>{h}</b>, {p}% rain, {tp}°
 wmo0:"Clear",wmo1:"Mostly clear",wmo2:"Partly cloudy",wmo3:"Overcast",wmo45:"Fog",wmo51:"Drizzle",wmo56:"Freezing drizzle",wmo61:"Rain",wmo65:"Heavy rain",wmo66:"Freezing rain",wmo71:"Snow",wmo80:"Showers",wmo85:"Snow showers",wmo95:"Thunderstorm"
 },
 fr:{
-planNameLabel:"Nom du plan",secGoal:"Objectif",goalRace:"Préparer une course",goalFit:"Me remettre en forme",focusDist:"Distance de référence",startDate:"Date de début",focusHint:"Elle fixe les allures et la longueur des sorties longues. Pas de course, pas d'affûtage : le plan progresse simplement semaine après semaine.",fitHint:"Du lundi {s} au dimanche {e}.",fitBlock:"Plan forme {n} semaines",hFitStarts:"Votre plan de {n} semaines commence le lundi {d}.",hFitIn:"Semaine {n} sur {t}, phase {phase}{cut}.",hFitDone:"Votre plan de {n} semaines s'est terminé le {d}. Indiquez une nouvelle date de début pour préparer la suite.",wa_pastFit:"La semaine 1 a commencé le {d}. Déplacez la date de début pour que le plan démarre maintenant.",planMetaFit:"Base {lbl} · {w} semaines · début le {d}",myPlans:"Mes plans",newPlan:"Nouveau plan",savePlan:"Enregistrer",language:"Langue",theme:"Thème",thDark:"Sombre",thLight:"Clair",thAuto:"Auto (appareil)",
+planNameLabel:"Nom du plan",secGoal:"Objectif",goalRace:"Préparer une course",goalFit:"Me remettre en forme",focusDist:"Distance de référence",startDate:"Date de début",focusHint:"Elle fixe les allures et la longueur des sorties longues. Pas de course, pas d'affûtage : le plan progresse simplement semaine après semaine.",fitHint:"Du lundi {s} au dimanche {e}.",fitBlock:"Plan forme {n} semaines",hFitStarts:"Votre plan de {n} semaines commence le lundi {d}.",hFitIn:"Semaine {n} sur {t}, phase {phase}{cut}.",hFitDone:"Votre plan de {n} semaines s'est terminé le {d}. Indiquez une nouvelle date de début pour préparer la suite.",wa_pastFit:"La semaine 1 a commencé le {d}. Déplacez la date de début pour que le plan démarre maintenant.",planMetaFit:"Base {lbl} · {w} semaines · début le {d}",myPlans:"Mes plans",newPlan:"Nouveau plan",savePlan:"Enregistrer",language:"Langue",theme:"Thème",thDark:"Sombre",thLight:"Clair",thAuto:"Auto",thHint:"Auto suit le réglage de l'appareil.",prefs:"Affichage et langue",
 secRace:"Course",distance:"Distance",customKm:"Distance personnalisée (km)",raceDate:"Date de la course",weeks:"Semaines d'entraînement",
 secNow:"Votre niveau actuel",curVol:"Volume hebdo (km)",curLong:"Plus longue sortie récente (km)",recDist:"Course récente",none:"Aucune",
 halfMarathon:"Semi-marathon",marathon:"Marathon",recTime:"Temps final",recTimePh:"h:mm:ss ou mm:ss",
@@ -1622,8 +1644,9 @@ function applyStatic(){
   document.querySelectorAll("[data-i18n-ph]").forEach(el=>{el.placeholder=t(el.dataset.i18nPh);});
   document.querySelectorAll("[data-i18n-aria]").forEach(el=>{el.setAttribute("aria-label",t(el.dataset.i18nAria));});
   $("#langSel").value=LANG;
-  $("#themeSel").value=document.documentElement.dataset.theme||"dark";
+  syncTheme();
 }
+function syncTheme(){const v=document.documentElement.dataset.theme||"dark";document.querySelectorAll("#themeSeg [data-theme-v]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.themeV===v)));}
 function setLang(l){
   if(l===LANG||!I18N[l])return;
   const prevName=defaultName();const from=LANG;LANG=l;try{localStorage.setItem("bb-lang",l);}catch(_){}
@@ -1636,7 +1659,14 @@ function setLang(l){
   const st=$("#saveStatus");if(st&&!S.savedAt)setStatus(t("notSaved"));
 }
 $("#langSel").addEventListener("change",e=>setLang(e.target.value));
-$("#themeSel").addEventListener("change",e=>{const v=e.target.value;document.documentElement.dataset.theme=v;try{localStorage.setItem("bb-theme",v);}catch(_){}});
+$("#themeSeg").addEventListener("click",e=>{const b=e.target.closest("[data-theme-v]");if(!b)return;const v=b.dataset.themeV;document.documentElement.dataset.theme=v;try{localStorage.setItem("bb-theme",v);}catch(_){}syncTheme();});
+/* Display and language panel: opens from the gear, closes on Escape (focus back to the gear) or a tap outside */
+function setPrefs(open,focusBack){const P=$("#prefsPanel"),B=$("#btnPrefs");P.hidden=!open;B.setAttribute("aria-expanded",String(open));
+  if(open)(P.querySelector('[aria-pressed="true"]')||P.querySelector("button,select")).focus({preventScroll:true});else if(focusBack)B.focus({preventScroll:true});}
+$("#btnPrefs").addEventListener("click",()=>setPrefs($("#prefsPanel").hidden));
+$("#prefs").addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#prefsPanel").hidden){e.stopPropagation();setPrefs(false,true);}});
+$("#prefs").addEventListener("focusout",e=>{if(e.relatedTarget&&!$("#prefs").contains(e.relatedTarget))setPrefs(false);});
+document.addEventListener("click",e=>{if(!$("#prefsPanel").hidden&&!e.target.closest("#prefs"))setPrefs(false);});
 
 applyStatic();
 regen();renderSetup();$("#planName").value=S.name;renderPlan();setStatus(t("notSaved"));

@@ -3,6 +3,15 @@ import { test, expect, mobileOnly, desktopOnly } from './helpers';
 test.describe('phone layout', () => {
   test.beforeEach(({ mobile }) => mobileOnly(mobile));
 
+  test('the gear sits on the brand row and the plan name gets its own line', async ({ app, page }) => {
+    const box = async (sel: string) => (await page.locator(sel).boundingBox())!;
+    const brand = await box('.brand'), gear = await box('#btnPrefs'), name = await box('#planName'), save = await box('#btnSave');
+    expect(Math.abs((gear.y + gear.height / 2) - (brand.y + brand.height / 2))).toBeLessThan(12);
+    expect(name.y).toBeGreaterThan(brand.y + brand.height - 1);
+    expect(save.y).toBeGreaterThan(name.y + name.height - 1);
+    expect(name.width).toBeGreaterThan(200);
+  });
+
   test('Plan and Settings tabs show one panel at a time', async ({ app, page }) => {
     await expect(page.locator('#mtabs')).toBeVisible();
     await expect(page.locator('#plan')).toBeVisible();
