@@ -18,7 +18,7 @@ Block Builder creates a running training block in the browser. You pick a race o
 - **Watch export:** Apple Watch (`.workout`, through WorkoutKit), Garmin and other devices (`.fit`), per run, per week or for the whole plan.
 - **Other exports:** calendar (`.ics`), plus a format dropdown for the plan itself: spreadsheet (`.csv`) or printable PDF (A4 landscape week-by-day grid with phases, weekly km, run descriptions and plan totals). The dropdown remembers the last format picked.
 - **Languages:** English and French, picked from a dropdown in the header.
-- **Themes:** light and dark, following the device setting.
+- **Themes:** dark "night track" by default, with a light theme or Auto (follows the device) in the header; the choice is remembered on the device. The volt accent marks only today's run and the main button.
 - **Phone layout:** Plan and Settings tabs.
 - **Keyboard and screen readers:** messages such as "Plan saved" are announced, dialogs are named by their title, Tab stays inside an open dialog, and closing it returns to the button or run that opened it.
 
@@ -81,9 +81,9 @@ Every test starts on a frozen date (Friday 6 November 2026, Paris time) with emp
 | `exports.spec.ts` | CSV, PDF, calendar, Garmin and Apple Watch zips |
 | `i18n.spec.ts` | every string in English and French with matching placeholders, language switch |
 | `mobile.spec.ts` | Plan/Settings tabs, 16px fields, tap targets, sideways grid scroll; side-by-side layout on desktop |
-| `layout.spec.ts` | nothing sticks out of the page, dark mode, no script errors |
+| `layout.spec.ts` | nothing sticks out of the page, theme picker (dark default, light kept after reload, Auto follows the device), volt accent only on today and the main button, no script errors |
 | `security.spec.ts` | Content Security Policy present and not broken by the page or either export, WorkoutKit not fetched from a CDN, a tampered jsPDF file refused |
-| `a11y.spec.ts` | WCAG 2.1 A/AA checks on each view and dialog, light and dark |
+| `a11y.spec.ts` | WCAG 2.1 A/AA checks on each view and dialog, dark and light |
 
 GitHub Actions runs every setup on each push and pull request (`.github/workflows/tests.yml`) and keeps each setup's HTML report for 14 days. `main` is protected: all six setups must pass before a pull request can merge or a push can land, admins included, and force-pushes are blocked. GitHub Pages publishes `main` as soon as it changes, so only tested code goes live.
 
@@ -108,6 +108,7 @@ All three depend on the claude.ai artifact runtime, so they were removed here. T
 
 ## Changelog
 
+- **2026-11-10 (v1.1.12):** New dark "night track" look by default, with a volt accent used only on today's run and the main button. A Theme picker in the header switches to Light or Auto (follows your device).
 - **2026-11-09 (v1.1.11):** The language picker in the header is now a dropdown (English / Français) instead of two EN/FR buttons.
 - **2026-11-09 (v1.1.10):** Taper long runs no longer come out longer than the longest run before them. Plans that start from low volume never reach the usual peak long run, and the taper used to scale from that usual peak anyway: a beginner half plan peaking at 12 km got 14.5 km in its first taper week.
 - **2026-11-09 (v1.1.9):** Safer outside code: the PDF libraries are checked against fixed hashes before they run, the Apple Watch encoder is now served from this site instead of a CDN, and a Content Security Policy limits where scripts and requests can go.

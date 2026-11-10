@@ -2,6 +2,15 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.12] - 2026-11-10
+
+### Changed
+- Dark "night track" colour scheme is now the default, whatever the device setting. A single volt accent (#D4FF3A) marks only today's run and the main button; the brand mark, countdown, focus ring and selected items use the text colour instead of orange (BB-20).
+- Light theme kept as a deliberate choice: the volt fills the main button with dark text, and lines in the accent use olive (#557000) to stay readable on light backgrounds.
+
+### Added
+- Theme picker in the header: Dark, Light, or Auto (follows the device). Remembered on the device (`bb-theme`), applied before the page paints so there is no flash.
+
 ## [1.1.11] - 2026-11-09
 
 ### Changed
