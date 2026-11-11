@@ -9,6 +9,10 @@ updates:
     groups:
       test-tooling:
         patterns: ["*"]
+    ignore:
+      # Types must match the Node the tests run on (22, in CI and locally). Raise this on purpose with Node.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: github-actions
     directory: /
     schedule:
