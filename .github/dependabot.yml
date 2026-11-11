@@ -1,0 +1,15 @@
+# Weekly update PRs for the test tooling and the CI actions. The six Tests jobs must pass before one merges.
+# Note: a Playwright bump also needs the container tag in tests.yml changed to match (the CI check fails until it is).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      test-tooling:
+        patterns: ["*"]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
