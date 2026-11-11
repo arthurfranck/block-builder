@@ -6,7 +6,7 @@ Block Builder creates a running training block in the browser. You pick a race o
 
 ## Features
 
-- **Goals:** train for a race (5K, 10K, half marathon, marathon, or a custom distance) or get in shape over a set number of weeks.
+- **Goals:** train for a race (5K, 10K, half marathon, marathon, or a custom distance) or get in shape over a set number of weeks. For a half or a full marathon, the plan warns when it peaks too low for the race (longest run under about 60% of a half or 75% of a marathon, or biggest week under about 30 or 45 km) and suggests more weeks or the Get in shape goal.
 - **Phases:** base, build, peak and taper, with cutback weeks. Taper long runs step down from the longest run the plan actually reached (75%, then 60%). Each full week stays within +10% of the last full week before it: after rounding, easy runs are shortened first, then the hard runs, then the long run. If every run is already at its minimum distance (low volume with many runs), the plan says which weeks still jump and suggests fewer runs; a hand edit that makes a week jump is flagged too. A load profile chart shows weekly volume and the long run.
 - **Paces:** worked out from a recent race result (easy, tempo, intervals, race pace). The finish time is read to fit the race: "1:45" for a half means 1 h 45 min, a lone "52" for a 10K means 52 minutes, and the field shows the reading (1:45:00). A time that fits no reading for that race is flagged instead of being ignored.
 - **Runs per week:** 1 to 7.
@@ -36,7 +36,7 @@ Plans are saved in the visitor's browser (`localStorage`) only. The weather city
 - Vendored: [`@bibixx/workoutkit`](https://www.npmjs.com/package/@bibixx/workoutkit) 0.2.0 (MIT) in `vendor/workoutkit-0.2.0/`, loaded only when exporting to Apple Watch.
 - Content Security Policy (in a `<meta>` tag): scripts only from the page itself and cdnjs, styles from the page and Google Fonts, network requests only to Open-Meteo, no plugins, forms or `<base>` changes. Inline script is still allowed because the app lives in `index.html`; moving it to its own file would let the policy drop `'unsafe-inline'`.
 - Hosted on GitHub Pages from the `main` branch, root folder.
-- `package.json`, `package-lock.json`, `playwright.config.ts` and `tests/` are for the automated tests only; the page doesn't use them. The lockfile pins the exact test tool versions, so CI and a local run use the same Playwright and axe-core. To move to newer versions, run `npm update`, set the Playwright container image in `.github/workflows/tests.yml` to the same version (CI stops with a message if they differ), and commit both in a pull request.
+- `package.json`, `package-lock.json`, `playwright.config.ts` and `tests/` are for the automated tests only; the page doesn't use them. The lockfile pins the exact test tool versions, so CI and a local run use the same Playwright and axe-core. Dependabot (`.github/dependabot.yml`) opens a weekly pull request for newer test tools and GitHub Actions. To move to newer versions by hand, run `npm update`, set the Playwright container image in `.github/workflows/tests.yml` to the same version (CI stops with a message if they differ), and commit both in a pull request.
 
 ## Run locally
 
@@ -108,6 +108,7 @@ All three depend on the claude.ai artifact runtime, so they were removed here. T
 
 ## Changelog
 
+- **2026-11-11 (v1.1.14):** Half and full marathon plans warn when they peak too low for the race: the longest run and biggest week are compared with what the race usually needs, with a suggestion to add weeks or switch to Get in shape.
 - **2026-11-10 (v1.1.13):** Theme and language moved out of the header into a gear menu at its end, so the plan name and plan buttons come first. On phone the plan name gets its own line instead of being cut off. Theme is now a Dark / Light / Auto switch.
 - **2026-11-10 (v1.1.12):** New dark "night track" look by default, with a volt accent used only on today's run and the main button. A Theme picker in the header switches to Light or Auto (follows your device).
 - **2026-11-09 (v1.1.11):** The language picker in the header is now a dropdown (English / Français) instead of two EN/FR buttons.

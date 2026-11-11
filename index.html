@@ -360,7 +360,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.13";
+const VERSION = "1.1.14";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -400,6 +400,7 @@ wa_short:"{w} weeks is short for a {lbl}. {min} or more lets volume build withou
 wa_long:"Blocks over 24 weeks tend to go stale. Consider a general base phase first, then {n} focused weeks.",
 wa_lowVol:"{v} km/week is a low starting point for a {lbl}. The plan ramps carefully, so expect a conservative peak.",
 wa_mLong:"A longest recent run under 14 km makes 32 km long runs hard to reach safely in one block.",
+wa_ready:"This plan peaks at a {long} km long run and {peak} km in a week. A {lbl} usually calls for a long run of about {tl} km and weeks of about {tp} km. Add weeks, or set the goal to Get in shape.",
 wa_days:"You picked {d} running days for {r} runs a week. Using a default pattern until those match.",
 wa_tooMany:"{h} quality run types with {r} runs a week leaves room for {m} {sess} per week. Types will rotate, so each appears less often.",
 sessOne:"hard session",sessMany:"hard sessions",
@@ -496,6 +497,7 @@ wa_short:"{w} semaines, c'est court pour un {lbl}. {min} semaines ou plus permet
 wa_long:"Au-delà de 24 semaines, un plan s'essouffle. Faites d'abord une phase de foncier générale, puis {n} semaines ciblées.",
 wa_lowVol:"{v} km/semaine, c'est un point de départ bas pour un {lbl}. Le plan progresse prudemment, attendez-vous à un pic modeste.",
 wa_mLong:"Avec une plus longue sortie récente sous 14 km, atteindre des sorties de 32 km en sécurité dans un seul plan est difficile.",
+wa_ready:"Ce plan culmine à une sortie longue de {long} km et {peak} km sur une semaine. Un {lbl} demande en général une sortie longue d'environ {tl} km et des semaines d'environ {tp} km. Ajoutez des semaines, ou choisissez l'objectif Me remettre en forme.",
 wa_days:"Vous avez choisi {d} jours pour {r} sorties par semaine. Une répartition par défaut s'applique tant que les deux ne correspondent pas.",
 wa_tooMany:"{h} types de séances de qualité pour {r} sorties par semaine : la place ne permet que {m} {sess} par semaine. Les types tournent, chacun revient donc moins souvent.",
 sessOne:"séance difficile",sessMany:"séances difficiles",
@@ -849,6 +851,14 @@ function warnings(inp,types,plan,edited){
   const lowVol={"5k":12,"10k":18,"hm":22,"m":32}[c];
   if(inp.goal!=="fitness"&&+inp.curVol<lowVol)w.push(t("wa_lowVol",{v:inp.curVol,lbl}));
   if(inp.goal!=="fitness"&&c==="m"&&+inp.curLong<14)w.push(t("wa_mLong"));
+  /* goal readiness (BB-40): longest run before race day and biggest week, against what a half or marathon usually needs */
+  if(inp.goal!=="fitness"&&(c==="hm"||c==="m")&&plan.weeks.length){
+    const pre=plan.weeks.filter(x=>!x.sessions.some(s=>s.kind==="race"));
+    const lr=Math.max(0,...pre.flatMap(x=>x.sessions.map(s=>+s.km||0)));
+    const pk=Math.max(0,...pre.map(x=>x.sessions.reduce((a,s)=>a+(+s.km||0),0)));
+    const tl=D*(c==="m"?.75:.6),tp=c==="m"?45:30;
+    if(lr<tl-.05||pk<tp-.05)w.push(t("wa_ready",{long:+lr.toFixed(1),peak:Math.round(pk),lbl,tl:Math.round(tl),tp}));
+  }
   const days=[...new Set(inp.days)];
   if(days.length!==+inp.runs)w.push(t("wa_days",{d:days.length,r:inp.runs}));
   const hard=types.filter(x=>x.on&&x.kind==="hard");

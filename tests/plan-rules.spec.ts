@@ -127,3 +127,44 @@ test.describe('taper long runs', () => {
     }
   });
 });
+
+test.describe('goal readiness', () => {
+  /*
+   * A half needs a long run of about 60% of the distance and ~30 km weeks; a marathon about 75% and ~45 km (BB-40).
+   * Before this, a 15 km/week beginner got a 12 km peak long run for a half with only a low-volume warning.
+   */
+  const READY = 'usually calls for';
+
+  test('a half plan that peaks too low says so, with its peak and what the race needs', async ({ app }) => {
+    await app.configure({ dist: 'hm', runs: 3, weeks: 12, curVol: 15, curLong: 6 });
+    const weeks = (await app.plan()).filter((w) => !w.sessions.some((s) => s.kind === 'race'));
+    const long = Math.max(...weeks.flatMap((w) => w.sessions.map((s) => s.km)));
+    const peak = Math.round(Math.max(...weeks.map((w) => w.sessions.reduce((a, s) => a + s.km, 0))));
+    await expect(app.warnings().filter({ hasText: READY })).toHaveText([
+      `This plan peaks at a ${long} km long run and ${peak} km in a week. A half marathon usually calls for a long run of about 13 km and weeks of about 30 km. Add weeks, or set the goal to Get in shape.`,
+    ]);
+  });
+
+  test('a marathon plan from 30 km a week is flagged', async ({ app }) => {
+    await app.configure({ dist: 'm', runs: 4, weeks: 16, curVol: 30, curLong: 14 });
+    await expect(app.warnings().filter({ hasText: READY })).toContainText(['about 32 km and weeks of about 45 km']);
+  });
+
+  test('a plan that reaches the race needs shows no readiness warning', async ({ app }) => {
+    await app.configure({ dist: 'hm', runs: 5, weeks: 12, curVol: 30, curLong: 12 });
+    await expect(app.warnings().filter({ hasText: READY })).toHaveCount(0);
+  });
+
+  test('shorter races and the Get in shape goal are not checked', async ({ app }) => {
+    await app.configure({ dist: '10k', runs: 3, weeks: 8, curVol: 12, curLong: 5 });
+    await expect(app.warnings().filter({ hasText: READY })).toHaveCount(0);
+    await app.configure({ goal: 'fitness', dist: 'hm', runs: 3, weeks: 12, curVol: 15, curLong: 6 });
+    await expect(app.warnings().filter({ hasText: READY })).toHaveCount(0);
+  });
+
+  test('the warning is in French too', async ({ app }) => {
+    await app.configure({ dist: 'hm', runs: 3, weeks: 12, curVol: 15, curLong: 6 });
+    await app.setLang('fr');
+    await expect(app.warnings().filter({ hasText: 'demande en général' })).toHaveCount(1);
+  });
+});
