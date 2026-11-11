@@ -2,6 +2,12 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.15] - 2026-11-11
+
+### Changed
+- Run types in the settings are now compact chips in two groups, Easy and Quality, with a line saying how many are on (BB-24). Tap a chip to switch that run type on or off; Easy run shows a lock because it can't be turned off. The section went from about 960 px to about 300 px tall.
+- Names, kind, phases, description templates and Add run type moved into a "Customise workouts" section that starts folded. Inside, the cards are the same as before, minus their tick box (the chip does that now). Open cards stay open when something changes.
+
 ## [1.1.14] - 2026-11-11
 
 ### Added

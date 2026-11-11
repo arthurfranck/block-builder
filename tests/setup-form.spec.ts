@@ -110,6 +110,40 @@ test.describe('run types', () => {
     expect((await app.plan()).flatMap((w) => w.sessions).some((s) => s.kind === 'hard')).toBe(false);
   });
 
+  test('run types are chips grouped Easy / Quality, with the details folded away', async ({ app, page }) => {
+    await app.showSetup();
+    const names = (g: string) => page.getByRole('group', { name: g }).locator('label.tchip').allInnerTexts();
+    expect(await names('Easy')).toEqual(['Easy run', 'Long run', 'Recovery run', 'Easy + strides']);
+    expect(await names('Quality')).toEqual(['Tempo', 'Intervals', 'Hill repeats', 'Fartlek', 'Progression run', 'Race pace']);
+    const on = await page.locator('#typeChips input:checked').count();
+    await expect(page.locator('#typesCount')).toHaveText(`Tap a session to switch it on or off. ${on} of 10 on.`);
+    await expect(page.locator('#types')).toBeHidden();
+    await expect(page.locator('#btnAddType')).toBeHidden();
+  });
+
+  test('a chip switches its run type with the keyboard and keeps focus', async ({ app, page }) => {
+    await app.showSetup();
+    const tempo = page.locator('#t-on-tempo');
+    const was = await tempo.isChecked();
+    const count = async () => +/(\d+) of/.exec((await page.locator('#typesCount').textContent())!)![1];
+    const before = await count();
+    await tempo.focus();
+    await page.keyboard.press('Space');
+    await expect(tempo).toBeChecked({ checked: !was });
+    await expect(tempo).toBeFocused();
+    await expect(page.locator('label.tchip:has(#t-on-tempo)')).toHaveClass(was ? /off/ : /^(?!.*off)/);
+    expect(await count()).toBe(before + (was ? -1 : 1));
+  });
+
+  test('run type chips are in French when the page is', async ({ app, page }) => {
+    await app.setLang('fr');
+    await page.keyboard.press('Escape');
+    await app.showSetup();
+    await expect(page.getByRole('group', { name: 'Qualité' })).toBeVisible();
+    await expect(page.locator('#typesMore > summary')).toContainText('Personnaliser les séances');
+    await expect(page.locator('#typesCount')).toContainText(/\d+ sur \d+ activées/);
+  });
+
   test('easy cannot be turned off, long can', async ({ app, page }) => {
     await app.showSetup();
     await expect(page.locator('#t-on-easy')).toBeDisabled();
@@ -124,20 +158,27 @@ test.describe('run types', () => {
     await expect(app.warnings()).toHaveCount(0);
   });
 
-  test('a renamed run type shows in the plan', async ({ app, page }) => {
-    await app.showSetup();
+  test('a renamed run type shows on its chip and in the plan', async ({ app, page }) => {
+    await app.openCustomise();
     await page.locator('#t-name-tempo').fill('Threshold');
     await page.locator('#t-name-tempo').dispatchEvent('change');
+    await expect(page.locator('label.tchip:has(#t-on-tempo)')).toHaveText('Threshold');
     await app.showPlan();
     expect((await app.plan()).flatMap((w) => w.sessions).some((s) => s.name === 'Threshold')).toBe(true);
   });
 
   test('a custom run type can be added and removed', async ({ app, page }) => {
-    await app.showSetup();
+    await app.openCustomise();
     const n = await page.locator('#types .type').count();
     await app.pick('#btnAddType');
     const custom = page.locator('#types .type').last();
     await expect(custom.locator('.tname')).toHaveValue('Custom run');
+    const quality = page.getByRole('group', { name: 'Quality' });
+    await expect(quality.getByRole('checkbox', { name: 'Use Custom run' })).toBeChecked();
+    await expect(custom.locator('details')).toHaveAttribute('open', '');
+    await custom.locator('select[data-f="kind"]').selectOption('easy');
+    await expect(page.getByRole('group', { name: 'Easy' }).getByRole('checkbox', { name: 'Use Custom run' })).toBeVisible();
+    await expect(quality.getByRole('checkbox', { name: 'Use Custom run' })).toHaveCount(0);
     await custom.getByRole('button', { name: /Remove/ }).click();
     await expect(page.locator('#types .type')).toHaveCount(n);
   });
@@ -193,7 +234,7 @@ test.describe('New plan starts blank', () => {
     await expect(page.locator('#longDay')).toHaveValue('-1');
     for (const id of ['curVol', 'curLong', 'recTime']) await expect(page.locator('#' + id)).toHaveValue('');
     await expect(page.locator('#recDist')).toHaveValue('0');
-    const ticked = await page.locator('#types input[type=checkbox]:checked').evaluateAll((els) => els.map((e) => e.id));
+    const ticked = await page.locator('#typeChips input[type=checkbox]:checked').evaluateAll((els) => els.map((e) => e.id));
     expect(ticked).toEqual(['t-on-easy']);
   });
 

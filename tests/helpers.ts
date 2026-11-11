@@ -77,6 +77,13 @@ export class App {
   distance(d: '5k' | '10k' | 'hm' | 'm' | 'custom') { return this.pick(`#distSeg [data-dist="${d}"]`); }
   runs(n: number) { return this.pick(`#runsSeg [data-runs="${n}"]`); }
   typeToggle(id: string) { return this.pick(`#t-on-${id}`); }
+  /** Open "Customise workouts", where run type names, phases and templates live. */
+  async openCustomise() {
+    await this.showSetup();
+    const more = this.page.locator('#typesMore');
+    if (!(await more.evaluate((d: HTMLDetailsElement) => d.open))) await more.locator(':scope > summary').click();
+    await expect(this.page.locator('#types')).toBeVisible();
+  }
 
   /** Configure a plan in one go; only the fields given are touched. */
   async configure(o: { goal?: 'race' | 'fitness'; dist?: '5k' | '10k' | 'hm' | 'm' | 'custom'; customKm?: number; weeks?: number;

@@ -139,7 +139,27 @@ textarea{resize:vertical;font-size:13.5px;line-height:1.4}
 .type.off{background:var(--surface-2)}
 .type.off .tname{color:var(--muted)}
 .type-head{display:flex;align-items:center;gap:8px}
-.type-head input[type=checkbox]{width:17px;height:17px;accent-color:var(--ink);flex:none}
+.tgroups{display:grid;gap:10px}
+.tgrp{display:grid;gap:6px}
+.tgrp .lbl{font-size:11.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.tchips{display:flex;flex-wrap:wrap;gap:6px}
+.tchip{position:relative;display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:0 13px 0 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);font-weight:600;font-size:14px;cursor:pointer}
+.tchip input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer}
+.tchip input:disabled{cursor:default}
+.tchip.off{background:transparent;border-style:dashed;color:var(--muted)}
+.tchip:has(input:focus-visible){outline:2px solid var(--ink);outline-offset:2px}
+@media (hover:hover){.tchip:hover{border-color:var(--ink)}}
+.tchip .lock{color:var(--muted);flex:none}
+@media (pointer:coarse){.tchip{min-height:44px}}
+.customise{border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.customise>summary{cursor:pointer;list-style:none;display:grid;grid-template-columns:1fr auto;column-gap:10px;align-items:center;padding:9px 12px;min-height:44px;box-sizing:border-box}
+.customise>summary::-webkit-details-marker{display:none}
+.customise>summary::after{content:"";grid-row:1/3;grid-column:2;width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(-45deg);transition:transform .15s}
+.customise[open]>summary::after{transform:rotate(45deg)}
+.cust-t{font-weight:600;font-size:14.5px}
+.cust-s{font-size:12.5px;color:var(--muted)}
+.cust-body{display:grid;gap:8px;padding:0 10px 10px}
+@media (prefers-reduced-motion:reduce){.customise>summary::after{transition:none}}
 .type-head .tname{flex:1;min-width:0;border:1px solid transparent;background:transparent;font-weight:600;padding:2px 4px;border-radius:4px}
 .type-head .tname:focus{border-color:var(--line)}
 .kind-dot{width:10px;height:10px;border-radius:50%;flex:none}
@@ -343,9 +363,16 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 
       <section class="sec">
         <h3 data-i18n="secTypes">Run types</h3>
-        <div class="hint" data-i18n-html="typesHint"></div>
-        <div class="types" id="types"></div>
-        <button class="btn sm" id="btnAddType" data-i18n="addType">Add run type</button>
+        <div class="hint" id="typesCount"></div>
+        <div class="tgroups" id="typeChips"></div>
+        <details class="customise" id="typesMore">
+          <summary><span class="cust-t" data-i18n="customise">Customise workouts</span><span class="cust-s" data-i18n="customiseSub">Phases, descriptions, add your own</span></summary>
+          <div class="cust-body">
+            <div class="hint" data-i18n-html="typesHint"></div>
+            <div class="types" id="types"></div>
+            <button class="btn sm" id="btnAddType" data-i18n="addType">Add run type</button>
+          </div>
+        </details>
       </section>
       <button class="btn primary see-plan m-only" type="button" data-tabgo="plan" data-i18n="seePlan">See the plan</button>
     </aside>
@@ -360,7 +387,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.14";
+const VERSION = "1.1.15";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -371,7 +398,7 @@ secRace:"Race",distance:"Distance",customKm:"Custom distance (km)",raceDate:"Rac
 secNow:"Your running now",curVol:"Weekly volume (km)",curLong:"Longest recent run (km)",recDist:"Recent race",none:"None",
 halfMarathon:"Half marathon",marathon:"Marathon",recTime:"Finish time",recTimePh:"h:mm:ss or mm:ss",
 secWeek:"Week shape",runsPerWeek:"Runs per week",runningDays:"Running days",longDay:"Long run day",
-secTypes:"Run types",typesHint:"Tick the sessions you want. Templates accept <code>{km}</code> <code>{easy}</code> <code>{tempo}</code> <code>{interval}</code> <code>{rep}</code> <code>{race}</code> <code>{mp}</code> and <code>{work}</code>, the main set that progresses through the block.",addType:"Add run type",
+secTypes:"Run types",typesHint:"Description templates accept <code>{km}</code> <code>{easy}</code> <code>{tempo}</code> <code>{interval}</code> <code>{rep}</code> <code>{race}</code> <code>{mp}</code> and <code>{work}</code>, the main set that progresses through the block.",addType:"Add run type",typesCount:"Tap a session to switch it on or off. {a} of {b} on.",grpEasy:"Easy",grpQuality:"Quality",customise:"Customise workouts",customiseSub:"Phases, descriptions, add your own",alwaysOn:"Always on",
 d5k:"5K",d10k:"10K",dhm:"Half",dm:"Marathon",dcustom:"Custom",l5k:"5K",l10k:"10K",lhm:"half marathon",lm:"marathon",
 kEasy:"Easy",kRecovery:"Recovery",kLong:"Long",kHard:"Quality",
 ph_base:"base",ph_build:"build",ph_peak:"peak",ph_taper:"taper",cutback:"cutback",
@@ -468,7 +495,7 @@ secRace:"Course",distance:"Distance",customKm:"Distance personnalisée (km)",rac
 secNow:"Votre niveau actuel",curVol:"Volume hebdo (km)",curLong:"Plus longue sortie récente (km)",recDist:"Course récente",none:"Aucune",
 halfMarathon:"Semi-marathon",marathon:"Marathon",recTime:"Temps final",recTimePh:"h:mm:ss ou mm:ss",
 secWeek:"Semaine type",runsPerWeek:"Sorties par semaine",runningDays:"Jours de course",longDay:"Jour de la sortie longue",
-secTypes:"Types de séances",typesHint:"Cochez les séances voulues. Les modèles acceptent <code>{km}</code> <code>{easy}</code> <code>{tempo}</code> <code>{interval}</code> <code>{rep}</code> <code>{race}</code> <code>{mp}</code> et <code>{work}</code>, le corps de séance qui progresse au fil du plan.",addType:"Ajouter un type de séance",
+secTypes:"Types de séances",typesHint:"Les modèles de description acceptent <code>{km}</code> <code>{easy}</code> <code>{tempo}</code> <code>{interval}</code> <code>{rep}</code> <code>{race}</code> <code>{mp}</code> et <code>{work}</code>, le corps de séance qui progresse au fil du plan.",addType:"Ajouter un type de séance",typesCount:"Touchez une séance pour l’activer ou la désactiver. {a} sur {b} activées.",grpEasy:"Faciles",grpQuality:"Qualité",customise:"Personnaliser les séances",customiseSub:"Phases, descriptions, vos propres séances",alwaysOn:"Toujours activée",
 d5k:"5 km",d10k:"10 km",dhm:"Semi",dm:"Marathon",dcustom:"Autre",l5k:"5 km",l10k:"10 km",lhm:"semi-marathon",lm:"marathon",
 kEasy:"Facile",kRecovery:"Récupération",kLong:"Longue",kHard:"Qualité",
 ph_base:"foncier",ph_build:"développement",ph_peak:"spécifique",ph_taper:"affûtage",cutback:"allégée",
@@ -906,12 +933,23 @@ function renderHints(){
 }
 const kindColor=k=>`var(--${k==="hard"?"hard":k==="long"?"long":k==="recovery"?"recovery":k==="race"?"race":"easy"})`;
 const kindText=k=>kindColor(k).replace(")","-t)");
+function renderChips(){
+  const tt=t;
+  const focusId=document.activeElement&&document.activeElement.closest&&document.activeElement.closest("#typeChips")?document.activeElement.id:null;
+  const chip=(t,i)=>`<label class="tchip ${t.on?"":"off"}" data-i="${i}"><input type="checkbox" id="t-on-${t.id}" ${t.on?"checked":""} ${t.locked?"disabled":""} aria-label="${esc(tt("useType",{name:t.name}))}"><span class="kind-dot" style="background:${kindColor(t.kind)}" aria-hidden="true"></span>${esc(t.name)}${t.locked?`<svg class="lock" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><title>${tt("alwaysOn")}</title><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`:""}</label>`;
+  const grp=(key,list)=>list.length?`<div class="tgrp"><span class="lbl" id="tg-${key}">${tt(key)}</span><div class="tchips" role="group" aria-labelledby="tg-${key}">${list.map(([t,i])=>chip(t,i)).join("")}</div></div>`:"";
+  const idx=S.types.map((t,i)=>[t,i]);
+  $("#typeChips").innerHTML=grp("grpEasy",idx.filter(([t])=>t.kind!=="hard"))+grp("grpQuality",idx.filter(([t])=>t.kind==="hard"));
+  $("#typesCount").textContent=tt("typesCount",{a:S.types.filter(t=>t.on).length,b:S.types.length});
+  if(focusId){const f=document.getElementById(focusId);if(f)f.focus();}
+}
 function renderTypes(){
   const tt=t;
+  const openCards=[...document.querySelectorAll("#types .type details[open]")].map(d=>d.closest(".type").dataset.i);
+  renderChips();
   $("#types").innerHTML=S.types.map((t,i)=>`
   <div class="type ${t.on?"":"off"}" data-i="${i}">
     <div class="type-head">
-      <input type="checkbox" id="t-on-${t.id}" data-f="on" ${t.on?"checked":""} ${t.locked?"disabled":""} aria-label="${esc(tt("useType",{name:t.name}))}">
       <span class="kind-dot" style="background:${kindColor(t.kind)}" title="${kindLbl(t.kind)}"></span>
       <input class="tname" id="t-name-${t.id}" data-f="name" value="${esc(t.name)}" aria-label="${tt("typeNameLbl")}">
       ${t.locked||DEFAULT_TYPES().some(d=>d.id===t.id)?"":`<button class="icon-btn" data-del="${i}" aria-label="${tt("remove")} ${esc(t.name)}">${tt("remove")}</button>`}
@@ -924,6 +962,7 @@ function renderTypes(){
       </div>
     </details>
   </div>`).join("");
+  for(const i of openCards){const d=document.querySelector(`.type[data-i="${i}"] details`);if(d)d.open=true;}
 }
 function inputsChanged(){
   S.isExample=false;
@@ -957,9 +996,12 @@ $("#setup").addEventListener("change",e=>{
     if(S.name===prevName){S.name=defaultName();$("#planName").value=S.name;}
     inputsChanged();return;
   }
+  const cEl=el.closest(".tchip");
+  if(cEl){S.types[+cEl.dataset.i].on=el.checked;renderTypes();inputsChanged();return;}
   const tEl=el.closest(".type");
   if(tEl&&el.dataset.f){const t=S.types[+tEl.dataset.i];const f=el.dataset.f;
     if(f==="on")t.on=el.checked;else if(f==="kind"){t.kind=el.value;if(t.kind==="hard"&&!t.phases.length)t.phases=["build","peak"];}else t[f]=el.value;
+    if(f==="name")renderChips();
     if(f==="on"||f==="kind"){const open=tEl.querySelector("details").open;renderTypes();if(open)document.querySelector(`.type[data-i="${tEl.dataset.i}"] details`).open=true;}
     inputsChanged();}
 });

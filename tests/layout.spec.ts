@@ -15,7 +15,7 @@ test('nothing sticks out of the page on the plan view', async ({ app, page }) =>
 });
 
 test('nothing sticks out of the page on the settings view', async ({ app, page }) => {
-  await app.showSetup();
+  await app.openCustomise();
   await page.locator('#types details').first().evaluate((d: HTMLDetailsElement) => (d.open = true));
   expect(await overflowing(page)).toEqual([]);
 });
