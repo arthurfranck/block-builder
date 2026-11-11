@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.14] - 2026-11-11
+
+### Added
+- Goal readiness warning for half and full marathons (BB-40): when the longest run before race day is under about 60% of a half (75% of a marathon), or the biggest week is under about 30 km (45 km), the plan says how far it peaks, what the race usually needs, and suggests more weeks or the Get in shape goal. Checked on the plan as shown, so hand edits count. Not shown for the Get in shape goal or shorter races.
+
 ## [1.1.13] - 2026-11-10
 
 ### Changed
