@@ -32,7 +32,7 @@ Plans are saved in the visitor's browser (`localStorage`) only. The weather city
 
 - One file for the app: `index.html` (HTML, CSS and JavaScript, no build step), plus vendored third-party code in `vendor/` (see `vendor/README.md`).
 - External resources:
-  - Google Fonts (Barlow, Barlow Condensed, JetBrains Mono)
+  - Google Fonts (Archivo, expanded and heavy, for the brand and big numbers; Inter for everything else)
   - [Open-Meteo](https://open-meteo.com) forecast and geocoding APIs (free, no key), called only once a city or location is set
   - [jsPDF](https://github.com/parallax/jsPDF) 4.2.1 and [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable) 5.0.9 from cdnjs, loaded only when exporting a PDF, with integrity hashes: if the CDN serves a different file, the browser refuses it
 - Vendored: [`@bibixx/workoutkit`](https://www.npmjs.com/package/@bibixx/workoutkit) 0.2.0 (MIT) in `vendor/workoutkit-0.2.0/`, loaded only when exporting to Apple Watch.
@@ -85,7 +85,7 @@ Every test starts on a frozen date (Friday 6 November 2026, Paris time) with emp
 | `exports.spec.ts` | CSV, PDF, calendar, Garmin and Apple Watch zips |
 | `i18n.spec.ts` | every string in English and French with matching placeholders, language switch |
 | `mobile.spec.ts` | Plan/Settings tabs, gear on the brand row and plan name on its own line, 16px fields, tap targets, sideways grid scroll; side-by-side layout on desktop |
-| `layout.spec.ts` | nothing sticks out of the page, run colours follow effort (setup chips match the plan grid), gear menu (theme and language hidden until opened, Escape and outside tap close it), theme picker (dark default, light kept after reload, Auto follows the device), volt accent only on today and the main button, no script errors |
+| `layout.spec.ts` | nothing sticks out of the page, run colours follow effort (setup chips match the plan grid), gear menu (theme and language hidden until opened, Escape and outside tap close it), theme picker (dark default, light kept after reload, Auto follows the device), volt accent only on today and the main button, no script errors, type (Archivo for the brand and big numbers, Inter elsewhere, capitals only on small labels) |
 | `security.spec.ts` | Content Security Policy present and not broken by the page or either export, WorkoutKit not fetched from a CDN, a tampered jsPDF file refused |
 | `a11y.spec.ts` | WCAG 2.1 A/AA checks on each view and dialog, dark and light |
 
