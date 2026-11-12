@@ -392,7 +392,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.20";
+const VERSION = "1.1.21";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -450,7 +450,7 @@ loadProfile:"Load profile",longRunLeg:"long run",
 sendAll:"Send all runs to watch",exportCal:"Export calendar",exportCsv:"Export CSV",exportFmt:"Export format",fmtCsv:"CSV (spreadsheet)",fmtPdf:"PDF (printable)",exportGo:"Export",
 pdfBuilding:"Building PDF…",pdfLoadFail:"Couldn't load the PDF builder. Check your connection and try again.",pdfFail:"Couldn't build the PDF: {m}",pdfGenerated:"Generated {d}",pdfPage:"Page {p} of {n}",pdfRace:"Race",rebuildFrom:"Rebuild from settings",
 week:"Week",wAbbr:"W",sendWatch:"Send to watch",sendWatchWeek:"Send week {n} to watch",watchShort:"Watch",rest:"Rest",tabPlan:"Plan",tabSetup:"Settings",seePlan:"See the plan",editSettings:"Edit settings",addRun:"+ Add run",noteBadge:"NOTE",
-svgTitle:"Week {n}: {km} km, {phase}",svgAria:"Weekly kilometres by week",
+svgTitle:"Week {n}: {km} km, {phase}",svgNow:"this week",svgToday:"today",svgRace:"race week",svgAria:"Weekly kilometres by week",
 editRace:"Edit race",removeRace:"Remove race",raceOptional:"Optional: name your race so it shows in the header with a countdown.",
 findOn:"Find {lbl} races on Finishers",addMyRace:"Add my race",raceUrl:"Race page link (optional)",raceUrlPh:"Paste the race's Finishers page",
 raceName:"Race name",raceNamePh:"e.g. Semi-marathon de Boulogne",city:"City",raceMatch:"The race date and distance come from the fields above, so set those to match.",
@@ -547,7 +547,7 @@ loadProfile:"Profil de charge",longRunLeg:"sortie longue",
 sendAll:"Envoyer toutes les séances à la montre",exportCal:"Exporter le calendrier",exportCsv:"Exporter en CSV",exportFmt:"Format d'export",fmtCsv:"CSV (tableur)",fmtPdf:"PDF (imprimable)",exportGo:"Exporter",
 pdfBuilding:"Création du PDF…",pdfLoadFail:"Impossible de charger le générateur de PDF. Vérifiez votre connexion et réessayez.",pdfFail:"Impossible de créer le PDF : {m}",pdfGenerated:"Créé le {d}",pdfPage:"Page {p} sur {n}",pdfRace:"Course",rebuildFrom:"Recalculer depuis les réglages",
 week:"Semaine",wAbbr:"S",sendWatch:"Envoyer à la montre",sendWatchWeek:"Envoyer la semaine {n} à la montre",watchShort:"Montre",rest:"Repos",tabPlan:"Plan",tabSetup:"Réglages",seePlan:"Voir le plan",editSettings:"Modifier les réglages",addRun:"+ Ajouter une sortie",noteBadge:"NOTE",
-svgTitle:"Semaine {n} : {km} km, {phase}",svgAria:"Kilomètres par semaine",
+svgTitle:"Semaine {n} : {km} km, {phase}",svgNow:"cette semaine",svgToday:"aujourd'hui",svgRace:"semaine de course",svgAria:"Kilomètres par semaine",
 editRace:"Modifier la course",removeRace:"Retirer la course",raceOptional:"Facultatif : indiquez votre course pour l'afficher en haut de page avec un compte à rebours.",
 findOn:"Trouver des courses ({lbl}) sur Finishers",addMyRace:"Ajouter ma course",raceUrl:"Lien de la page de la course (facultatif)",raceUrlPh:"Collez la page Finishers de la course",
 raceName:"Nom de la course",raceNamePh:"ex. Semi-marathon de Boulogne",city:"Ville",raceMatch:"La date et la distance de la course viennent des champs ci-dessus : réglez-les en conséquence.",
@@ -1064,21 +1064,37 @@ $("#setup").addEventListener("change",e=>{
 const phaseColor=p=>`var(--ph-${p})`;
 const phaseText=p=>`var(--ph-${p}-t)`;
 function profileSVG(weeks,W){
-  W=Math.max(Math.round(W||600),240);const H=170,pl=30,pb=22,pt=18;
+  W=Math.max(Math.round(W||600),240);const H=186,pl=30,pb=22,pt=34;
   const max=Math.max(...weeks.map(w=>w.sessions.reduce((a,s)=>a+s.km,0)),10);
   const top=Math.ceil(max/10)*10;
   const bw=(W-pl-4)/weeks.length;
   const every=bw>=22?1:bw>=12?2:4;
   const y=v=>pt+(H-pt-pb)*(1-v/top);
+  const today=new Date();today.setHours(0,0,0,0);
+  const nowI=weeks.findIndex(w=>{const st=parseISO(w.start);return today>=st&&today<addDays(st,7);});
   let g="";
+  /* phase bands behind the bars, labelled when there is room (BB-25: replaces the phase legend) */
+  for(let i=0;i<weeks.length;){
+    let j=i;while(j+1<weeks.length&&weeks[j+1].phase===weeks[i].phase)j++;
+    const ph=weeks[i].phase,x0=pl+i*bw,wd=(j-i+1)*bw,lbl=phaseLbl(ph);
+    g+=`<rect class="band" data-phase="${esc(ph)}" x="${x0+1}" y="${pt-22}" width="${Math.max(0,wd-2)}" height="${H-pb-pt+22}" rx="4" fill="${phaseColor(ph)}" opacity=".13"/>`;
+    if(wd>=lbl.length*6.6+10)g+=`<text class="band-lbl" x="${x0+6}" y="${pt-9}" style="fill:${phaseText(ph)};font-weight:600">${esc(lbl)}</text>`;
+    i=j+1;
+  }
   for(let t=0;t<=top;t+=top>60?20:10){g+=`<line x1="${pl}" x2="${W}" y1="${y(t)}" y2="${y(t)}" stroke="var(--line)" stroke-width="1"/><text x="${pl-6}" y="${y(t)+4}" text-anchor="end">${t}</text>`;}
   weeks.forEach((w,i)=>{const km=w.sessions.reduce((a,s)=>a+s.km,0);const x=pl+i*bw+bw*0.14,bwi=bw*0.72;
     const lk=(w.sessions.find(s=>s.kind==="long"||s.kind==="race")||{}).km||0;
-    const lab=(i%every===0||i===weeks.length-1);
-    g+=`<g><title>${esc(t("svgTitle",{n:w.n,km:km.toFixed(1),phase:phaseLbl(w.phase)}))}${w.cutback?" ("+t("cutback")+")":""}</title><rect x="${x}" y="${y(km)}" width="${bwi}" height="${Math.max(0,y(0)-y(km))}" rx="2" fill="${phaseColor(w.phase)}" opacity="${w.cutback?0.55:1}"/>
+    const race=w.sessions.some(s=>s.kind==="race"),now=i===nowI;
+    const lab=(i%every===0||i===weeks.length-1||race||now);
+    const extra=[w.cutback?t("cutback"):"",now?t("svgNow"):"",race?t("svgRace"):""].filter(Boolean).join(", ");
+    g+=`<g${race?' class="race"':""}${now?' class="now"':""}><title>${esc(t("svgTitle",{n:w.n,km:km.toFixed(1),phase:phaseLbl(w.phase)}))}${extra?" ("+esc(extra)+")":""}</title><rect x="${x}" y="${y(km)}" width="${bwi}" height="${Math.max(0,y(0)-y(km))}" rx="2" fill="${phaseColor(w.phase)}" opacity="${w.cutback?0.55:1}"/>
     <rect x="${x}" y="${y(lk)}" width="${bwi}" height="2" fill="var(--ink)" opacity=".55"/>
     ${lab?`<text x="${x+bwi/2}" y="${y(km)-5}" text-anchor="middle">${Math.round(km)}</text>`:""}
-    ${lab?`<text x="${x+bwi/2}" y="${H-6}" text-anchor="middle">${w.n}</text>`:""}</g>`;});
+    ${race?`<path class="flag" d="M${x+bwi/2-4} ${y(km)-16}v-14l10 4l-10 4" fill="var(--race)" stroke="var(--race)" stroke-width="1.5" stroke-linejoin="round"/>`:""}
+    ${lab?`<text x="${x+bwi/2}" y="${H-6}" text-anchor="middle"${now?' style="fill:var(--ink);font-weight:700"':""}>${w.n}</text>`:""}</g>`;});
+  /* where today falls inside the current week */
+  if(nowI>=0){const st=parseISO(weeks[nowI].start),d=Math.round((today-st)/864e5),xn=pl+nowI*bw+bw*(d+0.5)/7;
+    g+=`<line class="today-mark" x1="${xn}" x2="${xn}" y1="${pt-22}" y2="${H-pb}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="3 3" opacity=".8"><title>${esc(cap(t("svgToday")))}</title></line>`;}
   return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t("svgAria")}">${g}</svg>`;
 }
 let chartW=0;
@@ -1105,7 +1121,7 @@ function renderPlan(){
     ${P.meta.raceSec?`<div class="stat"><b>${fmtDur(P.meta.raceSec)}</b><span>${esc(cap(t("stEquiv",{lbl:distLabel(I)})))}</span></div>`:""}
   </div>`;
   h+=renderToday();
-  h+=`<div class="profile"><div class="profile-head"><h2>${t("loadProfile")}</h2><div class="legend">${PHASES.map(p=>`<span><i style="background:${phaseColor(p)}"></i>${phaseLbl(p)}</span>`).join("")}<span><i style="background:var(--ink);height:2px;opacity:.55;vertical-align:3px"></i>${t("longRunLeg")}</span></div></div><div class="chart" id="profileChart"></div></div>`;
+  h+=`<div class="profile"><div class="profile-head"><h2>${t("loadProfile")}</h2><div class="legend"><span><i style="background:var(--ink);height:2px;opacity:.55;vertical-align:3px"></i>${t("longRunLeg")}</span></div></div><div class="chart" id="profileChart"></div></div>`;
   h+=`<div class="toolbar">
     <span class="spacer"></span>
     <button class="btn sm" data-act="allwatch">${t("sendAll")}</button>
