@@ -231,6 +231,9 @@ td.day:hover .empty,td.day .empty:focus{border-color:var(--line);background:var(
 tr.wnote td{border-left:0;padding:0 10px 10px 144px;font-size:13.5px;color:var(--ink)}
 tr.wnote td p{margin:0;padding:8px 12px;background:var(--surface-2);border-radius:6px;max-width:80ch}
 tr.wnote td p b{font-weight:600;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.07em;margin-right:6px}
+tr.wwarn td{border-left:0;padding:0 10px 10px 144px;font-size:13.5px}
+tr.wwarn td p{margin:0;padding:8px 12px;background:var(--warn-bg);color:var(--warn-ink);border-radius:6px;max-width:80ch}
+tr.wwarn td p b{font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.07em;margin-right:6px}
 tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);font-weight:500}
 
 .modal-bg{position:fixed;inset:0;background:rgb(0 0 0 / .42);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
@@ -387,7 +390,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.16";
+const VERSION = "1.1.17";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -431,7 +434,7 @@ wa_ready:"This plan peaks at a {long} km long run and {peak} km in a week. A {lb
 wa_days:"You picked {d} running days for {r} runs a week. Using a default pattern until those match.",
 wa_tooMany:"{h} quality run types with {r} runs a week leaves room for {m} {sess} per week. Types will rotate, so each appears less often.",
 sessOne:"hard session",sessMany:"hard sessions",
-wa_noHard:"No quality run types are ticked, so the plan has no hard sessions.",wa_steep:"{w} more than 10% bigger than the last full week before. Every run is already at its shortest: fewer runs per week would keep the build gentler.",wa_steepEdit:"{w} more than 10% bigger than the last full week before. Shortening a run would keep the build gentler.",wkOne:"Week {n} is",wkMany:"Weeks {n} are",
+wa_noHard:"No quality run types are ticked, so the plan has no hard sessions.",wa_steep:"{w} more than 10% bigger than the last full week before. Every run is already at its shortest: fewer runs per week would keep the build gentler.",wa_steepEdit:"{w} more than 10% bigger than the last full week before. Shortening a run would keep the build gentler.",wkL1:"Week {n}",wkLn:"Weeks {n}",wkWarn:"Check",wa_wkTooHard:"{w}: more hard runs than suit {r} runs a week. Details on the week.",wk_tooHard:"{n} hard runs this week: at {r} runs a week, keep it to {m}. Change one to an easy run.",wkOne:"Week {n} is",wkMany:"Weeks {n} are",
 wa_noPace:"Without a recent race time, sessions use effort descriptions instead of paces.",wa_badTime:"Couldn't read {time} as a {lbl} finish time, so sessions use effort descriptions. Write it as h:mm:ss or mm:ss, for example {ex}.",
 wa_past:"With this race date and length, week 1 started on {d}. Shorten the block or move the race date.",
 blockName:"{lbl} block",trainingBlock:"Training block",
@@ -528,7 +531,7 @@ wa_ready:"Ce plan culmine à une sortie longue de {long} km et {peak} km sur une
 wa_days:"Vous avez choisi {d} jours pour {r} sorties par semaine. Une répartition par défaut s'applique tant que les deux ne correspondent pas.",
 wa_tooMany:"{h} types de séances de qualité pour {r} sorties par semaine : la place ne permet que {m} {sess} par semaine. Les types tournent, chacun revient donc moins souvent.",
 sessOne:"séance difficile",sessMany:"séances difficiles",
-wa_noHard:"Aucun type de séance de qualité n'est coché : le plan n'a aucune séance difficile.",wa_steep:"{w} plus de 10 % au-dessus de la dernière semaine complète. Chaque sortie est déjà à sa distance minimale : moins de sorties par semaine rendrait la progression plus douce.",wa_steepEdit:"{w} plus de 10 % au-dessus de la dernière semaine complète. Raccourcir une sortie rendrait la progression plus douce.",wkOne:"La semaine {n} est",wkMany:"Les semaines {n} sont",
+wa_noHard:"Aucun type de séance de qualité n'est coché : le plan n'a aucune séance difficile.",wa_steep:"{w} plus de 10 % au-dessus de la dernière semaine complète. Chaque sortie est déjà à sa distance minimale : moins de sorties par semaine rendrait la progression plus douce.",wa_steepEdit:"{w} plus de 10 % au-dessus de la dernière semaine complète. Raccourcir une sortie rendrait la progression plus douce.",wkL1:"Semaine {n}",wkLn:"Semaines {n}",wkWarn:"À revoir",wa_wkTooHard:"{w} : plus de séances difficiles que n'en supportent {r} sorties par semaine. Détails sur la semaine.",wk_tooHard:"{n} séances difficiles cette semaine : à {r} sorties par semaine, restez à {m}. Passez-en une en footing.",wkOne:"La semaine {n} est",wkMany:"Les semaines {n} sont",
 wa_noPace:"Sans temps de course récent, les séances sont décrites en effort plutôt qu'en allure.",wa_badTime:"Impossible de lire {time} comme temps sur {lbl} : les séances sont décrites en effort. Écrivez-le en h:mm:ss ou mm:ss, par exemple {ex}.",
 wa_past:"Avec cette date et cette durée, la semaine 1 a commencé le {d}. Raccourcissez le plan ou déplacez la date.",
 blockName:"Plan {lbl}",trainingBlock:"Plan d'entraînement",
@@ -775,7 +778,7 @@ function generate(inp,types){
     let longD=+inp.longDay;
     if(!days.includes(longD))longD=days[days.length-1];
     if(raceWeek){if(!days.includes(raceDow)){const idx=days.indexOf(longD);days[idx]=raceDow;days.sort((a,b)=>a-b);}longD=raceDow;}
-    let hk=runs<=4?1:(phase==="base"||phase==="taper"?1:2);
+    let hk=Math.min(maxHardRuns(inp),phase==="base"||phase==="taper"?1:2);
     if(isCut)hk=Math.max(1,hk-1);
     if(!hardTypes.length)hk=0;
     if(raceWeek&&runs<=3)hk=0;
@@ -889,18 +892,38 @@ function warnings(inp,types,plan,edited){
   const days=[...new Set(inp.days)];
   if(days.length!==+inp.runs)w.push(t("wa_days",{d:days.length,r:inp.runs}));
   const hard=types.filter(x=>x.on&&x.kind==="hard");
-  const maxHard=+inp.runs<=4?1:2;
+  const maxHard=maxHardRuns(inp);
   if(hard.length>maxHard*2)w.push(t("wa_tooMany",{h:hard.length,r:inp.runs,m:maxHard,sess:t(maxHard>1?"sessMany":"sessOne")}));
   if(!hard.length)w.push(t("wa_noHard"));
   /* +10% a week on the last full week (cutbacks and taper skipped), checked on the weeks as shown */
   const wk=plan.weeks.map(x=>x.sessions.reduce((a,s)=>a+(+s.km||0),0));const steep=[];
   plan.weeks.forEach((x,i)=>{if(i===0||x.cutback||x.phase==="taper")return;const r=plan.weeks[i-1].cutback?wk[i-2]:wk[i-1];if(r>0&&wk[i]>r*1.1+0.05)steep.push(x.n);});
   if(steep.length)w.push(t(edited?"wa_steepEdit":"wa_steep",{w:t(steep.length>1?"wkMany":"wkOne",{n:steep.join(", ")})}));
+  w.push(...weekCheckSummary(plan,inp));
   if(badRaceTime(inp))w.push(badTimeMsg(inp));
   else if(!(+inp.recDist>0&&raceTimeSec(inp.recTime,+inp.recDist)))w.push(t("wa_noPace"));
   const startD=parseISO(plan.meta.start);const today=new Date();today.setHours(0,0,0,0);
   if(startD<addDays(today,-6))w.push(t(inp.goal==="fitness"?"wa_pastFit":"wa_past",{d:fmtDate(startD)}));
   return w;
+}
+
+/* ---------- week checks (BB-57; spacing BB-44, hard-pace share BB-48 to come) ----------
+   Problems the plan or a hand edit can fix, checked on the weeks as shown and reported on the week itself.
+   Setup problems stay in warnings() above. */
+function maxHardRuns(inp){return +inp.runs<=4?1:2;} /* most hard runs in a week: generator, setup warning and week check share it; BB-49 will make it depend on experience level */
+function weekChecks(w,inp){
+  const out=[],ss=w.sessions.filter(s=>s.kind!=="race");
+  const nHard=ss.filter(s=>s.kind==="hard").length,m=maxHardRuns(inp);
+  if(nHard>m)out.push({k:"tooHard",txt:t("wk_tooHard",{n:nHard,r:inp.runs,m})});
+  return out;
+}
+function weekCheckSummary(plan,inp){
+  const by={};
+  plan.weeks.forEach(w=>weekChecks(w,inp).forEach(c=>(by[c.k]=by[c.k]||[]).push(w.n)));
+  const wl=a=>t(a.length>1?"wkLn":"wkL1",{n:a.join(", ")});
+  const out=[];
+  if(by.tooHard)out.push(t("wa_wkTooHard",{w:wl(by.tooHard),r:inp.runs}));
+  return out;
 }
 
 /* ---------- state ---------- */
@@ -1074,6 +1097,7 @@ function renderPlan(){
       h+=`<td class="day" data-w="${wi}" data-d="${d}">${ss.length?ss.map(s=>`<button type="button" class="ses ${s.kind==="race"?"race":""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${effColor(sesEffort(s))};--kt:${effText(sesEffort(s))}"><span class="t">${esc(s.name)}</span><span class="k">${esc(s.km)} km</span><span class="d">${esc(s.desc)}</span>${s.note?`<span class="nb">${t("noteBadge")}</span>`:""}</button>`).join(""):`<div class="empty" tabindex="0" role="button" aria-label="${esc(t("rest")+" "+t("addRun")+" · "+t("eTitle",{n:w.n,day:DAYS[d]}))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t("rest")}</span><span class="plus">${t("addRun")}</span></div>`}</td>`;
     }
     h+=`</tr>`;
+    weekChecks(w,I).forEach(c=>{h+=`<tr class="wwarn" data-check="${c.k}"><td colspan="8"><p><b>${t("wkWarn")}</b>${esc(c.txt)}</p></td></tr>`;});
     if(w.note)h+=`<tr class="wnote"><td colspan="8"><p><b>${t("note")}</b>${esc(w.note)}</p></td></tr>`;
   });
   h+=`</tbody></table></div>`;
