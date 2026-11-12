@@ -131,3 +131,15 @@ All notable changes to Block Builder. Format: [Keep a Changelog](https://keepach
 - The long run type can be unticked; that day then becomes an easy run.
 - Save plan is refused until the required fields are filled in.
 - "No quality run types ticked" warning reworded.
+
+## Before 1.1.0 - 2026-11-06
+
+Unversioned releases, the same day as 1.1.0.
+
+### Added
+- Today card above the load profile: today's run (or the next one) and the local forecast with the driest slot left in the day.
+- Export the plan as PDF or CSV from a format dropdown (replaces the Export CSV button).
+- First standalone release: coach notes removed; plans saved in the browser only, with JSON export and import; plain file downloads.
+
+### Fixed
+- Design QA: Plan/Settings tabs on phone, lighter header, 16px form fields on touch screens, visible rest days, compact week watch button.
