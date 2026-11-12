@@ -28,15 +28,30 @@ test.describe('default example plan', () => {
     expect(top).toBe(VERSION);
   });
 
-  test('summary numbers match the grid', async ({ app }) => {
+  test('summary numbers match the grid', async ({ app, page }) => {
     const weeks = await app.plan();
     const totals = weeks.map((w) => w.sessions.reduce((a, s) => a + s.km, 0));
+    // the plan starts after today and ends on race day: every week is still to go
     expect(await app.stat(0)).toBe(weeks.length);
-    expect(await app.stat(1)).toBe(Math.round(totals.reduce((a, b) => a + b, 0)));
-    expect(await app.stat(2)).toBe(Math.round(Math.max(...totals)));
+    expect(await app.stat(1)).toBe(Math.round(Math.max(...totals)));
     const longest = Math.max(...weeks.flatMap((w) => w.sessions.filter((s) => s.kind === 'long').map((s) => s.km)));
-    expect(await app.stat(3)).toBe(longest);
+    expect(await app.stat(2)).toBe(longest);
     weeks.forEach((w, i) => expect(w.km).toBeCloseTo(totals[i], 1));
+  });
+
+  test('summary: weeks to go, peak week, longest run and target with units, no total km (BB-26)', async ({ app, page }) => {
+    const stats = page.locator('#plan .summary .stat');
+    await expect(stats.locator('span')).toHaveText(['weeks to go', 'peak week', 'longest run', 'Half marathon target']);
+    await expect(stats.nth(1).locator('b small')).toHaveText('km');
+    await expect(stats.nth(2).locator('b small')).toHaveText('km');
+    await expect(stats.nth(3).locator('b')).toHaveText(/^\dh\d\d$/);
+    await expect(stats.nth(3)).toHaveAttribute('title', /^\d:\d\d:\d\d$/);
+    await expect(page.locator('#plan .summary')).not.toContainText('total');
+    // a 13-week plan starts Mon 2 Nov: today (Fri 6 Nov) is in week 1, which still counts
+    await app.configure({ weeks: 13 });
+    expect(await app.stat(0)).toBe(13);
+    await app.setLang('fr');
+    await expect(stats.locator('span')).toHaveText(['semaines restantes', 'semaine max', 'sortie la plus longue', 'Objectif semi-marathon']);
   });
 
   test('load profile draws one bar per week', async ({ app, page }) => {

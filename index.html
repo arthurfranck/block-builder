@@ -182,6 +182,7 @@ main.plan{min-width:0;display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
 .summary{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:baseline}
 .stat{display:grid}
 .stat b{font-family:var(--f-display);font-stretch:125%;font-weight:800;font-size:26px;line-height:1.05;font-variant-numeric:tabular-nums}
+.stat b small{font-family:var(--f-body);font-stretch:100%;font-size:13px;font-weight:600;margin-left:3px;color:var(--muted);letter-spacing:0}
 .stat span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
 .profile{background:var(--surface);border-radius:10px;padding:12px 14px 8px}
 .profile-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;align-items:center;margin-bottom:6px}
@@ -392,7 +393,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.21";
+const VERSION = "1.1.22";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -444,7 +445,7 @@ daysCount:"({a} of {b})",useType:"Use {name}",typeNameLbl:"Run type name",remove
 startHint:"Week 1 starts Monday {d}. Race on {r}.",paceHint:"Paces: easy {e}, tempo {t}, intervals {i}, {lbl} pace {r}.",paceHintNone:"Add a recent race and time to get paces.",
 exampleBanner:"Example settings. Change the race, your current running and the run types in the settings; the plan rebuilds as you go.",
 pendingBanner:"You edited sessions by hand, so new settings aren't applied yet.",rebuildPlan:"Rebuild plan",keepEdits:"Keep my edits",
-stWeeks:"weeks",stTotal:"total km",stPeak:"peak week km",stLongest:"longest run km",stEquiv:"{lbl} equivalent",
+stWeeks:"weeks",stTotal:"total km",stPeak:"peak week km",stLongest:"longest run km",stEquiv:"{lbl} equivalent",sToGo:"weeks to go",sToGo1:"week to go",sPeak:"peak week",sLongest:"longest run",sTarget:"{lbl} target",uH:"h",uMin:"min",
 loadProfile:"Load profile",longRunLeg:"long run",
 
 sendAll:"Send all runs to watch",exportCal:"Export calendar",exportCsv:"Export CSV",exportFmt:"Export format",fmtCsv:"CSV (spreadsheet)",fmtPdf:"PDF (printable)",exportGo:"Export",
@@ -541,7 +542,7 @@ daysCount:"({a} sur {b})",useType:"Utiliser {name}",typeNameLbl:"Nom du type de 
 startHint:"La semaine 1 commence le lundi {d}. Course le {r}.",paceHint:"Allures : facile {e}, tempo {t}, fractionné {i}, allure {lbl} {r}.",paceHintNone:"Ajoutez une course récente et son temps pour obtenir des allures.",
 exampleBanner:"Réglages d'exemple. Modifiez la course, votre niveau et les types de séances dans les réglages : le plan se recalcule au fur et à mesure.",
 pendingBanner:"Vous avez modifié des séances à la main, les nouveaux réglages ne sont donc pas encore appliqués.",rebuildPlan:"Recalculer le plan",keepEdits:"Garder mes modifications",
-stWeeks:"semaines",stTotal:"km au total",stPeak:"km semaine max",stLongest:"km sortie la plus longue",stEquiv:"équivalent {lbl}",
+stWeeks:"semaines",stTotal:"km au total",stPeak:"km semaine max",stLongest:"km sortie la plus longue",stEquiv:"équivalent {lbl}",sToGo:"semaines restantes",sToGo1:"semaine restante",sPeak:"semaine max",sLongest:"sortie la plus longue",sTarget:"objectif {lbl}",uH:"h",uMin:"min",
 loadProfile:"Profil de charge",longRunLeg:"sortie longue",
 
 sendAll:"Envoyer toutes les séances à la montre",exportCal:"Exporter le calendrier",exportCsv:"Exporter en CSV",exportFmt:"Format d'export",fmtCsv:"CSV (tableur)",fmtPdf:"PDF (imprimable)",exportGo:"Exporter",
@@ -1113,12 +1114,18 @@ function renderPlan(){
   if(S.isExample)h+=`<div class="banner info"><span>${t("exampleBanner")}</span><button class="btn sm m-only" type="button" data-tabgo="setup">${t("editSettings")}</button></div>`;
   if(S.pendingRegen)h+=`<div class="banner"><span>${t("pendingBanner")}</span><button class="btn sm primary" data-act="regen">${t("rebuildPlan")}</button><button class="btn sm ghost" data-act="keep">${t("keepEdits")}</button></div>`;
   if(warns.length)h+=`<div class="banner"><ul>${warns.map(w=>`<li>${esc(w)}</li>`).join("")}</ul></div>`;
+  /* summary (BB-26): what is left and what the plan builds to, with units; total km dropped (still in the PDF) */
+  const today=new Date();today.setHours(0,0,0,0);
+  const raceI=weeks.findIndex(w=>w.sessions.some(s=>s.kind==="race")),endI=raceI>=0?raceI:weeks.length-1;
+  const nowI=weeks.findIndex(w=>{const st=parseISO(w.start);return today>=st&&today<addDays(st,7);});
+  const toGo=today<parseISO(weeks[0].start)?endI+1:nowI>=0?Math.max(0,endI-nowI+1):0;
+  const u=x=>`<small>${x}</small>`;
+  const hm=sec=>{sec=Math.round(sec/60)*60;const h=Math.floor(sec/3600),m=Math.round(sec%3600/60);return h?`${h}${u(t("uH"))}${String(m).padStart(2,"0")}`:`${m}${u(t("uMin"))}`;};
   h+=`<div class="summary">
-    <div class="stat"><b>${weeks.length}</b><span>${t("stWeeks")}</span></div>
-    <div class="stat"><b>${Math.round(totals.reduce((a,b)=>a+b,0))}</b><span>${t("stTotal")}</span></div>
-    <div class="stat"><b>${Math.round(Math.max(...totals))}</b><span>${t("stPeak")}</span></div>
-    <div class="stat"><b>${longest}</b><span>${t("stLongest")}</span></div>
-    ${P.meta.raceSec?`<div class="stat"><b>${fmtDur(P.meta.raceSec)}</b><span>${esc(cap(t("stEquiv",{lbl:distLabel(I)})))}</span></div>`:""}
+    <div class="stat" data-stat="togo"><b>${toGo}</b><span>${t(toGo===1?"sToGo1":"sToGo")}</span></div>
+    <div class="stat" data-stat="peak"><b>${Math.round(Math.max(...totals))}${u("km")}</b><span>${t("sPeak")}</span></div>
+    <div class="stat" data-stat="long"><b>${longest}${u("km")}</b><span>${t("sLongest")}</span></div>
+    ${P.meta.raceSec?`<div class="stat" data-stat="target" title="${esc(fmtDur(P.meta.raceSec))}"><b>${hm(P.meta.raceSec)}</b><span>${esc(cap(t("sTarget",{lbl:distLabel(I)})))}</span></div>`:""}
   </div>`;
   h+=renderToday();
   h+=`<div class="profile"><div class="profile-head"><h2>${t("loadProfile")}</h2><div class="legend"><span><i style="background:var(--ink);height:2px;opacity:.55;vertical-align:3px"></i>${t("longRunLeg")}</span></div></div><div class="chart" id="profileChart"></div></div>`;
