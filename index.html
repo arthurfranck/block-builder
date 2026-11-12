@@ -7,9 +7,9 @@
   /* "Night track": dark is the default. Volt accent only on today's run and the primary action. */
   --bg:#0B0F10; --surface:#131A1C; --surface-2:#1B2427; --ink:#ECF1EE; --muted:#97A5A8; --line:#283336;
   --accent:#D4FF3A; --accent-ink:#0B0F10; --accent-btn:#D4FF3A; --accent-line:#D4FF3A;
-  --easy:#4CB98F; --recovery:#93A7A3; --hard:#E66C86; --long:#809EE8; --race:#E2B84A;
+  --recovery:#7FA6C9; --easy:#4CB98F; --long:#DDBF4F; --tempo:#F0894A; --hard:#EC5A6E; --race:#D879D2;
   --ph-base:#5E8C7C; --ph-build:#5579AE; --ph-peak:#EE7650; --ph-taper:#C9A447;
-  --easy-t:#4CB98F; --recovery-t:#93A7A3; --hard-t:#E66C86; --long-t:#809EE8; --race-t:#E2B84A;
+  --recovery-t:#7FA6C9; --easy-t:#4CB98F; --long-t:#DDBF4F; --tempo-t:#F0894A; --hard-t:#EC5A6E; --race-t:#D879D2;
   --ph-base-t:#6A9A89; --ph-build-t:#7392C2; --ph-peak-t:#EE7650; --ph-taper-t:#C9A447;
   --warn-bg:#33270F; --warn-ink:#F2CD86; color-scheme:dark;
   --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
@@ -20,18 +20,18 @@
 :root[data-theme="light"]{
   --bg:#F2F5F4; --surface:#FFFFFF; --surface-2:#E9EEEC; --ink:#142027; --muted:#5A6A6F; --line:#D5DDDB;
   --accent:#D4FF3A; --accent-ink:#142027; --accent-btn:#D4FF3A; --accent-line:#557000;
-  --easy:#2B8768; --recovery:#7D908C; --hard:#B5384F; --long:#3456A6; --race:#A87A06;
+  --recovery:#4F7EAB; --easy:#2B8768; --long:#9E7C08; --tempo:#C65B1F; --hard:#C9405A; --race:#B04BA8;
   --ph-base:#8FB2A5; --ph-build:#6C93C8; --ph-peak:#D4542C; --ph-taper:#C9A447;
   --warn-bg:#FFF4E5; --warn-ink:#7A4A00;
-  --easy-t:#257459; --recovery-t:#5D6D6A; --hard-t:#B5384F; --long-t:#3456A6; --race-t:#866105;
+  --recovery-t:#3B6690; --easy-t:#21735A; --long-t:#75620A; --tempo-t:#A9501A; --hard-t:#B3324A; --race-t:#97368F;
   --ph-base-t:#557C6D; --ph-build-t:#4575B7; --ph-peak-t:#C44D28; --ph-taper-t:#8B6F29; color-scheme:light}
 @media (prefers-color-scheme: light){:root[data-theme="auto"]{
   --bg:#F2F5F4; --surface:#FFFFFF; --surface-2:#E9EEEC; --ink:#142027; --muted:#5A6A6F; --line:#D5DDDB;
   --accent:#D4FF3A; --accent-ink:#142027; --accent-btn:#D4FF3A; --accent-line:#557000;
-  --easy:#2B8768; --recovery:#7D908C; --hard:#B5384F; --long:#3456A6; --race:#A87A06;
+  --recovery:#4F7EAB; --easy:#2B8768; --long:#9E7C08; --tempo:#C65B1F; --hard:#C9405A; --race:#B04BA8;
   --ph-base:#8FB2A5; --ph-build:#6C93C8; --ph-peak:#D4542C; --ph-taper:#C9A447;
   --warn-bg:#FFF4E5; --warn-ink:#7A4A00;
-  --easy-t:#257459; --recovery-t:#5D6D6A; --hard-t:#B5384F; --long-t:#3456A6; --race-t:#866105;
+  --recovery-t:#3B6690; --easy-t:#21735A; --long-t:#75620A; --tempo-t:#A9501A; --hard-t:#B3324A; --race-t:#97368F;
   --ph-base-t:#557C6D; --ph-build-t:#4575B7; --ph-peak-t:#C44D28; --ph-taper-t:#8B6F29; color-scheme:light}}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45}
@@ -283,7 +283,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 .wxh{flex:1 0 46px;display:grid;justify-items:center;gap:1px;padding:5px 2px;border-radius:6px;border:1px solid transparent;font-variant-numeric:tabular-nums}
 .wxh .hr{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
 .wxh .tp{font-weight:600;font-size:14px}
-.wxh .pp{font-family:var(--f-mono);font-size:11px;color:var(--long)}
+.wxh .pp{font-family:var(--f-mono);font-size:11px;color:var(--recovery-t)}
 .wxh.best{border-color:var(--easy);background:color-mix(in srgb,var(--easy) 10%,transparent)}
 .wxbest{font-size:13px;color:var(--muted)}
 .wxbest b{color:var(--easy);font-weight:600}
@@ -387,7 +387,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.15";
+const VERSION = "1.1.16";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -931,12 +931,16 @@ function renderHints(){
   $("#startHint").textContent=I.goal==="fitness"?t("fitHint",{s:fmtDate(start),e:fmtDate(addDays(start,7*(S.plan?S.plan.weeks.length:I.weeks)-1))}):t("startHint",{d:fmtDate(start),r:fmtDay(parseISO(I.raceDate))});
   $("#paceHint").textContent=P.vdot?t("paceHint",{e:P.txt.easy,t:P.txt.tempo,i:P.txt.interval,lbl:distLabel(I),r:P.txt.race}):badRaceTime(I)?badTimeMsg(I):t("paceHintNone");
 }
-const kindColor=k=>`var(--${k==="hard"?"hard":k==="long"?"long":k==="recovery"?"recovery":k==="race"?"race":"easy"})`;
-const kindText=k=>kindColor(k).replace(")","-t)");
+/* Effort scale, cool to hot: recovery, easy, long, tempo (steady quality), hard (intervals, hills, custom quality), race. */
+const TEMPO_IDS=new Set(["tempo","progression","racepace","fartlek"]);
+const effort=(id,kind)=>kind==="hard"?(TEMPO_IDS.has(id)?"tempo":"hard"):["recovery","long","race"].includes(kind)?kind:"easy";
+const sesEffort=s=>effort(s.typeId,s.kind);
+const effColor=e=>`var(--${e})`;
+const effText=e=>`var(--${e}-t)`;
 function renderChips(){
   const tt=t;
   const focusId=document.activeElement&&document.activeElement.closest&&document.activeElement.closest("#typeChips")?document.activeElement.id:null;
-  const chip=(t,i)=>`<label class="tchip ${t.on?"":"off"}" data-i="${i}"><input type="checkbox" id="t-on-${t.id}" ${t.on?"checked":""} ${t.locked?"disabled":""} aria-label="${esc(tt("useType",{name:t.name}))}"><span class="kind-dot" style="background:${kindColor(t.kind)}" aria-hidden="true"></span>${esc(t.name)}${t.locked?`<svg class="lock" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><title>${tt("alwaysOn")}</title><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`:""}</label>`;
+  const chip=(t,i)=>`<label class="tchip ${t.on?"":"off"}" data-i="${i}"><input type="checkbox" id="t-on-${t.id}" ${t.on?"checked":""} ${t.locked?"disabled":""} aria-label="${esc(tt("useType",{name:t.name}))}"><span class="kind-dot" style="background:${effColor(effort(t.id,t.kind))}" aria-hidden="true"></span>${esc(t.name)}${t.locked?`<svg class="lock" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><title>${tt("alwaysOn")}</title><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>`:""}</label>`;
   const grp=(key,list)=>list.length?`<div class="tgrp"><span class="lbl" id="tg-${key}">${tt(key)}</span><div class="tchips" role="group" aria-labelledby="tg-${key}">${list.map(([t,i])=>chip(t,i)).join("")}</div></div>`:"";
   const idx=S.types.map((t,i)=>[t,i]);
   $("#typeChips").innerHTML=grp("grpEasy",idx.filter(([t])=>t.kind!=="hard"))+grp("grpQuality",idx.filter(([t])=>t.kind==="hard"));
@@ -950,7 +954,7 @@ function renderTypes(){
   $("#types").innerHTML=S.types.map((t,i)=>`
   <div class="type ${t.on?"":"off"}" data-i="${i}">
     <div class="type-head">
-      <span class="kind-dot" style="background:${kindColor(t.kind)}" title="${kindLbl(t.kind)}"></span>
+      <span class="kind-dot" style="background:${effColor(effort(t.id,t.kind))}" title="${kindLbl(t.kind)}"></span>
       <input class="tname" id="t-name-${t.id}" data-f="name" value="${esc(t.name)}" aria-label="${tt("typeNameLbl")}">
       ${t.locked||DEFAULT_TYPES().some(d=>d.id===t.id)?"":`<button class="icon-btn" data-del="${i}" aria-label="${tt("remove")} ${esc(t.name)}">${tt("remove")}</button>`}
     </div>
@@ -1067,7 +1071,7 @@ function renderPlan(){
       <button class="btn sm ghost wbtn" data-act="wwatch" data-w="${wi}" aria-label="${esc(t("sendWatchWeek",{n:w.n}))}" title="${esc(t("sendWatchWeek",{n:w.n}))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3M12 10v2l1.5 1"/></svg>${t("watchShort")}</button></div></div></td>`;
     for(let d=0;d<7;d++){
       const ss=w.sessions.filter(s=>s.day===d);
-      h+=`<td class="day" data-w="${wi}" data-d="${d}">${ss.length?ss.map(s=>`<button type="button" class="ses ${s.kind==="race"?"race":""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${kindColor(s.kind)};--kt:${kindText(s.kind)}"><span class="t">${esc(s.name)}</span><span class="k">${esc(s.km)} km</span><span class="d">${esc(s.desc)}</span>${s.note?`<span class="nb">${t("noteBadge")}</span>`:""}</button>`).join(""):`<div class="empty" tabindex="0" role="button" aria-label="${esc(t("rest")+" "+t("addRun")+" · "+t("eTitle",{n:w.n,day:DAYS[d]}))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t("rest")}</span><span class="plus">${t("addRun")}</span></div>`}</td>`;
+      h+=`<td class="day" data-w="${wi}" data-d="${d}">${ss.length?ss.map(s=>`<button type="button" class="ses ${s.kind==="race"?"race":""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${effColor(sesEffort(s))};--kt:${effText(sesEffort(s))}"><span class="t">${esc(s.name)}</span><span class="k">${esc(s.km)} km</span><span class="d">${esc(s.desc)}</span>${s.note?`<span class="nb">${t("noteBadge")}</span>`:""}</button>`).join(""):`<div class="empty" tabindex="0" role="button" aria-label="${esc(t("rest")+" "+t("addRun")+" · "+t("eTitle",{n:w.n,day:DAYS[d]}))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t("rest")}</span><span class="plus">${t("addRun")}</span></div>`}</td>`;
     }
     h+=`</tr>`;
     if(w.note)h+=`<tr class="wnote"><td colspan="8"><p><b>${t("note")}</b>${esc(w.note)}</p></td></tr>`;
@@ -1091,8 +1095,8 @@ function wxIcon(c){const k=wmoKey(c);const sun=`<circle cx="20" cy="20" r="7" fi
   else if(k===3)g=cloud(-2);
   else if(k===45)g=`<g stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 14h26M5 20h30M8 26h24M11 32h18"/></g>`;
   else if(k===71||k===85)g=cloud(-6)+`<g fill="currentColor"><circle cx="14" cy="33" r="1.8"/><circle cx="21" cy="36" r="1.8"/><circle cx="28" cy="33" r="1.8"/></g>`;
-  else if(k===95)g=cloud(-6)+`<path d="M21 28l-4 7h5l-3 6" fill="none" stroke="var(--race)" stroke-width="2.4" stroke-linejoin="round"/>`;
-  else g=cloud(-6)+`<g stroke="var(--long)" stroke-width="2.4" stroke-linecap="round"><path d="M14 30l-2 5M21 30l-2 5M28 30l-2 5"/></g>`;
+  else if(k===95)g=cloud(-6)+`<path d="M21 28l-4 7h5l-3 6" fill="none" stroke="var(--long)" stroke-width="2.4" stroke-linejoin="round"/>`;
+  else g=cloud(-6)+`<g stroke="var(--recovery)" stroke-width="2.4" stroke-linecap="round"><path d="M14 30l-2 5M21 30l-2 5M28 30l-2 5"/></g>`;
   return `<svg viewBox="0 0 40 40" aria-hidden="true">${g}</svg>`;}
 const hm=s=>String(s).slice(11,16);
 async function wxLoad(force){
@@ -1160,7 +1164,7 @@ function renderToday(){
   else if(wi<0||today>end){body=`<div class="rest"><b>${t("tdDone")}</b><p>${t("tdDoneT",{d:fmtDate(end)})}</p></div>`;}
   else{const w=P.weeks[wi];eb+=`<span style="color:${phaseText(w.phase)}">${t("tdWeek",{n:w.n,phase:phaseLbl(w.phase)})}</span>`;
     const ss=w.sessions.filter(s=>s.day===td);
-    if(ss.length)body=ss.map(s=>`<div class="tses" style="--k:${kindColor(s.kind)};--kt:${kindText(s.kind)}"><div class="tn"><b>${esc(s.name)}</b><span>${esc(s.km)} km</span></div>${s.desc?`<p>${esc(s.desc)}</p>`:""}
+    if(ss.length)body=ss.map(s=>`<div class="tses" style="--k:${effColor(sesEffort(s))};--kt:${effText(sesEffort(s))}"><div class="tn"><b>${esc(s.name)}</b><span>${esc(s.km)} km</span></div>${s.desc?`<p>${esc(s.desc)}</p>`:""}
       <div class="acts"><button type="button" class="btn sm" data-act="tedit" data-w="${wi}" data-s="${s.id}">${t("tdEdit")}</button><button type="button" class="btn sm" data-act="twatch" data-w="${wi}" data-s="${s.id}">${t("sendWatch")}</button></div></div>`).join("");
     else{const n=nextAfter(wi,td);body=`<div class="rest"><b>${t("tdRest")}</b><p>${t("tdRestT")}</p></div>${n?`<p class="tnext">${t("tdNext",{when:whenOf(n.w,n.s),name:esc(n.s.name.toLowerCase()),km:n.s.km})}</p>`:""}`;}
   }
@@ -1511,7 +1515,7 @@ function loadPDF(){
 }
 /* built-in PDF fonts are Latin-1: map the typographic characters the plan uses, drop the rest */
 const pdfTxt=v=>String(v??"").replace(/[–—−]/g,"-").replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/…/g,"...").replace(/→/g,"->").replace(/≈/g,"~").replace(/≤/g,"<=").replace(/≥/g,">=").replace(/[   ]/g," ").replace(/[^\n\x20-\xFF]/g,"");
-const PDF_KIND={easy:[43,135,104],recovery:[125,144,140],hard:[181,56,79],long:[52,86,166],race:[168,122,6]};
+const PDF_KIND={recovery:[79,126,171],easy:[43,135,104],long:[158,124,8],tempo:[198,91,31],hard:[201,64,90],race:[176,75,168]};
 const PDF_PHASE={base:[143,178,165],build:[108,147,200],peak:[212,84,44],taper:[201,164,71]};
 async function exportPDF(btn){
   if(btn)btn.disabled=true;
@@ -1539,7 +1543,7 @@ async function exportPDF(btn){
       const kinds=[w.phase];
       for(let d=0;d<7;d++){const ss=w.sessions.filter(s=>s.day===d);
         row.push(ss.map(s=>`${s.name} · ${s.km} km\n${s.desc}${s.note?"\n"+t("note")+": "+s.note:""}`).join("\n\n"));
-        kinds.push(ss.length?ss[0].kind:null);}
+        kinds.push(ss.length?sesEffort(ss[0]):null);}
       body.push(row.map(pdfTxt));meta.push({type:"week",kinds});
       if(w.note){body.push([{content:pdfTxt(`${t("note")}: ${w.note}`),colSpan:8}]);meta.push({type:"note"});}
     });
@@ -1553,7 +1557,7 @@ async function exportPDF(btn){
       columnStyles:{0:{cellWidth:30,fontStyle:"bold"},...Object.fromEntries([1,2,3,4,5,6,7].map(i=>[i,{cellWidth:dayW}]))},
       didParseCell:h=>{if(h.section!=="body")return;const m=meta[h.row.index];if(!m)return;
         if(m.type==="note"){h.cell.styles.fillColor=[233,238,236];h.cell.styles.fontStyle="italic";return;}
-        if(h.column.index>0&&m.kinds[h.column.index]==="race")h.cell.styles.fillColor=[246,238,214];},
+        if(h.column.index>0&&m.kinds[h.column.index]==="race")h.cell.styles.fillColor=[245,229,243];},
       didDrawCell:h=>{if(h.section!=="body")return;const m=meta[h.row.index];if(!m||m.type!=="week")return;
         const k=m.kinds[h.column.index];const c=h.column.index===0?PDF_PHASE[k]:PDF_KIND[k];if(!c)return;
         doc.setFillColor(...c);doc.rect(h.cell.x+.4,h.cell.y+.6,1.1,h.cell.height-1.2,"F");}

@@ -2,6 +2,13 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.16] - 2026-11-12
+
+### Changed
+- Run colours follow effort, cool to hot (BB-21): recovery blue, easy green, long run yellow, steady quality (tempo, progression, race pace, fartlek) orange, hard quality (intervals, hills, custom quality types) red, race day magenta. Used on the run type chips, the plan grid, the Today card and the PDF. Tempo and intervals used to share one pink, and the long run was a cool blue.
+- Every run still shows its name next to its colour bar, so nothing relies on colour alone. Text colours pass 4.5:1 in both themes; the light-theme long run bar was darkened to stay above 3:1.
+- Weather: rain chance and rain drops use the recovery blue, lightning the yellow (they borrowed the old long-run blue and race gold).
+
 ## [1.1.15] - 2026-11-11
 
 ### Changed

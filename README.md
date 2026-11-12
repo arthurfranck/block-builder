@@ -12,6 +12,7 @@ Block Builder creates a running training block in the browser. You pick a race o
 - **Runs per week:** 1 to 7.
 - **New plan:** starts empty. Pick runs per week, enter your weekly volume and longest run, and the plan builds. Only Easy run is switched on until you add more types.
 - **Run types:** easy, recovery, long, tempo, intervals, hill repeats, fartlek, progression and race pace, shown as chips grouped Easy and Quality: tap one to switch it on or off (Easy run is always on). You can switch off the long run (that day becomes an easy run). Under "Customise workouts" you can rename types, add custom ones, and edit their description templates and the phases they're used in.
+- **Effort colours:** each run's colour bar shows how hard it is, cool to hot: recovery, easy, long run, steady quality (tempo, progression, race pace, fartlek), hard quality (intervals, hills, custom quality types), race day. Same colours on the chips, the plan, the Today card and the PDF.
 - **Editing:** edit, move (drag and drop), add or delete any run, with a personal note per run.
 - **Today:** above the load profile, a card shows today's run with Edit and Send to watch (or, on a rest day, the next run and its date; before the plan starts, the start date and first run). Next to it, the local forecast: current conditions and feels-like temperature, high and low, rain chance, wind, sunset, and an hourly strip to 22:00 that marks the driest slot left in the day. Type a city or use your location; the choice is remembered in your browser.
 - **Race countdown:** optional, with the race name, city and a link to its page (Finishers search built in).
@@ -81,7 +82,7 @@ Every test starts on a frozen date (Friday 6 November 2026, Paris time) with emp
 | `exports.spec.ts` | CSV, PDF, calendar, Garmin and Apple Watch zips |
 | `i18n.spec.ts` | every string in English and French with matching placeholders, language switch |
 | `mobile.spec.ts` | Plan/Settings tabs, gear on the brand row and plan name on its own line, 16px fields, tap targets, sideways grid scroll; side-by-side layout on desktop |
-| `layout.spec.ts` | nothing sticks out of the page, gear menu (theme and language hidden until opened, Escape and outside tap close it), theme picker (dark default, light kept after reload, Auto follows the device), volt accent only on today and the main button, no script errors |
+| `layout.spec.ts` | nothing sticks out of the page, run colours follow effort (setup chips match the plan grid), gear menu (theme and language hidden until opened, Escape and outside tap close it), theme picker (dark default, light kept after reload, Auto follows the device), volt accent only on today and the main button, no script errors |
 | `security.spec.ts` | Content Security Policy present and not broken by the page or either export, WorkoutKit not fetched from a CDN, a tampered jsPDF file refused |
 | `a11y.spec.ts` | WCAG 2.1 A/AA checks on each view and dialog, dark and light |
 
@@ -108,6 +109,7 @@ All three depend on the claude.ai artifact runtime, so they were removed here. T
 
 ## Changelog
 
+- **2026-11-12 (v1.1.16):** Run colours now show effort, cool to hot: recovery blue, easy green, long run yellow, tempo-type sessions orange, intervals and hills red, race day magenta. Tempo and intervals no longer share one colour.
 - **2026-11-11 (v1.1.15):** Run types take far less room in the settings: they're now chips grouped Easy and Quality that you tap on or off. Names, phases, descriptions and Add run type are under "Customise workouts".
 - **2026-11-11 (v1.1.14):** Half and full marathon plans warn when they peak too low for the race: the longest run and biggest week are compared with what the race usually needs, with a suggestion to add weeks or switch to Get in shape.
 - **2026-11-10 (v1.1.13):** Theme and language moved out of the header into a gear menu at its end, so the plan name and plan buttons come first. On phone the plan name gets its own line instead of being cut off. Theme is now a Dark / Light / Auto switch.
