@@ -109,36 +109,4 @@ All three depend on the claude.ai artifact runtime, so they were removed here. T
 
 ## Changelog
 
-- **2026-11-12 (v1.1.16):** Run colours now show effort, cool to hot: recovery blue, easy green, long run yellow, tempo-type sessions orange, intervals and hills red, race day magenta. Tempo and intervals no longer share one colour.
-- **2026-11-11 (v1.1.15):** Run types take far less room in the settings: they're now chips grouped Easy and Quality that you tap on or off. Names, phases, descriptions and Add run type are under "Customise workouts".
-- **2026-11-11 (v1.1.14):** Half and full marathon plans warn when they peak too low for the race: the longest run and biggest week are compared with what the race usually needs, with a suggestion to add weeks or switch to Get in shape.
-- **2026-11-10 (v1.1.13):** Theme and language moved out of the header into a gear menu at its end, so the plan name and plan buttons come first. On phone the plan name gets its own line instead of being cut off. Theme is now a Dark / Light / Auto switch.
-- **2026-11-10 (v1.1.12):** New dark "night track" look by default, with a volt accent used only on today's run and the main button. A Theme picker in the header switches to Light or Auto (follows your device).
-- **2026-11-09 (v1.1.11):** The language picker in the header is now a dropdown (English / Français) instead of two EN/FR buttons.
-- **2026-11-09 (v1.1.10):** Taper long runs no longer come out longer than the longest run before them. Plans that start from low volume never reach the usual peak long run, and the taper used to scale from that usual peak anyway: a beginner half plan peaking at 12 km got 14.5 km in its first taper week.
-- **2026-11-09 (v1.1.9):** Safer outside code: the PDF libraries are checked against fixed hashes before they run, the Apple Watch encoder is now served from this site instead of a CDN, and a Content Security Policy limits where scripts and requests can go.
-- **2026-11-09 (v1.1.8):** Weekly mileage now grows at most 10% on the last full week, including after cutback weeks; before, rounding pushed some weeks up 13 to 19%. When the minimum run distances make that impossible, or a hand edit causes a jump, a warning names the weeks.
-- **2026-11-09 (v1.1.7):** Switched-off run types are easier to read: the card turns grey instead of fading the text. Screen readers announce rest days as "Rest + Add run · Week 1 · Wed" instead of just "+ Add run".
-- **2026-11-09 (v1.1.6):** Screen readers now announce messages like "Plan saved" and errors. In dialogs, Tab stays inside, the dialog is announced by its title, and closing it puts you back on the button or run you started from.
-- **2026-11-09 (v1.1.5):** Leftovers from the claude.ai version are gone: notes are labelled "Note" (not "Coach") on the plan, in the CSV and PDF exports and in calendar events, and unused Claude messages and error texts were removed.
-- **2026-11-08 (v1.1.4):** On iPhone, tapping a run-type template, a run's description or note, or the export format no longer zooms the page in: those fields use 16px text on touch screens.
-- **2026-11-08 (v1.1.3):** Finish times are read to fit the race: "1:45" for a half marathon now means 1 h 45 min instead of being ignored, and a time that can't fit the race says so.
-- **2026-11-07 (v1.1.2):** Imported plan files are checked before use, so a shared file can't run script on the page; a broken file still opens. Changes made just before New plan, opening another plan or closing the tab are saved. Leaving with a never-saved plan asks first.
-- **2026-11-06 (v1.1.1):** iPhone fixes: the race date field no longer overlaps Weeks of training, and opening a run no longer pops the run type picker open.
-- **2026-11-06 (v1.1.0):** New plan starts blank instead of from example settings: no runs per week, running days or long run day selected, and only Easy ticked. 1 and 2 runs per week are available. The long run type can be unticked. The page footer shows the version.
-- **2026-11-06:** Today card above the load profile: today's run (or the next one) and the local forecast with the driest slot left in the day.
-- **2026-11-06:** Export the plan as PDF or CSV from a format dropdown (replaces the Export CSV button).
-- **2026-11-06:** First standalone release:
-  - Coach notes removed.
-  - Plans saved in the browser only, with JSON export and import.
-  - Plain file downloads.
-  - Design QA fixes:
-    - Plan/Settings tabs on phone.
-    - Lighter header.
-    - 16px form fields on touch screens.
-    - Visible rest days.
-    - Compact week watch button.
-    - Darker text colors to pass WCAG AA contrast.
-    - Fixed-size chart text.
-    - Race name shown only once.
-    - Plan name follows the goal until you rename it.
+What changed in each version is in [CHANGELOG.md](CHANGELOG.md). The version shown in the page footer is the latest entry there.

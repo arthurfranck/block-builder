@@ -6,9 +6,17 @@ Every commit that changes `index.html` must update `README.md` in the same commi
 
 - **Features:** add, change or remove bullets so they match what the page actually does.
 - **Where plans are stored / Tech / Run locally:** update if storage, hosting, dependencies or external resources change.
-- **Changelog:** add one dated line (YYYY-MM-DD) at the top of the list, saying what changed for the person using the page.
 
 Before committing, reread the whole README against the current `index.html` and fix anything that is no longer true. Do not commit a page change with a stale README.
+
+## Changelog and version (required)
+
+`CHANGELOG.md` is the only changelog; README.md just links to it. For every release that changes `index.html`:
+
+- Bump `const VERSION` in `index.html` (semantic versioning).
+- Add a `## [x.y.z] - YYYY-MM-DD` section at the top of `CHANGELOG.md` ([Keep a Changelog](https://keepachangelog.com) headings), saying what changed for the person using the page.
+
+The tests read the version from `index.html` and fail if the footer or the top `CHANGELOG.md` entry don't match it, so no test needs editing on a version bump.
 
 ## Run the tests (required)
 
