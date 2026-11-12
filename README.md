@@ -6,7 +6,7 @@ Block Builder creates a running training block in the browser. You pick a race o
 
 ## Features
 
-- **Goals:** train for a race (5K, 10K, half marathon, marathon, or a custom distance) or get in shape over a set number of weeks. For a half or a full marathon, the plan warns when it peaks too low for the race (longest run under about 60% of a half or 75% of a marathon, or biggest week under about 30 or 45 km) and suggests more weeks or the Get in shape goal.
+- **Goals:** train for a race (5K, 10K, half marathon, marathon, or a custom distance) or build a personal plan over a set number of weeks. For a half or a full marathon, the plan warns when it peaks too low for the race (longest run under about 60% of a half or 75% of a marathon, or biggest week under about 30 or 45 km) and suggests more weeks or the Personal plan goal.
 - **Phases:** base, build, peak and taper, with cutback weeks. Taper long runs step down from the longest run the plan actually reached (75%, then 60%). Each full week stays within +10% of the last full week before it: after rounding, easy runs are shortened first, then the hard runs, then the long run. If every run is already at its minimum distance (low volume with many runs), the plan says which weeks still jump and suggests fewer runs; a hand edit that makes a week jump is flagged too. A load profile chart shows weekly volume and the long run.
 - **Paces:** worked out from a recent race result (easy, tempo, intervals, race pace). The finish time is read to fit the race: "1:45" for a half means 1 h 45 min, a lone "52" for a 10K means 52 minutes, and the field shows the reading (1:45:00). A time that fits no reading for that race is flagged instead of being ignored.
 - **Runs per week:** 1 to 7.

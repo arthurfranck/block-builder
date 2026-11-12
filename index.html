@@ -327,7 +327,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
     <aside class="setup" id="setup">
       <section class="sec">
         <h3 data-i18n="secGoal">Goal</h3>
-        <div class="seg" id="goalSeg" role="group" data-i18n-aria="secGoal"><button type="button" data-goal="race" data-i18n="goalRace">Train for a race</button><button type="button" data-goal="fitness" data-i18n="goalFit">Get in shape</button></div>
+        <div class="seg" id="goalSeg" role="group" data-i18n-aria="secGoal"><button type="button" data-goal="race" data-i18n="goalRace">Train for a race</button><button type="button" data-goal="fitness" data-i18n="goalFit">Personal plan</button></div>
         <div class="field"><span class="lbl" id="distLbl">Distance</span>
           <div class="seg" id="distSeg"></div>
         </div>
@@ -393,13 +393,13 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.22";
+const VERSION = "1.1.23";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
 const I18N={
 en:{
-planNameLabel:"Plan name",secGoal:"Goal",goalRace:"Train for a race",goalFit:"Get in shape",focusDist:"Focus distance",startDate:"Start date",focusHint:"Sets the paces and how long the long runs get. No race, no taper: the plan just builds week by week.",fitHint:"Starts Monday {s}, ends Sunday {e}.",fitBlock:"{n}-week fitness block",hFitStarts:"Your {n}-week plan starts Monday {d}.",hFitIn:"Week {n} of {t}, {phase} phase{cut}.",hFitDone:"Your {n}-week plan finished on {d}. Set a new start date to plan the next block.",wa_pastFit:"Week 1 started on {d}. Move the start date if you want the plan to begin now.",planMetaFit:"{lbl} focus · {w} weeks · starts {d}",myPlans:"My plans",newPlan:"New plan",savePlan:"Save plan",language:"Language",theme:"Theme",thDark:"Dark",thLight:"Light",thAuto:"Auto",thHint:"Auto follows your device.",prefs:"Display and language",
+planNameLabel:"Plan name",secGoal:"Goal",goalRace:"Train for a race",goalFit:"Personal plan",focusDist:"Focus distance",startDate:"Start date",focusHint:"Sets the paces and how long the long runs get. No race, no taper: the plan just builds week by week.",fitHint:"Starts Monday {s}, ends Sunday {e}.",fitBlock:"{n}-week personal plan",hFitStarts:"Your {n}-week plan starts Monday {d}.",hFitIn:"Week {n} of {t}, {phase} phase{cut}.",hFitDone:"Your {n}-week plan finished on {d}. Set a new start date to plan the next block.",wa_pastFit:"Week 1 started on {d}. Move the start date if you want the plan to begin now.",planMetaFit:"{lbl} focus · {w} weeks · starts {d}",myPlans:"My plans",newPlan:"New plan",savePlan:"Save plan",language:"Language",theme:"Theme",thDark:"Dark",thLight:"Light",thAuto:"Auto",thHint:"Auto follows your device.",prefs:"Display and language",
 secRace:"Race",distance:"Distance",customKm:"Custom distance (km)",raceDate:"Race date",weeks:"Weeks of training",
 secNow:"Your running now",curVol:"Weekly volume (km)",curLong:"Longest recent run (km)",recDist:"Recent race",none:"None",
 halfMarathon:"Half marathon",marathon:"Marathon",recTime:"Finish time",recTimePh:"h:mm:ss or mm:ss",
@@ -433,7 +433,7 @@ wa_short:"{w} weeks is short for a {lbl}. {min} or more lets volume build withou
 wa_long:"Blocks over 24 weeks tend to go stale. Consider a general base phase first, then {n} focused weeks.",
 wa_lowVol:"{v} km/week is a low starting point for a {lbl}. The plan ramps carefully, so expect a conservative peak.",
 wa_mLong:"A longest recent run under 14 km makes 32 km long runs hard to reach safely in one block.",
-wa_ready:"This plan peaks at a {long} km long run and {peak} km in a week. A {lbl} usually calls for a long run of about {tl} km and weeks of about {tp} km. Add weeks, or set the goal to Get in shape.",
+wa_ready:"This plan peaks at a {long} km long run and {peak} km in a week. A {lbl} usually calls for a long run of about {tl} km and weeks of about {tp} km. Add weeks, or set the goal to Personal plan.",
 wa_days:"You picked {d} running days for {r} runs a week. Using a default pattern until those match.",
 wa_tooMany:"{h} quality run types with {r} runs a week leaves room for {m} {sess} per week. Types will rotate, so each appears less often.",
 sessOne:"hard session",sessMany:"hard sessions",
@@ -496,7 +496,7 @@ wxSun:"sunset {t}",wxBest:"Driest slot left today: <b>{h}</b>, {p}% rain, {tp}°
 wmo0:"Clear",wmo1:"Mostly clear",wmo2:"Partly cloudy",wmo3:"Overcast",wmo45:"Fog",wmo51:"Drizzle",wmo56:"Freezing drizzle",wmo61:"Rain",wmo65:"Heavy rain",wmo66:"Freezing rain",wmo71:"Snow",wmo80:"Showers",wmo85:"Snow showers",wmo95:"Thunderstorm"
 },
 fr:{
-planNameLabel:"Nom du plan",secGoal:"Objectif",goalRace:"Préparer une course",goalFit:"Me remettre en forme",focusDist:"Distance de référence",startDate:"Date de début",focusHint:"Elle fixe les allures et la longueur des sorties longues. Pas de course, pas d'affûtage : le plan progresse simplement semaine après semaine.",fitHint:"Du lundi {s} au dimanche {e}.",fitBlock:"Plan forme {n} semaines",hFitStarts:"Votre plan de {n} semaines commence le lundi {d}.",hFitIn:"Semaine {n} sur {t}, phase {phase}{cut}.",hFitDone:"Votre plan de {n} semaines s'est terminé le {d}. Indiquez une nouvelle date de début pour préparer la suite.",wa_pastFit:"La semaine 1 a commencé le {d}. Déplacez la date de début pour que le plan démarre maintenant.",planMetaFit:"Base {lbl} · {w} semaines · début le {d}",myPlans:"Mes plans",newPlan:"Nouveau plan",savePlan:"Enregistrer",language:"Langue",theme:"Thème",thDark:"Sombre",thLight:"Clair",thAuto:"Auto",thHint:"Auto suit le réglage de l'appareil.",prefs:"Affichage et langue",
+planNameLabel:"Nom du plan",secGoal:"Objectif",goalRace:"Préparer une course",goalFit:"Plan perso",focusDist:"Distance de référence",startDate:"Date de début",focusHint:"Elle fixe les allures et la longueur des sorties longues. Pas de course, pas d'affûtage : le plan progresse simplement semaine après semaine.",fitHint:"Du lundi {s} au dimanche {e}.",fitBlock:"Plan perso {n} semaines",hFitStarts:"Votre plan de {n} semaines commence le lundi {d}.",hFitIn:"Semaine {n} sur {t}, phase {phase}{cut}.",hFitDone:"Votre plan de {n} semaines s'est terminé le {d}. Indiquez une nouvelle date de début pour préparer la suite.",wa_pastFit:"La semaine 1 a commencé le {d}. Déplacez la date de début pour que le plan démarre maintenant.",planMetaFit:"Base {lbl} · {w} semaines · début le {d}",myPlans:"Mes plans",newPlan:"Nouveau plan",savePlan:"Enregistrer",language:"Langue",theme:"Thème",thDark:"Sombre",thLight:"Clair",thAuto:"Auto",thHint:"Auto suit le réglage de l'appareil.",prefs:"Affichage et langue",
 secRace:"Course",distance:"Distance",customKm:"Distance personnalisée (km)",raceDate:"Date de la course",weeks:"Semaines d'entraînement",
 secNow:"Votre niveau actuel",curVol:"Volume hebdo (km)",curLong:"Plus longue sortie récente (km)",recDist:"Course récente",none:"Aucune",
 halfMarathon:"Semi-marathon",marathon:"Marathon",recTime:"Temps final",recTimePh:"h:mm:ss ou mm:ss",
@@ -530,7 +530,7 @@ wa_short:"{w} semaines, c'est court pour un {lbl}. {min} semaines ou plus permet
 wa_long:"Au-delà de 24 semaines, un plan s'essouffle. Faites d'abord une phase de foncier générale, puis {n} semaines ciblées.",
 wa_lowVol:"{v} km/semaine, c'est un point de départ bas pour un {lbl}. Le plan progresse prudemment, attendez-vous à un pic modeste.",
 wa_mLong:"Avec une plus longue sortie récente sous 14 km, atteindre des sorties de 32 km en sécurité dans un seul plan est difficile.",
-wa_ready:"Ce plan culmine à une sortie longue de {long} km et {peak} km sur une semaine. Un {lbl} demande en général une sortie longue d'environ {tl} km et des semaines d'environ {tp} km. Ajoutez des semaines, ou choisissez l'objectif Me remettre en forme.",
+wa_ready:"Ce plan culmine à une sortie longue de {long} km et {peak} km sur une semaine. Un {lbl} demande en général une sortie longue d'environ {tl} km et des semaines d'environ {tp} km. Ajoutez des semaines, ou choisissez l'objectif Plan perso.",
 wa_days:"Vous avez choisi {d} jours pour {r} sorties par semaine. Une répartition par défaut s'applique tant que les deux ne correspondent pas.",
 wa_tooMany:"{h} types de séances de qualité pour {r} sorties par semaine : la place ne permet que {m} {sess} par semaine. Les types tournent, chacun revient donc moins souvent.",
 sessOne:"séance difficile",sessMany:"séances difficiles",

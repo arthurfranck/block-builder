@@ -141,7 +141,7 @@ test.describe('goal readiness', () => {
     const long = Math.max(...weeks.flatMap((w) => w.sessions.map((s) => s.km)));
     const peak = Math.round(Math.max(...weeks.map((w) => w.sessions.reduce((a, s) => a + s.km, 0))));
     await expect(app.warnings().filter({ hasText: READY })).toHaveText([
-      `This plan peaks at a ${long} km long run and ${peak} km in a week. A half marathon usually calls for a long run of about 13 km and weeks of about 30 km. Add weeks, or set the goal to Get in shape.`,
+      `This plan peaks at a ${long} km long run and ${peak} km in a week. A half marathon usually calls for a long run of about 13 km and weeks of about 30 km. Add weeks, or set the goal to Personal plan.`,
     ]);
   });
 
@@ -155,7 +155,7 @@ test.describe('goal readiness', () => {
     await expect(app.warnings().filter({ hasText: READY })).toHaveCount(0);
   });
 
-  test('shorter races and the Get in shape goal are not checked', async ({ app }) => {
+  test('shorter races and the Personal plan goal are not checked', async ({ app }) => {
     await app.configure({ dist: '10k', runs: 3, weeks: 8, curVol: 12, curLong: 5 });
     await expect(app.warnings().filter({ hasText: READY })).toHaveCount(0);
     await app.configure({ goal: 'fitness', dist: 'hm', runs: 3, weeks: 12, curVol: 15, curLong: 6 });
