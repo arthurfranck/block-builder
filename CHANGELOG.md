@@ -2,6 +2,14 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.20] - 2026-11-12
+
+### Changed
+- Fewer lines (BB-31): the countdown, load profile, plan grid, Customise workouts, filled race box and My plans rows lost their 1px outlines, and so did the lines between setup sections and between days in the plan grid (the lines between weeks stay). Cards now stand out by their surface: page, card, then a second level for things inside a card (run type cards, plans in My plans).
+- The Today card is the only one lifted, with a soft shadow on top of its volt frame; its weather side is set apart by its tint instead of a line.
+- Light theme: the page background is one step darker (#E8EDEB) so white cards read without outlines; text contrast still passes in both themes.
+- Buttons, fields, chips, selects and the gear menu keep their borders.
+
 ## [1.1.19] - 2026-11-12
 
 ### Changed

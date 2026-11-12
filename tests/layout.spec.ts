@@ -160,3 +160,23 @@ test('type: Archivo expanded for the brand and big numbers, Inter elsewhere, upp
     .map((e) => e.className || e.tagName));
   expect(big).toEqual([]);
 });
+
+test('cards separate by surface, not borders; only Today is lifted; controls keep their borders (BB-31)', async ({ app, page }) => {
+  for (const theme of ['dark', 'light'] as const) {
+    if (theme === 'light') await app.setTheme('light');
+    const css = (sel: string) => page.locator(sel).first().evaluate((e) => {
+      const c = getComputedStyle(e);
+      return { border: parseFloat(c.borderTopWidth) + parseFloat(c.borderLeftWidth), shadow: c.boxShadow, bg: c.backgroundColor };
+    });
+    const pageBg = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    for (const sel of ['.profile', '.grid-wrap']) {
+      const c = await css(sel);
+      expect(c.border, `${sel} (${theme})`).toBe(0);
+      expect(c.bg, `${sel} stands out from the page by its surface (${theme})`).not.toBe(pageBg);
+      expect(c.shadow, `${sel} has no lift (${theme})`).toBe('none');
+    }
+    expect(await page.locator('table.grid td.day').first().evaluate((e) => parseFloat(getComputedStyle(e).borderLeftWidth))).toBe(0);
+    expect((await css('.today')).shadow).toMatch(/rgba\(.*\d+px \d+px/);
+    for (const sel of ['.btn', '#curVol']) expect((await css(sel)).border, `${sel} keeps its border (${theme})`).toBeGreaterThan(0);
+  }
+});
