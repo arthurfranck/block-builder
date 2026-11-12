@@ -5,7 +5,7 @@ test.describe('paces', () => {
     await app.showSetup();
     await expect(page.locator('#paceHint')).toContainText(/Paces: easy \d:\d\d\/km, tempo \d:\d\d\/km/);
     await app.showPlan();
-    await expect(page.locator('#plan .summary .stat').nth(4)).toContainText('Half marathon equivalent');
+    await expect(page.locator('#plan .summary .stat[data-stat="target"]')).toContainText('Half marathon target');
   });
 
   test('a faster race time gives faster paces', async ({ app, page }) => {

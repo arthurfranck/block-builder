@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.22] - 2026-11-12
+
+### Changed
+- Summary numbers above the plan (BB-26): weeks to go (the current week counts, up to race day; before the plan starts, every week), peak week and longest run with "km" after the number, and the race target time as "1h55" (hover for the exact time) labelled "Half marathon target" instead of "equivalent". Total km is gone from the screen; the PDF still lists plan totals.
+
 ## [1.1.21] - 2026-11-12
 
 ### Changed

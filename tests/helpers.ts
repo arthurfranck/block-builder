@@ -133,7 +133,8 @@ export class App {
     }) as Promise<Week[]>;
   }
 
-  async stat(i: number) { return +(await this.page.locator('#plan .summary .stat b').nth(i).textContent())!; }
+  /** Summary number i, without its unit ("46km" -> 46). */
+  async stat(i: number) { return parseFloat((await this.page.locator('#plan .summary .stat b').nth(i).textContent())!); }
 
   session(week: number, day: number): Locator {
     return this.page.locator(`table.grid td.day[data-w="${week}"][data-d="${day}"] .ses`);
