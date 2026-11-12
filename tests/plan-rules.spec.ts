@@ -191,9 +191,9 @@ test.describe('hard runs per week (BB-57)', () => {
     await toIntervals(2);
     const hard = (await app.plan())[0].sessions.filter((s) => ['hard', 'tempo'].includes(s.kind)).length;
     expect(hard).toBeGreaterThanOrEqual(2);
-    const row = weekWarnings(page);
+    // Tue and Wed intervals are also back to back (BB-44), so week 1 gets two warning rows
+    const row = weekWarnings(page).and(page.locator('[data-check="tooHard"]'));
     await expect(row).toHaveCount(1);
-    await expect(row).toHaveAttribute('data-check', 'tooHard');
     await expect(row).toContainText(`${hard} hard runs this week: at 4 runs a week, keep it to 1. Change one to an easy run.`);
     // the warning sits right under week 1
     await expect(page.locator('table.grid tbody tr').nth(1)).toHaveClass(/wwarn/);
@@ -205,7 +205,68 @@ test.describe('hard runs per week (BB-57)', () => {
       await app.modal().locator('#eType').selectOption('easy');
       await app.modal().getByRole('button', { name: 'Save changes' }).click();
     }
-    await expect(row).toHaveCount(0);
+    await expect(weekWarnings(page)).toHaveCount(0);
     await expect(app.warnings().filter({ hasText: 'more hard runs than suit' })).toHaveCount(0);
+  });
+});
+
+test.describe('spacing (BB-44)', () => {
+  const weekWarnings = (page: import('@playwright/test').Page) => page.locator('table.grid tr.wwarn');
+  const setDays = async (app: import('./helpers').App, page: import('@playwright/test').Page, runs: number, on: number[]) => {
+    await app.runs(runs);
+    const seg = page.locator('#daysSeg');
+    for (let d = 0; d < 7; d++) {
+      const b = seg.locator(`[data-day="${d}"]`);
+      if ((await b.getAttribute('aria-pressed') === 'true') !== on.includes(d)) await b.click();
+    }
+    await app.showPlan();
+  };
+
+  test('a hard run moved next to the long run is flagged on the week, across the week boundary too', async ({ app, page }) => {
+    // Default plan: Mon, Tue, Thu, Fri, Sun with the long run on Sunday. Week 2 Monday follows week 1's long run.
+    await app.session(1, 0).click();
+    await app.modal().locator('#eType').selectOption('intervals');
+    await app.modal().getByRole('button', { name: 'Save changes' }).click();
+    const row = weekWarnings(page).and(page.locator('[data-check="b2b"]'));
+    await expect(row).toHaveCount(1);
+    // week 2 also has a generated hard run on Tuesday, so Monday's intervals touch it as well
+    await expect(row).toContainText('Long run (Sun) and Intervals (Mon), Intervals (Mon) and ');
+    await expect(row).toContainText(' back to back. Keep an easy day or a rest day between hard runs and the long run.');
+    await expect(app.warnings().filter({ hasText: 'right next to another hard run' })).toContainText(['Week 2: a hard run right next to another hard run or the long run. Details on the week.']);
+  });
+
+  test('runs on all 7 days after edits: no rest day, on the week', async ({ app, page }) => {
+    for (const d of [2, 5]) {
+      await app.cell(0, d).locator('.empty').click();
+      await page.locator('#eOk').click();
+    }
+    const row = weekWarnings(page).and(page.locator('[data-check="noRest"]'));
+    await expect(row).toHaveCount(1);
+    await expect(row).toContainText('Runs on all 7 days this week: keep at least one rest day.');
+    await expect(app.warnings().filter({ hasText: 'no rest day' })).toContainText(['Week 1: no rest day. Details on the week.']);
+  });
+
+  test('3 running days in a row is one setup warning, not a week warning', async ({ app, page }) => {
+    await setDays(app, page, 3, [4, 5, 6]);
+    await expect(app.warnings().filter({ hasText: 'in a row' })).toContainText(['Fri, Sat, Sun are 3 days in a row. Keep the middle one easy, or spread your running days.']);
+    await expect(weekWarnings(page)).toHaveCount(0);
+  });
+
+  test('days that box in the long run: one setup warning, weeks not flagged for it', async ({ app, page }) => {
+    await setDays(app, page, 2, [5, 6]);
+    await expect(app.warnings().filter({ hasText: 'next to the long run' })).toContainText(['Every other running day is next to the long run (Sun), so the hard run lands next to it. Add a running day further from it, or move the long run.']);
+    await expect(weekWarnings(page)).toHaveCount(0);
+  });
+
+  test('7 runs a week: one setup warning about the rest day', async ({ app, page }) => {
+    await app.runs(7);
+    await app.showPlan();
+    await expect(app.warnings().filter({ hasText: 'leaves no rest day' })).toHaveCount(1);
+    await expect(weekWarnings(page)).toHaveCount(0);
+  });
+
+  test('spread-out days get none of these warnings', async ({ app, page }) => {
+    await expect(app.warnings().filter({ hasText: /in a row|next to the long run|rest day/ })).toHaveCount(0);
+    await expect(weekWarnings(page)).toHaveCount(0);
   });
 });
