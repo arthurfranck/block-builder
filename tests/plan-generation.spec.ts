@@ -42,6 +42,37 @@ test.describe('default example plan', () => {
   test('load profile draws one bar per week', async ({ app, page }) => {
     await expect(page.locator('#profileChart svg g')).toHaveCount((await app.plan()).length);
   });
+
+  test('load profile: phase bands instead of a phase legend, race flag on the race week (BB-25)', async ({ app, page }) => {
+    const chart = page.locator('#profileChart svg');
+    await expect(chart.locator('rect.band')).toHaveCount(4);
+    expect(await chart.locator('rect.band').evaluateAll((r) => r.map((e) => e.getAttribute('data-phase')))).toEqual(['base', 'build', 'peak', 'taper']);
+    await expect(chart.locator('text.band-lbl')).toHaveText(['base', 'build', 'peak', 'taper']);
+    await expect(page.locator('.profile .legend')).toHaveText('long run');
+    const weeks = await app.plan();
+    const raceWeek = weeks.findIndex((w) => w.sessions.some((s) => s.kind === 'race'));
+    await expect(chart.locator('g.race')).toHaveCount(1);
+    await expect(chart.locator('g').nth(raceWeek)).toHaveClass('race');
+    await expect(chart.locator('g.race path.flag')).toHaveCount(1);
+    await expect(chart.locator('g.race title')).toContainText('(race week)');
+    // the plan starts after today (Fri 6 Nov): no current-week marker
+    await expect(chart.locator('.today-mark')).toHaveCount(0);
+    await expect(chart.locator('g.now')).toHaveCount(0);
+  });
+
+  test('load profile marks the current week and today (BB-25)', async ({ app, page }) => {
+    await app.configure({ weeks: 13 }); // week 1 now starts Mon 2 Nov, so today (Fri 6 Nov) falls in it
+    const chart = page.locator('#profileChart svg');
+    await expect(chart.locator('g.now')).toHaveCount(1);
+    await expect(chart.locator('g').first()).toHaveClass('now');
+    await expect(chart.locator('g.now title')).toContainText('(this week)');
+    const mark = chart.locator('line.today-mark');
+    await expect(mark).toHaveCount(1);
+    // Friday sits in the 5th seventh of week 1's slot
+    const [x, bar] = await Promise.all([mark.getAttribute('x1'), chart.locator('g.now rect').first().evaluate((r) => ({ x: +r.getAttribute('x')!, w: +r.getAttribute('width')! }))]);
+    const slot = bar.w / 0.72;
+    expect(+x!).toBeCloseTo(bar.x - slot * 0.14 + slot * 4.5 / 7, 0);
+  });
 });
 
 test.describe('race distances', () => {

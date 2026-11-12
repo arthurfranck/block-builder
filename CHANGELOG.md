@@ -2,6 +2,15 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.21] - 2026-11-12
+
+### Changed
+- Load profile (BB-25): phases are now shaded bands behind the bars, each labelled (base, build, peak, taper) when it has room, instead of a colour legend; the legend keeps only the long-run line.
+- The race week's bar carries a flag, placed on the week that holds the race rather than on the last bar.
+
+### Added
+- The current week is marked on the load profile: its number in bold and a dashed line where today falls inside it. Hovering a bar says "this week" or "race week".
+
 ## [1.1.20] - 2026-11-12
 
 ### Changed
