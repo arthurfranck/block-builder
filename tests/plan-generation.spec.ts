@@ -160,7 +160,7 @@ test.describe('fitness goal', () => {
     expect(weeks[0].dates).toBe('16 Nov – 22 Nov');
     expect(weeks.flatMap((w) => w.sessions).some((s) => s.kind === 'race')).toBe(false);
     expect(weeks.some((w) => w.phase === 'taper')).toBe(false);
-    await expect(page.locator('#planName')).toHaveValue('10-week fitness block');
+    await expect(page.locator('#planName')).toHaveValue('10-week personal plan');
     await expect(page.locator('#hello')).toContainText('Your 10-week plan starts Monday 16 Nov');
   });
 

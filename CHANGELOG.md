@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.23] - 2026-11-12
+
+### Changed
+- The no-race goal is now called "Personal plan" ("Plan perso" in French) instead of "Get in shape" / "Me remettre en forme" (BB-67): it builds a training plan without a race date. New plans are named "10-week personal plan" / "Plan perso 10 semaines"; saved plans keep their name.
+
 ## [1.1.22] - 2026-11-12
 
 ### Changed
