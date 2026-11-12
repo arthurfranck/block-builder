@@ -10,8 +10,8 @@ Block Builder creates a running training block in the browser. You pick a race o
 - **Phases:** base, build, peak and taper, with cutback weeks. Taper long runs step down from the longest run the plan actually reached (75%, then 60%). Each full week stays within +10% of the last full week before it: after rounding, easy runs are shortened first, then the hard runs, then the long run. If every run is already at its minimum distance (low volume with many runs), the plan says which weeks still jump and suggests fewer runs; a hand edit that makes a week jump is flagged too. A load profile chart shows weekly volume and the long run.
 - **Paces:** worked out from a recent race result (easy, tempo, intervals, race pace). The finish time is read to fit the race: "1:45" for a half means 1 h 45 min, a lone "52" for a 10K means 52 minutes, and the field shows the reading (1:45:00). A time that fits no reading for that race is flagged instead of being ignored.
 - **Runs per week:** 1 to 7.
-- **New plan:** starts empty. Pick runs per week, enter your weekly volume and longest run, and the plan builds. Only Easy run is ticked until you add more types.
-- **Run types:** easy, recovery, long, tempo, intervals, hill repeats, fartlek, progression and race pace. You can untick the long run (that day becomes an easy run), add custom types, and edit their description templates and the phases they're used in.
+- **New plan:** starts empty. Pick runs per week, enter your weekly volume and longest run, and the plan builds. Only Easy run is switched on until you add more types.
+- **Run types:** easy, recovery, long, tempo, intervals, hill repeats, fartlek, progression and race pace, shown as chips grouped Easy and Quality: tap one to switch it on or off (Easy run is always on). You can switch off the long run (that day becomes an easy run). Under "Customise workouts" you can rename types, add custom ones, and edit their description templates and the phases they're used in.
 - **Editing:** edit, move (drag and drop), add or delete any run, with a personal note per run.
 - **Today:** above the load profile, a card shows today's run with Edit and Send to watch (or, on a rest day, the next run and its date; before the plan starts, the start date and first run). Next to it, the local forecast: current conditions and feels-like temperature, high and low, rain chance, wind, sunset, and an hourly strip to 22:00 that marks the driest slot left in the day. Type a city or use your location; the choice is remembered in your browser.
 - **Race countdown:** optional, with the race name, city and a link to its page (Finishers search built in).
@@ -73,7 +73,7 @@ Every test starts on a frozen date (Friday 6 November 2026, Paris time) with emp
 |---|---|
 | `plan-generation.spec.ts` | distances, weeks, dates, runs per week, fitness goal |
 | `plan-rules.spec.ts` | phase order, taper length, cutback and taper volume, one race on race day, long-run day, weekly increase |
-| `setup-form.spec.ts` | paces, finish time read to fit the race distance, running days, run types, warnings, New plan starting blank |
+| `setup-form.spec.ts` | paces, finish time read to fit the race distance, running days, run type chips and Customise workouts, warnings, New plan starting blank |
 | `editing.spec.ts` | edit, add, delete and move runs (drag and drop on desktop), hand edits vs settings |
 | `today.spec.ts` | Today card before the plan, on a run day and on a rest day, Edit from the card, forecast and driest slot (Open-Meteo mocked), unknown city, failed request |
 | `race.spec.ts` | race name, Finishers link, countdown, race passed or today |
@@ -108,6 +108,7 @@ All three depend on the claude.ai artifact runtime, so they were removed here. T
 
 ## Changelog
 
+- **2026-11-11 (v1.1.15):** Run types take far less room in the settings: they're now chips grouped Easy and Quality that you tap on or off. Names, phases, descriptions and Add run type are under "Customise workouts".
 - **2026-11-11 (v1.1.14):** Half and full marathon plans warn when they peak too low for the race: the longest run and biggest week are compared with what the race usually needs, with a suggestion to add weeks or switch to Get in shape.
 - **2026-11-10 (v1.1.13):** Theme and language moved out of the header into a gear menu at its end, so the plan name and plan buttons come first. On phone the plan name gets its own line instead of being cut off. Theme is now a Dark / Light / Auto switch.
 - **2026-11-10 (v1.1.12):** New dark "night track" look by default, with a volt accent used only on today's run and the main button. A Theme picker in the header switches to Light or Auto (follows your device).

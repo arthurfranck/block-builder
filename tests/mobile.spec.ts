@@ -49,7 +49,7 @@ test.describe('phone layout', () => {
 
   /* Text areas and the export dropdown have their own smaller font rules; a later touch-screen rule lifts them to 16px. */
   test('text areas and the export dropdown use at least 16px text too', async ({ app, page }) => {
-    await app.showSetup();
+    await app.openCustomise();
     await page.locator('#types details').first().evaluate((d: HTMLDetailsElement) => (d.open = true));
     expect(await smallFields(page, '#types')).toEqual([]);
     await app.showPlan();
