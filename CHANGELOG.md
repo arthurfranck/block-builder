@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.17] - 2026-11-12
+
+### Added
+- Hard runs per week are checked on the plan as shown, so hand edits count (BB-57). A week with more hard runs than its runs per week allow (1 at 4 runs or fewer, 2 above) gets a warning line right under it, saying how many there are and to change one to an easy run, plus a line in the warnings above the plan naming the weeks. Generated plans already respect the limit, so this shows up only after edits.
+
 ## [1.1.16] - 2026-11-12
 
 ### Changed

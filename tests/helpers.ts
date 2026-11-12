@@ -113,7 +113,7 @@ export class App {
         const m = /--k:var\(--(\w+)\)/.exec(el.getAttribute('style') || '');
         return m ? m[1] : 'easy';
       };
-      return [...document.querySelectorAll<HTMLTableRowElement>('table.grid tbody tr:not(.wnote)')].map((tr) => ({
+      return [...document.querySelectorAll<HTMLTableRowElement>('table.grid tbody tr:not(.wnote):not(.wwarn)')].map((tr) => ({
         n: +tr.querySelector('.wkcell .n')!.textContent!.replace(/\D/g, ''),
         phase: tr.querySelector('.wkcell .ph')!.textContent!.trim(),
         cutback: tr.classList.contains('cutback'),

@@ -168,3 +168,44 @@ test.describe('goal readiness', () => {
     await expect(app.warnings().filter({ hasText: 'demande en général' })).toHaveCount(1);
   });
 });
+
+test.describe('hard runs per week (BB-57)', () => {
+  const weekWarnings = (page: import('@playwright/test').Page) => page.locator('table.grid tr.wwarn');
+
+  test('generated plans stay within the hard-run limit', async ({ app, page }) => {
+    await expect(weekWarnings(page)).toHaveCount(0);
+    await app.configure({ dist: 'm', runs: 4, weeks: 16, curVol: 30, curLong: 14 });
+    await expect(weekWarnings(page)).toHaveCount(0);
+    await expect(app.warnings().filter({ hasText: 'more hard runs than suit' })).toHaveCount(0);
+  });
+
+  test('a hand edit that adds a hard run is flagged on the week and in the banner', async ({ app, page }) => {
+    await app.configure({ dist: 'hm', runs: 4, weeks: 12, curVol: 30, curLong: 12 });
+    const toIntervals = async (day: number) => {
+      await app.session(0, day).click();
+      await app.modal().locator('#eType').selectOption('intervals');
+      await app.modal().getByRole('button', { name: 'Save changes' }).click();
+    };
+    // 4 runs a week (Tue, Wed, Fri, Sun): at most one hard run. Make Tuesday and Wednesday intervals.
+    await toIntervals(1);
+    await toIntervals(2);
+    const hard = (await app.plan())[0].sessions.filter((s) => ['hard', 'tempo'].includes(s.kind)).length;
+    expect(hard).toBeGreaterThanOrEqual(2);
+    const row = weekWarnings(page);
+    await expect(row).toHaveCount(1);
+    await expect(row).toHaveAttribute('data-check', 'tooHard');
+    await expect(row).toContainText(`${hard} hard runs this week: at 4 runs a week, keep it to 1. Change one to an easy run.`);
+    // the warning sits right under week 1
+    await expect(page.locator('table.grid tbody tr').nth(1)).toHaveClass(/wwarn/);
+    await expect(app.warnings().filter({ hasText: 'more hard runs than suit' })).toContainText(['Week 1: more hard runs than suit 4 runs a week. Details on the week.']);
+
+    // both back to easy runs: the warning goes away
+    for (const day of [1, 2]) {
+      await app.session(0, day).click();
+      await app.modal().locator('#eType').selectOption('easy');
+      await app.modal().getByRole('button', { name: 'Save changes' }).click();
+    }
+    await expect(row).toHaveCount(0);
+    await expect(app.warnings().filter({ hasText: 'more hard runs than suit' })).toHaveCount(0);
+  });
+});
