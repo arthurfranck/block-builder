@@ -101,3 +101,43 @@ test.describe('display and language panel', () => {
     await expect(page.locator('#prefsPanel')).toBeHidden();
   });
 });
+
+test.describe('run colours follow effort', () => {
+  /** Dot colour of each run type chip in the settings, by type id. */
+  const dots = (page: import('@playwright/test').Page) => page.evaluate(() => Object.fromEntries(
+    [...document.querySelectorAll<HTMLInputElement>('#typeChips input')].map((i) =>
+      [i.id.replace('t-on-', ''), getComputedStyle(i.parentElement!.querySelector('.kind-dot')!).backgroundColor])));
+
+  test('six steps from recovery to race; steady and hard quality sessions differ', async ({ app, page }) => {
+    await app.showSetup();
+    const c = await dots(page);
+    expect(new Set([c.recovery, c.easy, c.long, c.tempo, c.intervals]).size).toBe(5);
+    expect([c.progression, c.racepace, c.fartlek]).toEqual([c.tempo, c.tempo, c.tempo]);
+    expect(c.hills).toBe(c.intervals);
+    expect(c.strides).toBe(c.easy);
+    await app.showPlan();
+    const race = await page.locator('#plan .ses.race').first().evaluate((e) => getComputedStyle(e, '::before').backgroundColor);
+    expect(Object.values(c)).not.toContain(race);
+  });
+
+  test('a custom quality type takes the hard colour', async ({ app, page }) => {
+    await app.openCustomise();
+    await page.locator('#btnAddType').click();
+    const c = await dots(page);
+    const custom = Object.keys(c).find((k) => k.startsWith('c'))!;
+    expect(c[custom]).toBe(c.intervals);
+  });
+
+  test('runs in the plan use the colour of their run type', async ({ app, page }) => {
+    await app.showSetup();
+    const c = await dots(page);
+    const byName = await page.evaluate(() => Object.fromEntries(
+      [...document.querySelectorAll<HTMLInputElement>('#typeChips input')].map((i) => [i.parentElement!.textContent!.trim(), i.id.replace('t-on-', '')])));
+    await app.showPlan();
+    const bars = await page.locator('#plan .ses').evaluateAll((els) => els.map((e) =>
+      [e.querySelector('.t')!.textContent!, getComputedStyle(e, '::before').backgroundColor]));
+    const checked = bars.filter(([name]) => byName[name]);
+    expect(new Set(checked.map(([name]) => name)).size).toBeGreaterThanOrEqual(3);
+    for (const [name, colour] of checked) expect.soft(colour, name).toBe(c[byName[name]]);
+  });
+});
