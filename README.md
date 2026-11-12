@@ -43,6 +43,8 @@ Plans are saved in the visitor's browser (`localStorage`) only. The weather city
 
 Open `index.html` in a browser. Everything works offline except the fonts, which fall back to system fonts, the weather, the Apple Watch export and the PDF export.
 
+To serve it the way the tests and CI do, run `node tests/serve.mjs 8765` and open http://127.0.0.1:8765/. Working on it with Claude Code: see the `.claude/` section in CLAUDE.md (pre-commit test hook, preview config, `/release` command).
+
 ## Tests
 
 Automated tests use [Playwright](https://playwright.dev) and [axe-core](https://github.com/dequelabs/axe-core-npm) for accessibility. They live in `tests/` and run on six setups:

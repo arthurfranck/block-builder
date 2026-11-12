@@ -34,3 +34,9 @@ Before every commit that changes `index.html`, run `npm test` and make sure it p
 - `main` is protected: the six Tests jobs must pass before anything lands. Work on a branch and open a pull request; don't try to push to `main` directly.
 - Plans live in `localStorage` under the key `bb-plans`. The export format is `{app:"block-builder", version:1, plans:{…}}`. Keep import backward compatible.
 - Every user-facing string exists in both English and French (`I18N.en` / `I18N.fr`). Add both.
+
+## Claude Code setup (`.claude/`)
+
+- `settings.json` has a PreToolUse hook (`hooks/test-before-commit.sh`): before any `git commit`, if `index.html` differs from HEAD, it runs `npm run test:chrome` and blocks the commit when it fails. It does not replace the full `npm test` run above.
+- `launch.json` serves the repo with `node tests/serve.mjs 8765` (the same server the tests and CI use) for the preview pane.
+- `/release <id> [patch|minor|major]` (`commands/release.md`) walks through branch, version bump, CHANGELOG, README, tests, commit and pull request for one backlog item.
