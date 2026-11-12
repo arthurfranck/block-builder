@@ -2,6 +2,12 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.18] - 2026-11-12
+
+### Added
+- Spacing checks on the plan as shown, so hand edits count (BB-44). A hard run on the same or the next day as another hard run, the long run or race day (Sunday into the next Monday counts) gets a warning line under its week naming the runs and days; so does a week with runs on all 7 days. The warnings above the plan name the weeks.
+- Running-day warnings, shown once instead of on every week: 3 or more running days in a row at 4 runs a week or fewer ("Fri, Sat, Sun are 3 days in a row. Keep the middle one easy..."), running days that leave every run next to the long run, and 7 runs a week (no rest day). When the days chosen make a hard run touch the long run, the weeks aren't flagged for it.
+
 ## [1.1.17] - 2026-11-12
 
 ### Added
