@@ -2,6 +2,12 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.19] - 2026-11-12
+
+### Changed
+- New type (BB-22): Archivo, wide and heavy, for the brand, the greeting, the countdown, the summary numbers, the week numbers, the temperature and the run name on the Today card; Inter for everything else, with figures of equal width so distances and paces line up. JetBrains Mono and Barlow are gone (two fonts loaded instead of three).
+- Capitals only on small labels (section names, column heads, phases). Titles, run names and dialog headings are now in normal case.
+
 ## [1.1.18] - 2026-11-12
 
 ### Added

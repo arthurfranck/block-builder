@@ -141,3 +141,22 @@ test.describe('run colours follow effort', () => {
     for (const [name, colour] of checked) expect.soft(colour, name).toBe(c[byName[name]]);
   });
 });
+
+test('type: Archivo expanded for the brand and big numbers, Inter elsewhere, uppercase only on small labels (BB-22)', async ({ app, page }) => {
+  const href = await page.locator('link[rel="stylesheet"][href*="fonts.googleapis.com"]').getAttribute('href');
+  expect(href).toContain('family=Archivo:wdth,wght@125,700;125,800');
+  expect(href).toContain('family=Inter:wght@400;500;600;700');
+  expect(href).not.toMatch(/Barlow|JetBrains/);
+  const style = (sel: string) => page.locator(sel).first().evaluate((e) => {
+    const c = getComputedStyle(e);
+    return { family: c.fontFamily.split(',')[0].replace(/"/g, ''), stretch: c.fontStretch, transform: c.textTransform, size: parseFloat(c.fontSize) };
+  });
+  for (const sel of ['.brand', '.stat b', '.wkcell .n']) expect(await style(sel)).toMatchObject({ family: 'Archivo', stretch: '125%', transform: 'none' });
+  for (const sel of ['body', '.ses .k', '.wkcell .km', '.plan-name']) expect((await style(sel)).family).toBe('Inter');
+  expect(await page.evaluate(() => getComputedStyle(document.body).fontVariantNumeric)).toBe('tabular-nums');
+  // every uppercase text on the plan view is a small label (13px or less)
+  const big = await page.evaluate(() => [...document.querySelectorAll<HTMLElement>('body *')]
+    .filter((e) => e.offsetParent && getComputedStyle(e).textTransform === 'uppercase' && parseFloat(getComputedStyle(e).fontSize) > 13)
+    .map((e) => e.className || e.tagName));
+  expect(big).toEqual([]);
+});
