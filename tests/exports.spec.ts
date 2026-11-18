@@ -1,4 +1,6 @@
 import { test, expect, parseCSV, zipNames, ONLINE } from './helpers';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 
 test.describe('CSV', () => {
   test('one row per run with dates, days and descriptions', async ({ app }) => {
@@ -95,6 +97,26 @@ test.describe('watch export', () => {
     await app.modal().locator('[data-dev="garmin"]').click();
     const { buf } = await app.download(() => page.locator('#dGo').click());
     expect(zipNames(buf)).toHaveLength(1);
+  });
+
+  test('two runs of the same type on the same day keep both files (BB-15)', async ({ app, page }) => {
+    /* the editor can't stack two runs on a day (moving swaps days), but an imported plan can */
+    const p = structuredClone(JSON.parse(readFileSync(path.join(__dirname, 'fixtures', 'plans-v1.json'), 'utf8')).plans['spring-10k-v1']);
+    const w0 = p.plan.weeks[0];
+    const s0 = w0.sessions[0];
+    w0.sessions.push({ ...s0, id: s0.id + 'b' });
+    await page.locator('#btnPlans').click();
+    const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('#pImport').click()]);
+    await chooser.setFiles({ name: 'two.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ app: 'block-builder', version: 1, plans: { two: p } })) });
+    await app.modal().getByRole('button', { name: 'Open' }).click();
+    await app.showPlan();
+    await expect(app.session(0, s0.day)).toHaveCount(2);
+    const { buf } = await sendWeek1(app, 'garmin');
+    const names = zipNames(buf);
+    expect(new Set(names).size).toBe(names.length);
+    const dup = names.filter((f) => /-2\.fit$/.test(f));
+    expect(dup).toHaveLength(1);
+    expect(names).toContain(dup[0].replace(/-2\.fit$/, '.fit'));
   });
 
   test('Apple Watch: a zip of .workout files', async ({ app }) => {

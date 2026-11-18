@@ -427,7 +427,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.26";
+const VERSION = "1.1.27";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -1118,13 +1118,13 @@ $("#plan").addEventListener("click",e=>{
   if(act==="regen"||act==="rebuild"){if(act==="rebuild"&&S.edited){confirmBox(t("rebuildQ"),t("rebuildT"),t("rebuild"),()=>{S.pendingRegen=false;regen();renderPlan();markDirty();});return;}S.pendingRegen=false;regen();renderPlan();markDirty();}
   else if(act==="keep"){S.pendingRegen=false;renderPlan();}
   else if(act==="tedit"){openEditor(+a.dataset.w,a.dataset.s);}
-  else if(act==="twatch"){const w=S.plan.weeks[+a.dataset.w],s=w.sessions.find(x=>x.id===a.dataset.s);if(s)sendToWatch([{w,s}],t("tdWatchTitle",{name:s.name,d:fmtDay(sessionDate(w,s))}),`${slug(S.name)}-${iso(sessionDate(w,s))}`);}
+  else if(act==="twatch"){const w=S.plan.weeks[+a.dataset.w],s=w.sessions.find(x=>x.id===a.dataset.s);if(s)sendToWatch(planWorkouts([{w,s}]),t("tdWatchTitle",{name:s.name,d:fmtDay(sessionDate(w,s))}),`${slug(S.name)}-${iso(sessionDate(w,s))}`);}
   else if(act==="wxedit"){WX.editing=true;WX.err="";renderWx();const q=$("#wxQ");q&&q.focus();}
   else if(act==="wxtoggle"){WX.open=!(WX.open||WX.editing);if(!WX.open)WX.editing=false;try{localStorage.setItem("bb-wx-open",WX.open?"1":"0");}catch(_){}renderWx();const q=$("#wxQ");if(WX.open&&q&&!WX.loc)q.focus();}
   else if(act==="wxgeo"){wxGeo();}
   else if(act==="add"){addSession(+a.dataset.w,+a.dataset.d);}
-  else if(act==="wwatch"){const w=S.plan.weeks[+a.dataset.w];sendToWatch(w.sessions.map(s=>({w,s})),t("sendTitleWeek",{n:w.n,c:w.sessions.length}),`${slug(S.name)}-week-${String(w.n).padStart(2,"0")}`);}
-  else if(act==="allwatch"){sendToWatch(S.plan.weeks.flatMap(w=>w.sessions.map(s=>({w,s}))),t("sendTitleAll",{c:S.plan.weeks.reduce((a,w)=>a+w.sessions.length,0)}),`${slug(S.name)}-all`);}
+  else if(act==="wwatch"){const w=S.plan.weeks[+a.dataset.w];sendToWatch(planWorkouts(w.sessions.map(s=>({w,s}))),t("sendTitleWeek",{n:w.n,c:w.sessions.length}),`${slug(S.name)}-week-${String(w.n).padStart(2,"0")}`);}
+  else if(act==="allwatch"){sendToWatch(planWorkouts(S.plan.weeks.flatMap(w=>w.sessions.map(s=>({w,s})))),t("sendTitleAll",{c:S.plan.weeks.reduce((a,w)=>a+w.sessions.length,0)}),`${slug(S.name)}-all`);}
   else if(act==="ics")exportICS();
   else if(act==="csv")exportCSV();
   else if(act==="export"){const f=$("#expFmt");S.exportFmt=f?f.value:"csv";if(S.exportFmt==="pdf")exportPDF(a);else exportCSV();}
@@ -1177,7 +1177,7 @@ function openEditor(wi,id){
     m.querySelector("#eCancel").onclick=closeModal;
     m.querySelector("#eDel").onclick=()=>{w.sessions=w.sessions.filter(x=>x.id!==id);closeModal();touched();};
     m.querySelector("#eType").onchange=ev=>{const ty=S.types.find(x=>x.id===ev.target.value);if(ty){const P=paces(S.inputs);const km=+m.querySelector("#eKm").value||s.km;const wk=workFor(ty,{p:0.5,D:distKm(S.inputs),c:cat(distKm(S.inputs)),taper:w.phase==="taper",P,phase:w.phase});m.querySelector("#eDesc").value=fill(ty.tpl,{...P.txt,km,work:fill(wk.text||"",P.txt)});}};
-    m.querySelector("#eWatchBtn").onclick=()=>{closeModal();sendToWatch([{w,s}],t("sendTitleRun",{n:w.n,day:DAYS[s.day],name:s.name,km:s.km}));};
+    m.querySelector("#eWatchBtn").onclick=()=>{closeModal();sendToWatch(planWorkouts([{w,s}]),t("sendTitleRun",{n:w.n,day:DAYS[s.day],name:s.name,km:s.km}));};
     m.querySelector("#eOk").onclick=()=>{
       const tid=m.querySelector("#eType").value;const ty=S.types.find(x=>x.id===tid);
       const newKm=Math.max(0,+m.querySelector("#eKm").value||0);
@@ -1206,10 +1206,13 @@ function rescaleWatch(wp,delta){wp=JSON.parse(JSON.stringify(wp));
   if(st)st.g=['d',r05(Math.max(0.5,st.g[1]+delta))];return wp;}
 let WK=null;
 function loadWK(){if(!WK)WK=Promise.all([import("./vendor/workoutkit-0.2.0/index.js"),import("./vendor/workoutkit-0.2.0/encode.js")]).catch(e=>{WK=null;throw e;});return WK;}
-async function workoutBlob(w,s){
-  const [K,E]=await loadWK();const P=paces(S.inputs);const wp=s.watch||watchPlan(s.kind,s.km);
+/* a workout to export: {title, fitTitle, file, wp, paces?}. Plan runs and BB-58 quick workouts share it, so export needs no plan week. */
+function planWorkout(w,s){return {title:`W${w.n} ${s.name} ${s.km} km`,fitTitle:`W${w.n} ${s.name} ${s.km}k`,file:`w${String(w.n).padStart(2,"0")}-${DAYS[s.day].toLowerCase()}-${slug(s.name)}`,wp:s.watch||watchPlan(s.kind,s.km)};}
+const planWorkouts=list=>list.map(({w,s})=>planWorkout(w,s));
+async function workoutBlob(it){
+  const [K,E]=await loadWK();const P=it.paces||paces(S.inputs);const wp=it.wp;
   const plan=new K.WorkoutPlan({referenceId:crypto.randomUUID()});
-  const cw=plan.asCustom({activity:"running",location:"outdoor",displayName:`W${w.n} ${s.name} ${s.km} km`.slice(0,48)});
+  const cw=plan.asCustom({activity:"running",location:"outdoor",displayName:it.title.slice(0,48)});
   const goal=g=>g[0]==='d'?new K.DistanceGoal(new K.Distance(Math.round(g[1]*1000),"meters")):new K.TimeGoal(new K.Duration(Math.round(g[1]),"seconds"));
   const alert=pace=>{if(!pace||!P.vdot)return undefined;const sec=P.sec[pace],tol=PACE_TOL[pace];const sp=x=>new K.Speed(new K.Distance(1,"kilometers"),new K.Duration(Math.round(x),"seconds"));return new K.SpeedRangeAlert(sp(sec+tol),sp(sec-tol),"current");};
   if(wp.wu)cw.warmup=new K.Step(goal(wp.wu),t("warmup"));
@@ -1275,8 +1278,8 @@ function fitEncodeWorkout(name,steps){
   return file;
 }
 
-function fitSteps(wp){
-  const P=paces(S.inputs),out=[];
+function fitSteps(wp,P){
+  P=P||paces(S.inputs);const out=[];
   const goal=g=>g[0]==='d'?{dur:"distance",val:g[1]*1000}:{dur:"time",val:g[1]};
   const tgt=pace=>{if(!pace||!P.vdot)return null;const sec=P.sec[pace],tol=PACE_TOL[pace];return {lo:1000/(sec+tol),hi:1000/(sec-tol)};};
   const lbl=x=>x.pace?(P.vdot?P.txt[x.pace]:paceLbl(x.pace)):(x.p==="recovery"?t("recover"):t("run"));
@@ -1294,7 +1297,7 @@ const DEVICES=[
 ];
 function getDevice(){try{return localStorage.getItem("bb-device")||"apple";}catch(_){return "apple";}}
 function setDevice(k){try{localStorage.setItem("bb-device",k);}catch(_){}}
-function sendToWatch(list,title,zipBase){
+function sendToWatch(items,title,zipBase){
   let cur=getDevice();
   modal(`<h2>${t("sendTitle")}</h2><p class="hint" style="margin:0">${esc(title)}</p>
     <div class="devices" role="radiogroup" aria-label="${t("device")}">${DEVICES.map(d=>`<button type="button" role="radio" class="device" data-dev="${d.k}" aria-checked="${d.k===cur}"><b>${esc(d.name())}</b><span>${t("devFiles",{ext:d.ext})}</span></button>`).join("")}</div>
@@ -1303,21 +1306,22 @@ function sendToWatch(list,title,zipBase){
     const upd=()=>{m.querySelectorAll(".device").forEach(b=>b.setAttribute("aria-checked",b.dataset.dev===cur));m.querySelector("#devHelp").textContent=DEVICES.find(d=>d.k===cur).help();};
     m.querySelector(".devices").onclick=e=>{const b=e.target.closest(".device");if(b){cur=b.dataset.dev;upd();}};
     m.querySelector("#dCancel").onclick=closeModal;
-    m.querySelector("#dGo").onclick=()=>{setDevice(cur);document.querySelectorAll('#plan .today [data-act="twatch"]').forEach(b=>b.textContent=sendLbl(b.dataset.n||""));closeModal();exportWorkouts(cur,list,zipBase);};
+    m.querySelector("#dGo").onclick=()=>{setDevice(cur);document.querySelectorAll('#plan .today [data-act="twatch"]').forEach(b=>b.textContent=sendLbl(b.dataset.n||""));closeModal();exportWorkouts(cur,items,zipBase);};
     upd();
   });
 }
-async function exportWorkouts(dev,list,zipBase){
+async function exportWorkouts(dev,items,zipBase){
   const D=DEVICES.find(d=>d.k===dev);
   if(dev==="apple"){try{await loadWK();}catch(_){toast(t("wkLoadFail"));return;}}
-  const files=[];
-  for(const {w,s} of list){
-    const base=`w${String(w.n).padStart(2,"0")}-${DAYS[s.day].toLowerCase()}-${slug(s.name)}`;
+  const files=[],seen=new Map();
+  for(const it of items){
+    /* two workouts with the same file name (same day, same type) get -2, -3 instead of overwriting each other on unzip (BB-15) */
+    const n=(seen.get(it.file)||0)+1;seen.set(it.file,n);
+    const base=n>1?`${it.file}-${n}`:it.file;
     try{
-      const wp=s.watch||watchPlan(s.kind,s.km);
-      const data=dev==="apple"?new Uint8Array(await (await workoutBlob(w,s)).arrayBuffer()):fitEncodeWorkout(`W${w.n} ${s.name} ${s.km}k`,fitSteps(wp));
+      const data=dev==="apple"?new Uint8Array(await (await workoutBlob(it)).arrayBuffer()):fitEncodeWorkout(it.fitTitle||it.title,fitSteps(it.wp,it.paces));
       files.push({name:`${base}.${D.ext}`,data});
-    }catch(e){console.error(e);toast(t("buildFail",{name:s.name,m:(e&&e.message)||t("unknownErr")}));return;}
+    }catch(e){console.error(e);toast(t("buildFail",{name:it.title,m:(e&&e.message)||t("unknownErr")}));return;}
   }
   if(!files.length)return;
   const name=(zipBase||files[0].name.replace(/\.\w+$/,""))+"-"+D.k;
