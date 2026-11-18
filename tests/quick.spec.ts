@@ -244,3 +244,14 @@ test('the sheet fits inside the visible screen', async ({ app, page }) => {
   expect(box!.y + box!.height).toBeLessThanOrEqual(h);
   await expect(sheet(page).locator('#qwSend')).toBeInViewport();
 });
+
+test('the Goal row offers a quick workout without changing the goal', async ({ app, page }) => {
+  await app.showSetup();
+  const pressed = () => page.locator('#goalSeg button[aria-pressed="true"]').getAttribute('data-goal');
+  const goal = await pressed();
+  await page.locator('#btnQuickGoal').click();
+  await expect(sheet(page).getByRole('heading')).toHaveText('Quick workout');
+  await sheet(page).locator('[data-qk="cancel"]').click();
+  expect(await pressed()).toBe(goal);
+  await expect(page.locator('#btnQuickGoal')).toBeFocused();
+});

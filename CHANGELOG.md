@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.32] - 2026-11-18
+
+### Added
+- Quick workout from the Goal row in the settings: "Just want one session? Quick workout →" sits under "Train for a race" and "Personal plan". It opens the quick workout and leaves your plan's goal as it is (BB-58).
+
 ## [1.1.31] - 2026-11-18
 
 ### Added
