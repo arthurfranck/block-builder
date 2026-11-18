@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.28] - 2026-11-18
+
+### Added
+- Quick workout (BB-58, step 2): build one workout from the run types and send it to your watch without changing the plan. Open it from the plan toolbar, or from "Run anyway?" on a rest day. Choose the type, measure by distance or time (remembered), set the distance or duration for easy runs, or Short / Medium / Long and the target race for quality sessions, with warm-up and cool-down on or off. A live preview shows the distance, estimated time, workout bar and steps before you send it to Apple Watch, Garmin or another device.
+
 ## [1.1.27] - 2026-11-18
 
 ### Fixed

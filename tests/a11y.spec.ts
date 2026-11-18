@@ -47,6 +47,14 @@ test('My plans and the watch dialog', async ({ app, page }) => {
   await clean(page, 'watch dialog');
 });
 
+test('quick workout sheet', async ({ app, page }) => {
+  await app.showPlan();
+  await page.locator('#plan [data-act="quick"]').first().click();
+  await clean(page, 'quick workout');
+  await page.locator('[data-qk="type:easy"]').click();
+  await clean(page, 'quick workout, easy');
+});
+
 test('display and language panel', async ({ app, page }) => {
   await app.openPrefs();
   await clean(page, 'display and language panel');
