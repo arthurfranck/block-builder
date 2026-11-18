@@ -2,6 +2,15 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.29] - 2026-11-18
+
+### Added
+- Quick workout, step 3 (BB-58):
+  - **Fine-tune:** set the reps, rep length and recovery of a quality workout, in distance or time.
+  - **Your paces:** when your plan has no race time (or there is no plan yet), enter a recent race in the sheet. It is kept for quick workouts only and never changes your plan.
+  - **Recent:** the last 5 quick workouts you sent come back as chips at the top, one tap to pick again.
+  - **Empty plan:** a new, empty plan offers "Just want one session? Build a quick workout".
+
 ## [1.1.28] - 2026-11-18
 
 ### Added
