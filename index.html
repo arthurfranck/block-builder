@@ -292,6 +292,8 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 .qrec{font-weight:500;font-size:13.5px}
 .qadd{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px;font-size:14px}
 .qadd input{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:16px}
+.goalquick{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin-top:8px;font-size:13.5px;color:var(--muted)}
+.goalquick .btn{min-height:36px}
 .qempty{margin:12px 0 0;font-size:14px;color:var(--muted)}
 .linkbtn{border:0;background:none;padding:0;color:var(--ink);font:inherit;font-weight:600;text-decoration:underline;cursor:pointer}
 .devices{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
@@ -409,6 +411,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
       <section class="sec">
         <h3 data-i18n="secGoal">Goal</h3>
         <div class="seg" id="goalSeg" role="group" data-i18n-aria="secGoal"><button type="button" data-goal="race" data-i18n="goalRace">Train for a race</button><button type="button" data-goal="fitness" data-i18n="goalFit">Personal plan</button></div>
+        <div class="goalquick"><span data-i18n="qwEmpty">Just want one session?</span><button type="button" class="btn sm ghost" id="btnQuickGoal"><span data-i18n="qwOpen">Quick workout</span> <span aria-hidden="true">→</span></button></div>
         <div class="field"><span class="lbl" id="distLbl">Distance</span>
           <div class="seg" id="distSeg"></div>
         </div>
@@ -475,7 +478,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.31";
+const VERSION = "1.1.32";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -1820,6 +1823,8 @@ $("#themeSeg").addEventListener("click",e=>{const b=e.target.closest("[data-them
 /* Display and language panel: opens from the gear, closes on Escape (focus back to the gear) or a tap outside */
 function setPrefs(open,focusBack){const P=$("#prefsPanel"),B=$("#btnPrefs");P.hidden=!open;B.setAttribute("aria-expanded",String(open));
   if(open)(P.querySelector('[aria-pressed="true"]')||P.querySelector("button,select")).focus({preventScroll:true});else if(focusBack)B.focus({preventScroll:true});}
+/* Quick workout from the Goal row (BB-58): an action next to the goal, not a third goal; the plan is left as it is */
+$("#btnQuickGoal").addEventListener("click",()=>openQuick());
 $("#btnPrefs").addEventListener("click",()=>setPrefs($("#prefsPanel").hidden));
 $("#prefs").addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("#prefsPanel").hidden){e.stopPropagation();setPrefs(false,true);}});
 $("#prefs").addEventListener("focusout",e=>{if(e.relatedTarget&&!$("#prefs").contains(e.relatedTarget))setPrefs(false);});
