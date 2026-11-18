@@ -72,6 +72,31 @@ for (const [name, { inp: p, on }] of Object.entries(PROFILES)) {
       if (before) assert.equal(before.typeId, 'strides');
     });
 
+    test('BB-45: the long run is at most ~40% of the week (45% at 3 runs, 50% at 2)', () => {
+      const share = E.LONG_SHARE(p.runs);
+      for (const w of W.slice(0, -1)) {
+        const long = w.sessions.find((s) => s.kind === 'long');
+        if (long) assert.ok(long.km <= share * km(w) + 0.01, `week ${w.n}: ${long.km} of ${km(w)} km`);
+      }
+    });
+
+    test('BB-45: the long run stays under 2:30 (half) / 3:00 (marathon) at easy pace', () => {
+      const P = E.paces(inp), max = E.LONG_MAX_MIN[E.cat(E.distKm(inp))];
+      if (!max) return;
+      for (const w of W) for (const s of w.sessions) if (s.kind === 'long') assert.ok(E.durSec(s.km, P.sec.easy) <= max * 60 + 1, `week ${w.n}: ${s.km} km`);
+    });
+
+    test('BB-45: the long run grows by at most +2 km or +15 min on the last full week', () => {
+      const P = E.paces(inp), step = Math.max(2, E.kmIn(15 * 60, P.sec.easy));
+      let last = p.curLong;
+      for (const w of W) {
+        const long = w.sessions.find((s) => s.kind === 'long');
+        if (!long || w.phase === 'taper') continue;
+        assert.ok(long.km <= last + step + 0.01, `week ${w.n}: ${long.km} km after ${last} km`);
+        if (!w.cutback) last = long.km;
+      }
+    });
+
     test('gives every run a watch workout', () => {
       for (const w of W) for (const s of w.sessions) assert.ok(s.watch && s.watch.blocks.length, `week ${w.n} ${s.typeId}`);
     });
@@ -80,7 +105,23 @@ for (const [name, { inp: p, on }] of Object.entries(PROFILES)) {
 
 /* Known gaps, kept visible until their backlog items land. */
 test.todo('BB-41: week 1 stays within the stated weekly volume (profile A starts at 16 km for 15 km/wk)');
-test.todo('BB-45: long run at most ~40% of the week and ~3:00 for a marathon (profile D reaches ~46-49%)');
+
+describe('pace and time', () => {
+  test('durSec and kmIn convert both ways', () => {
+    assert.equal(E.durSec(10, 300), 3000);
+    assert.equal(E.kmIn(3000, 300), 10);
+  });
+});
+
+describe('BB-45 · profile D (slow marathoner)', () => {
+  test('long run no longer takes ~46-49% of the week, and peaks under 3 hours', () => {
+    const inp = { ...base, ...PROFILES['D · slow marathon, 4 runs, half in 2:30'].inp };
+    const W = E.generate(inp, types()).weeks.slice(0, -1);
+    const longs = W.map((w) => w.sessions.find((s) => s.kind === 'long').km);
+    assert.ok(Math.max(...W.map((w, i) => longs[i] / km(w))) <= 0.4 + 0.01);
+    assert.ok(E.durSec(Math.max(...longs), E.paces(inp).sec.easy) <= 180 * 60);
+  });
+});
 
 describe('paces', () => {
   test('a recent race gives VDOT paces, fastest to slowest in the right order', () => {
