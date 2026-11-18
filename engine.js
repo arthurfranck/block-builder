@@ -49,6 +49,13 @@ const velAt = o => (-0.182258+Math.sqrt(0.182258**2+4*0.000104*(4.60+o)))/(2*0.0
 function raceTimeMin(vd,m){let lo=3,hi=900;for(let i=0;i<60;i++){const mid=(lo+hi)/2;if(vdotOf(m,mid)>vd)lo=mid;else hi=mid;}return (lo+hi)/2;}
 const fmtPace = sec => {const s=Math.round(sec);return Math.floor(s/60)+":"+String(s%60).padStart(2,"0")+"/km";};
 function fmtDur(sec){sec=Math.round(sec);const h=Math.floor(sec/3600),m=Math.floor(sec%3600/60),s=sec%60;return (h?h+":"+String(m).padStart(2,"0"):m)+":"+String(s).padStart(2,"0");}
+/* pace <-> time (BB-45; shared with BB-58 quick workouts and BB-54 time-based runs): seconds for km at a pace, km in seconds at a pace */
+const durSec=(km,secKm)=>km*secKm;
+const kmIn=(sec,secKm)=>sec/secKm;
+/* long run limits (BB-45): share of the week by runs per week, longest duration at easy pace, growth on the last full long run */
+const LONG_SHARE=runs=>runs<=1?1:runs===2?0.5:runs===3?0.45:0.4;
+const LONG_MAX_MIN={"hm":150,"m":180};
+const LONG_STEP_KM=2, LONG_STEP_MIN=15;
 function distKm(inp){const d=DISTS.find(x=>x.k===inp.dist);return d&&d.km?d.km:clamp(+inp.customKm||10,3,100);}
 function missingSetup(I){const m=[];if(!(+I.runs>=1))m.push("needRuns");if(!(+I.curVol>0))m.push("needVol");if(!(+I.curLong>0))m.push("needLong");return m;}
 function genInputs(I){return {...I,runs:+I.runs>=1?+I.runs:5,days:+I.runs>=1?I.days:[],curVol:+I.curVol>0?I.curVol:30,curLong:+I.curLong>0?I.curLong:12};}
@@ -164,7 +171,8 @@ function generate(inp,types){
   const rot={}; const occ={};
   const weeks=[];
   let refKm=null; /* actual km of the last week that was neither a cutback nor taper */
-  let longPk=0; /* longest long run actually built before the taper: the taper scales from it, not from the target peak (BB-39) */
+  let longPk=0;
+  let lastLong=null; /* long run of the last full (not cutback, not taper) week: BB-45 growth limit */ /* longest long run actually built before the taper: the taper scales from it, not from the target peak (BB-39) */
   for(let i=0;i<W;i++){
     const phase=phaseOf(i), isCut=cut(i), raceWeek=!noRace&&i===W-1;
     const p=nb>1?clamp(i/(nb-1),0,1):1;
@@ -186,7 +194,13 @@ function generate(inp,types){
     if(raceWeek){sessions.push({id:uid(),day:longD,typeId:"race",name:t("raceDay"),kind:"race",km:+D.toFixed(1),desc:raceDesc(inp,P),note:"",watch:watchPlan("race",+D.toFixed(1))});}
     else{
       if(phase==="taper"){const pk=longPk||Lpk;longKm=pk*([0.75,0.6][i-nb]||0.6);}
-      else{const nbNC=Math.max(1,nb-1);longKm=L0+(Lpk-L0)*Math.min(1,i/nbNC);longKm=Math.min(longKm,Math.max(L0*0.9,target*lfrac));if(isCut)longKm*=0.75;}
+      else{const nbNC=Math.max(1,nb-1);longKm=L0+(Lpk-L0)*Math.min(1,i/nbNC);longKm=Math.min(longKm,Math.max(L0*0.9,target*lfrac));
+        /* BB-45: no bigger step than +2 km or +15 min (the larger) on the last full long run (week 1: on the current longest run) */
+        const prevL=lastLong??L0;longKm=Math.min(longKm,prevL+Math.max(LONG_STEP_KM,kmIn(LONG_STEP_MIN*60,P.sec.easy)));
+        if(isCut)longKm*=0.75;}
+      /* BB-45: at most ~40% of the week (relaxed at 3 runs or fewer), at most 2:30 (half) / 3:00 (marathon) at easy pace */
+      longKm=Math.min(longKm,target*LONG_SHARE(runs));
+      if(LONG_MAX_MIN[c])longKm=Math.min(longKm,kmIn(LONG_MAX_MIN[c]*60,P.sec.easy));
       longKm=r05(Math.max(longKm,4));
       const lt=longT.on?longT:easyT; /* long run type unticked: that day is a plain easy run */
       const w=longT.on?workFor(longT,ctxBase):{text:""};
@@ -253,6 +267,10 @@ function generate(inp,types){
       const km=easyKm[i];const w=workFor(x.t,ctxBase);
       sessions.push({id:uid(),day:x.d,typeId:x.t.id,name:x.t.name,kind:x.t.kind,km,desc:fill(x.t.tpl,{...P.txt,km,work:fill(w.text||"",P.txt)}),note:"",watch:watchPlan(x.t.kind,km,w)});
     });
+    /* BB-45: share of the week as built (rounding and minimum runs can move it); trim the long run, the km are not moved again */
+    if(mkLong&&runs>1){const rest=sessions.reduce((a,x)=>a+x.km,0)-longKm,sh=LONG_SHARE(runs),mx=Math.floor(sh/(1-sh)*rest*2)/2;
+      if(longKm>mx&&mx>=4){longKm=mx;const li=sessions.findIndex(x=>x.day===longD);sessions[li]=mkLong(longKm);}}
+    if(!isCut&&phase!=="taper"&&longKm)lastLong=longKm;
     if(!isCut&&phase!=="taper")refKm=sessions.reduce((a,x)=>a+x.km,0);
     if(phase!=="taper"&&longKm)longPk=Math.max(longPk,longKm);
     sessions.sort((a,b)=>a.day-b.day);
@@ -347,7 +365,7 @@ function weekCheckSummary(plan,inp){
 
 const BBEngine = {
   setLocale(o) { Object.assign(LOCALE, o); },
-  DISTS, PHASES, DEFAULT_DAYS, TYPE_DEFS, uid, clamp, r05, iso, parseISO, addDays, dow, raceTimeSec, REC_LBL, REC_EX, badRaceTime, badTimeMsg, vdotOf, velAt, raceTimeMin, fmtPace, fmtDur, distKm, missingSetup, genInputs, distLabel, cat, paces, effectiveDays, cyc, pickHardDays, workFor, fill, watchPlan, generate, raceDesc, warnings, maxHardRuns, longBoxedIn, weekChecks, weekCheckSummary
+  DISTS, PHASES, DEFAULT_DAYS, TYPE_DEFS, uid, clamp, r05, iso, parseISO, addDays, dow, raceTimeSec, REC_LBL, REC_EX, badRaceTime, badTimeMsg, vdotOf, velAt, raceTimeMin, fmtPace, fmtDur, durSec, kmIn, LONG_SHARE, LONG_MAX_MIN, distKm, missingSetup, genInputs, distLabel, cat, paces, effectiveDays, cyc, pickHardDays, workFor, fill, watchPlan, generate, raceDesc, warnings, maxHardRuns, longBoxedIn, weekChecks, weekCheckSummary
 };
 root.BBEngine = BBEngine;
 if (typeof module === "object" && module.exports) module.exports = BBEngine;

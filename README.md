@@ -7,6 +7,7 @@ Block Builder creates a running training block in the browser. You pick a race o
 ## Features
 
 - **Goals:** train for a race (5K, 10K, half marathon, marathon, or a custom distance) or build a personal plan over a set number of weeks. For a half or a full marathon, the plan warns when it peaks too low for the race (longest run under about 60% of a half or 75% of a marathon, or biggest week under about 30 or 45 km) and suggests more weeks or the Personal plan goal.
+- **Long run limits:** the long run is kept to about 40% of the week (45% at 3 runs a week, 50% at 2), to 2:30 for a half marathon and 3:00 for a marathon at your easy pace, and grows by at most 2 km or 15 minutes (whichever is more) on the last full week's long run, starting from your current longest run. The km it gives up go to the easy runs.
 - **Phases:** base, build, peak and taper, with cutback weeks. Taper long runs step down from the longest run the plan actually reached (75%, then 60%). Each full week stays within +10% of the last full week before it: after rounding, easy runs are shortened first, then the hard runs, then the long run. If every run is already at its minimum distance (low volume with many runs), the plan says which weeks still jump and suggests fewer runs; a hand edit that makes a week jump is flagged too. A load profile chart shows weekly volume and the long run.
 - **Paces:** worked out from a recent race result (easy, tempo, intervals, race pace). The finish time is read to fit the race: "1:45" for a half means 1 h 45 min, a lone "52" for a 10K means 52 minutes, and the field shows the reading (1:45:00). A time that fits no reading for that race is flagged instead of being ignored.
 - **Runs per week:** 1 to 7.
@@ -50,7 +51,7 @@ To serve it the way the tests and CI do, run `node tests/serve.mjs 8765` and ope
 
 ## Tests
 
-Automated tests use [Playwright](https://playwright.dev) and [axe-core](https://github.com/dequelabs/axe-core-npm) for accessibility. They live in `tests/` and run on six setups. The plan engine (`engine.js`) also has Node unit tests in `tests/engine/` (`npm run test:engine`, no browser): paces, watch workouts, and the five athlete profiles from the November audit checked against the plan rules (taper length, cutbacks, +10% a week, hard runs per week and their spacing, nothing hard near race day). `npm test` runs both.
+Automated tests use [Playwright](https://playwright.dev) and [axe-core](https://github.com/dequelabs/axe-core-npm) for accessibility. They live in `tests/` and run on six setups. The plan engine (`engine.js`) also has Node unit tests in `tests/engine/` (`npm run test:engine`, no browser): paces, watch workouts, and the five athlete profiles from the November audit checked against the plan rules (taper length, cutbacks, +10% a week, hard runs per week and their spacing, nothing hard near race day, long run share, duration and growth). `npm test` runs both.
 
 Browser setups:
 

@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.26] - 2026-11-18
+
+### Changed
+- Long run limits (BB-45): the long run is now kept to about 40% of the week (45% at 3 runs a week, 50% at 2), to 2:30 for a half marathon and 3:00 for a marathon at your easy pace, and grows by at most 2 km or 15 minutes (whichever is more) a week. The km it gives up go to the easy runs. A 30 km/week marathon plan, for example, peaks at an 18.5 km long run instead of 22.5 km, and its first long run can start below your current longest run. Plans that were within these limits don't change.
+
 ## [1.1.25] - 2026-11-18
 
 ### Changed
