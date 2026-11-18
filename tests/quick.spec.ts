@@ -94,3 +94,62 @@ test('in French', async ({ app, page }) => {
   await expect(sheet(page).getByRole('heading')).toHaveText('Séance rapide');
   await expect(sheet(page).locator('[data-qk="unit:t"]')).toHaveText('Temps');
 });
+
+/* ---------- step 3: fine-tune, own paces, recent workouts, empty plan ---------- */
+test('fine-tune changes reps, rep and recovery, and resets with the size', async ({ app, page }) => {
+  await openQuick(app);
+  const s = sheet(page);
+  await s.locator('[data-qk="type:intervals"]').click();
+  await s.locator('#qwFt summary').click();
+  const reps = s.locator('.qft').nth(0).locator('output');
+  const n = +(await reps.innerText());
+  await s.locator('[data-qk="ft:n,+"]').click();
+  await expect(reps).toHaveText(String(n + 1));
+  await expect(s.locator('#qwSteps')).toContainText(`${n + 1} × (`);
+  await s.locator('[data-qk="ft:rep,+"]').click();
+  await expect(s.locator('#qwFt')).toHaveAttribute('open', '');
+  await s.locator('[data-qk="size:l"]').click();
+  await s.locator('[data-qk="size:m"]').click();
+  await expect(s.locator('#qwSteps')).toContainText(`${n} × (`);
+});
+
+test('without a race time in the plan, the sheet takes its own and keeps it out of the plan', async ({ app, page }) => {
+  await app.configure({ recDist: '0' });
+  await openQuick(app);
+  const s = sheet(page);
+  await expect(s.locator('.qpaces')).toHaveText('No race time: the watch shows effort, not pace.');
+  await expect(s.locator('#qwSteps')).toContainText('@ tempo');
+  await s.locator('#qwRecDist').selectOption('10');
+  await s.locator('#qwRecTime').fill('46:00');
+  await s.locator('#qwRecTime').blur();
+  await expect(s.locator('.qpaces')).toHaveText('Paces from this race, kept for quick workouts only.');
+  await expect(s.locator('#qwSteps')).toContainText(/@ \d:\d\d\/km/);
+  await s.locator('[data-qk="cancel"]').click();
+  await openQuick(app);
+  await expect(sheet(page).locator('#qwRecTime')).toHaveValue('46:00');
+  await sheet(page).locator('[data-qk="cancel"]').click();
+  await app.showSetup();
+  await expect(page.locator('#recDist')).toHaveValue('0');
+});
+
+test('a sent workout comes back as a Recent chip', async ({ app, page }) => {
+  await openQuick(app);
+  let s = sheet(page);
+  await expect(s.locator('.qrec')).toHaveCount(0);
+  await s.locator('[data-qk="dev:garmin"]').click();
+  await app.download(() => s.locator('#qwSend').click());
+  await openQuick(app);
+  s = sheet(page);
+  await s.locator('[data-qk="type:hills"]').click();
+  await expect(s.locator('.qrec')).toHaveText(['Tempo · Medium · Half marathon']);
+  await s.locator('.qrec').click();
+  await expect(s.locator('[data-qk="type:tempo"]')).toHaveAttribute('aria-checked', 'true');
+});
+
+test('a new, empty plan offers a quick workout', async ({ app, page }) => {
+  await page.locator('#btnNew').click();
+  await app.showPlan();
+  await page.locator('#plan .qempty [data-act="quick"]').click();
+  await expect(sheet(page).getByRole('heading')).toHaveText('Quick workout');
+  await expect(sheet(page).locator('#qwRecDist')).toBeVisible();
+});

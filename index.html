@@ -267,6 +267,15 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 .qprev .tbig b{font-size:40px}
 .qdev{flex-wrap:nowrap}
 @media (max-width:560px){.qprev{gap:8px;padding-top:10px}.qprev #qwSteps{display:none}.qprev .tbig b{font-size:30px}.qdev button{padding:5px 8px;font-size:12.5px;white-space:nowrap}.qsz{padding:6px 8px}}
+.qfine summary{cursor:pointer;font-weight:600;font-size:14px;min-height:32px;display:flex;align-items:center}
+.qfts{display:grid;gap:6px;margin-top:6px}
+.qft{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px}
+.qft .qstep output{font-size:17px;min-width:7ch}
+.qpacef{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.qpacef label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
+.qpacef select,.qpacef input{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:7px 9px;font-size:16px;min-width:0}
+.qrec{font-weight:500;font-size:13.5px}
+.qempty{margin:12px 0 0;font-size:14px;color:var(--muted)}
 .linkbtn{border:0;background:none;padding:0;color:var(--ink);font:inherit;font-weight:600;text-decoration:underline;cursor:pointer}
 .devices{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
 .device{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 12px;text-align:left;cursor:pointer;display:grid;gap:2px}
@@ -449,7 +458,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.28";
+const VERSION = "1.1.29";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -543,7 +552,7 @@ deleted:"Plan deleted.",delFail:"Couldn't delete that plan.",newQ:"Start a new p
 langEdited:"Hand-edited sessions keep their current text. Use Rebuild from settings to translate them.",
 tdToday:"Today",tdWeek:"Week {n} · {phase}",tdRest:"Rest day",tdRestT:"No run planned today.",tdNext:"Next: <b>{when}</b>, {name} {km} km",
 tdBefore:"Plan starts {d}",tdBeforeT:"First run: <b>{when}</b>, {name} {km} km",tdDone:"Plan finished",tdDoneT:"The last week ended on {d}.",
-tdEdit:"Edit",tdWatchTitle:"{name} · {d}",qwOpen:"Quick workout",qwTitle:"Quick workout",qwAnyway:"Run anyway? Build a quick workout",qwType:"Type",qwUnit:"Measure by",qwUnitD:"Distance",qwUnitT:"Time",qwDist:"Distance",qwDur:"Duration",qwLess:"Less",qwMore:"More",qwSize:"Size",qwSize_s:"Short",qwSize_m:"Medium",qwSize_l:"Long",qwRace:"Target race",qwWucd:"Warm-up and cool-down",qwPacesPlan:"Paces from your plan, {plan}.",qwPacesEffort:"No race time in your plan: the watch shows effort, not pace.",tdEst:"≈ {d}",durMin:"{m} min",durHM:"{h} h {m}",tdJog:"jog",sendTo:"Send to {dev}",
+tdEdit:"Edit",tdWatchTitle:"{name} · {d}",qwOpen:"Quick workout",qwTitle:"Quick workout",qwAnyway:"Run anyway? Build a quick workout",qwType:"Type",qwUnit:"Measure by",qwUnitD:"Distance",qwUnitT:"Time",qwDist:"Distance",qwDur:"Duration",qwLess:"Less",qwMore:"More",qwSize:"Size",qwSize_s:"Short",qwSize_m:"Medium",qwSize_l:"Long",qwRace:"Target race",qwWucd:"Warm-up and cool-down",qwPacesPlan:"Paces from your plan, {plan}.",qwPacesEffort:"No race time: the watch shows effort, not pace.",qwPaces:"Your paces",qwPacesOwn:"Paces from this race, kept for quick workouts only.",qwPacesBad:"That time doesn't fit the race. Try mm:ss or h:mm:ss.",qwFt:"Fine-tune",qwFtShort:"tuned",qwReps:"Reps",qwRepD:"Rep distance",qwRepT:"Rep time",qwRecD:"Recovery distance",qwRecT:"Recovery time",qwRecent:"Recent",qwEmpty:"Just want one session?",qwEmptyGo:"Build a quick workout",tdEst:"≈ {d}",durMin:"{m} min",durHM:"{h} h {m}",tdJog:"jog",sendTo:"Send to {dev}",
 tdHeat:"<b>Hot today (feels {v}°).</b> Easy and tempo paces {s} s/km slower.",tdHeatHard:" Run the hard parts by effort, not pace.",wxAdd:"Add a city for today's weather",wxDriest:"driest {h}",
 wxTitle:"Weather",wxSet:"Add a city to see today's forecast for your run.",wxCity:"City",wxCityPh:"e.g. Paris",wxGo:"Show forecast",wxGeo:"Use my location",
 wxChange:"Change",wxLoading:"Loading forecast…",wxNoCity:"No city called “{q}”. Try adding the country, like “Deauville, France”.",
@@ -641,7 +650,7 @@ deleted:"Plan supprimé.",delFail:"Impossible de supprimer ce plan.",newQ:"Comme
 langEdited:"Les séances modifiées à la main gardent leur texte. Utilisez « Recalculer depuis les réglages » pour les traduire.",
 tdToday:"Aujourd'hui",tdWeek:"Semaine {n} · {phase}",tdRest:"Repos",tdRestT:"Pas de sortie prévue aujourd'hui.",tdNext:"Prochaine : <b>{when}</b>, {name} {km} km",
 tdBefore:"Le plan commence le {d}",tdBeforeT:"Première sortie : <b>{when}</b>, {name} {km} km",tdDone:"Plan terminé",tdDoneT:"La dernière semaine s'est terminée le {d}.",
-tdEdit:"Modifier",tdWatchTitle:"{name} · {d}",qwOpen:"Séance rapide",qwTitle:"Séance rapide",qwAnyway:"Envie de courir ? Créez une séance rapide",qwType:"Type",qwUnit:"Mesurer en",qwUnitD:"Distance",qwUnitT:"Temps",qwDist:"Distance",qwDur:"Durée",qwLess:"Moins",qwMore:"Plus",qwSize:"Format",qwSize_s:"Court",qwSize_m:"Moyen",qwSize_l:"Long",qwRace:"Course visée",qwWucd:"Échauffement et retour au calme",qwPacesPlan:"Allures de votre plan, {plan}.",qwPacesEffort:"Pas de temps de course dans votre plan : la montre indique l'effort, pas l'allure.",tdEst:"≈ {d}",durMin:"{m} min",durHM:"{h} h {m}",tdJog:"récup",sendTo:"Envoyer sur {dev}",
+tdEdit:"Modifier",tdWatchTitle:"{name} · {d}",qwOpen:"Séance rapide",qwTitle:"Séance rapide",qwAnyway:"Envie de courir ? Créez une séance rapide",qwType:"Type",qwUnit:"Mesurer en",qwUnitD:"Distance",qwUnitT:"Temps",qwDist:"Distance",qwDur:"Durée",qwLess:"Moins",qwMore:"Plus",qwSize:"Format",qwSize_s:"Court",qwSize_m:"Moyen",qwSize_l:"Long",qwRace:"Course visée",qwWucd:"Échauffement et retour au calme",qwPacesPlan:"Allures de votre plan, {plan}.",qwPacesEffort:"Pas de temps de course : la montre indique l'effort, pas l'allure.",qwPaces:"Vos allures",qwPacesOwn:"Allures tirées de cette course, gardées pour les séances rapides seulement.",qwPacesBad:"Ce temps ne correspond pas à la course. Essayez mm:ss ou h:mm:ss.",qwFt:"Ajuster",qwFtShort:"ajustée",qwReps:"Répétitions",qwRepD:"Distance par répétition",qwRepT:"Durée par répétition",qwRecD:"Distance de récup",qwRecT:"Durée de récup",qwRecent:"Récentes",qwEmpty:"Juste une séance ?",qwEmptyGo:"Créez une séance rapide",tdEst:"≈ {d}",durMin:"{m} min",durHM:"{h} h {m}",tdJog:"récup",sendTo:"Envoyer sur {dev}",
 tdHeat:"<b>Chaud aujourd'hui (ressenti {v}°).</b> Allures facile et tempo {s} s/km plus lentes.",tdHeatHard:" Faites les parties dures à l'effort, pas à l'allure.",wxAdd:"Ajoutez une ville pour la météo du jour",wxDriest:"plus sec {h}",
 wxTitle:"Météo",wxSet:"Ajoutez une ville pour voir la météo du jour pour votre sortie.",wxCity:"Ville",wxCityPh:"ex. Paris",wxGo:"Voir la météo",wxGeo:"Utiliser ma position",
 wxChange:"Changer",wxLoading:"Chargement de la météo…",wxNoCity:"Aucune ville nommée « {q} ». Ajoutez le pays, par exemple « Deauville, France ».",
@@ -835,7 +844,7 @@ try{new ResizeObserver(()=>{const el=$("#profileChart");if(el&&Math.abs(el.clien
 function renderPlan(){
   const P=S.plan, I=S.inputs; if(!P)return;
   const miss=missingSetup(I);
-  if(miss.length){const h0=$("#hello");if(h0)h0.innerHTML="";$("#plan").innerHTML=`<div class="banner info"><span>${esc(t("needTitle"))}</span><ul>${miss.map(k=>`<li>${esc(t(k))}</li>`).join("")}</ul><button class="btn sm m-only" type="button" data-tabgo="setup">${t("editSettings")}</button></div>`;return;}
+  if(miss.length){const h0=$("#hello");if(h0)h0.innerHTML="";$("#plan").innerHTML=`<div class="banner info"><span>${esc(t("needTitle"))}</span><ul>${miss.map(k=>`<li>${esc(t(k))}</li>`).join("")}</ul><button class="btn sm m-only" type="button" data-tabgo="setup">${t("editSettings")}</button></div><p class="qempty">${t("qwEmpty")} <button type="button" class="linkbtn" data-act="quick">${t("qwEmptyGo")}</button></p>`;return;}
   renderHello();
   const weeks=P.weeks;
   const totals=weeks.map(w=>w.sessions.reduce((a,s)=>a+s.km,0));
@@ -1003,7 +1012,7 @@ function mainSetHtml(wp){return wp.blocks.map(b=>{const w=b.steps.find(x=>x.p!==
     return b.steps.map(x=>`<b>${gTxt(x.g)}</b>${x.pace?" "+paceLbl(x.pace):""}`).join(" + ");}).join(" + ");}
 function workoutBar(wp,sesE,P){
   const segs=workoutSegs(wp,sesE,P);
-  const bar=`<div class="wbar" role="img" aria-label="${esc(watchSummary(wp))}">${segs.map(g=>`<i class="${g.role==="rec"?"rec":""}" style="flex:${Math.max(1,Math.round(g.sec))} 1 0;background:${effColor(g.e)}"></i>`).join("")}</div>`;
+  const bar=`<div class="wbar" role="img" aria-label="${esc(watchSummary(wp,P))}">${segs.map(g=>`<i class="${g.role==="rec"?"rec":""}" style="flex:${Math.max(1,Math.round(g.sec))} 1 0;background:${effColor(g.e)}"></i>`).join("")}</div>`;
   const main=mainSetHtml(wp);
   const lbl=`<div class="wbarlbl">${wp.wu?`<span><b>${gTxt(wp.wu)}</b> ${t("warmup").toLowerCase()}</span>`:""}<span>${main}</span>${wp.cd?`<span><b>${gTxt(wp.cd)}</b> ${t("cooldown").toLowerCase()}</span>`:""}</div>`;
   return {html:`<div>${bar}${lbl}</div>`,sec:segs.reduce((a,g)=>a+g.sec,0),segs};
@@ -1057,6 +1066,22 @@ const QW_QUALITY=["tempo","intervals","hills","fartlek","racepace"];
 const QW_SIZES={s:0.15,m:0.5,l:0.85};
 const QW_RACES=[["5k",5],["10k",10],["hm",21.0975],["m",42.195]];
 const QW={};
+/* paces for quick workouts: the plan's recent race when it has one, else the sheet's own (bb-quick-paces, never written into a plan) */
+function qwLoadPaces(){try{const v=JSON.parse(localStorage.getItem("bb-quick-paces")||"null");return v&&typeof v==="object"?{recDist:String(v.recDist||"0"),recTime:String(v.recTime||"")}:{recDist:"0",recTime:""};}catch(_){return {recDist:"0",recTime:""};}}
+function qwSavePaces(v){try{localStorage.setItem("bb-quick-paces",JSON.stringify(v));}catch(_){}}
+const planHasPaces=()=>!!paces(S.inputs).vdot&&!missingSetup(S.inputs).length;
+function qwPaces(Q){const src=planHasPaces()?S.inputs:qwLoadPaces();return paces({dist:Q.race||"10k",customKm:10,recDist:src.recDist,recTime:src.recTime});}
+/* recent quick workouts (bb-quick-recent): the last 5 sent, newest first */
+const QW_KEYS=["type","size","race","unit","amt","wucd","ft"];
+function qwLoadRecent(){try{const v=JSON.parse(localStorage.getItem("bb-quick-recent")||"[]");return Array.isArray(v)?v.filter(x=>x&&typeof x==="object"&&TYPE_DEFS.some(d=>d[0]===x.type)).slice(0,5):[];}catch(_){return [];}}
+function qwPushRecent(Q){const c={};for(const k of QW_KEYS)c[k]=Q[k]??null;const key=JSON.stringify(c);
+  const list=[c,...qwLoadRecent().filter(x=>JSON.stringify(Object.fromEntries(QW_KEYS.map(k=>[k,x[k]??null])))!==key)].slice(0,5);
+  try{localStorage.setItem("bb-quick-recent",JSON.stringify(list));}catch(_){}}
+function qwRecentLbl(c){const name=qwTypeName(c.type);
+  if(QW_EASY[c.type])return `${name} · ${(+c.amt).toLocaleString(LOC())} ${c.unit==="t"?"min":"km"}`;
+  return `${name} · ${t("qwSize_"+(c.size||"m"))} · ${cap(t("l"+(c.race||"10k")))}${c.ft?" · "+t("qwFtShort"):""}`;}
+/* the repeated (or only) main set of a quality workout, the one fine-tune changes */
+function qwMainBlock(wp){return wp.blocks.find(b=>b.n>1)||wp.blocks[0];}
 function qwLoadUnit(){try{return localStorage.getItem("bb-quick-unit")==="t"?"t":"d";}catch(_){return "d";}}
 /* clean values when switching Distance <-> Time: 5 s under 1 min, 15 s under 2, 30 s under 10, then whole minutes; 50 m under 1 km, 0.1 km to 5 km, then 0.5 km */
 function roundSec(x){const st=x<60?5:x<120?15:x<600?30:60;return Math.max(st,Math.round(x/st)*st);}
@@ -1073,7 +1098,7 @@ function wpInUnit(wp,unit,eff,P){
 }
 function qwTypeName(id){const ty=(S.types||[]).find(x=>x.id===id);return ty&&ty.name?ty.name:t("ty_"+id);}
 function qwBuild(Q){
-  const P=paces(S.inputs);const def=TYPE_DEFS.find(d=>d[0]===Q.type);const kind=def?def[1]:"easy",eff=effort(Q.type,kind);
+  const P=qwPaces(Q);const def=TYPE_DEFS.find(d=>d[0]===Q.type);const kind=def?def[1]:"easy",eff=effort(Q.type,kind);
   let wp;
   if(QW_EASY[Q.type]){
     const spk=Q.type==="recovery"?P.sec.easy*1.1:P.sec.easy;
@@ -1089,27 +1114,40 @@ function qwBuild(Q){
     if(!Q.wucd){delete wp.wu;delete wp.cd;}
   }
   wp=wpInUnit(wp,Q.unit,eff,P);
+  /* fine-tune: reps, rep and recovery length on the main set, in the chosen unit */
+  if(Q.ft&&!QW_EASY[Q.type]){const b=qwMainBlock(wp),w=b.steps.find(x=>x.p!=="recovery"),r=b.steps.find(x=>x.p==="recovery");
+    if(b.n>1&&Q.ft.n)b.n=Q.ft.n;if(w&&Q.ft.rep)w.g=[w.g[0],Q.ft.rep];if(r&&Q.ft.rec)r.g=[r.g[0],Q.ft.rec];}
   const bar=workoutBar(wp,eff,P);
   const km=bar.segs.reduce((a,g)=>a+g.km,0);
   return {wp,eff,P,name:qwTypeName(Q.type),bar,km,main:mainSetHtml(wp)};
 }
 function openQuick(type){
   const unit=qwLoadUnit();
-  Object.assign(QW,{type:type||QW.type||"tempo",size:QW.size||"m",unit,wucd:QW.wucd!==false,dev:getDevice(),
+  Object.assign(QW,{type:type||QW.type||"tempo",size:QW.size||"m",unit,wucd:QW.wucd!==false,dev:getDevice(),ft:null,ftOpen:false,
     race:QW.race||(S.inputs.goal!=="fitness"&&QW_RACES.some(r=>r[0]===S.inputs.dist)?S.inputs.dist:"10k")});
   qwSetAmt();
   modal(`<h2>${t("qwTitle")}</h2><div class="qw" id="qwBody"></div>`,m=>{
     m.addEventListener("click",e=>{const b=e.target.closest("[data-qk]");if(!b)return;const [k,v]=b.dataset.qk.split(":");
-      if(k==="type"){QW.type=v;qwSetAmt();}
-      else if(k==="unit"){if(QW.unit!==v){QW.unit=v;try{localStorage.setItem("bb-quick-unit",v);}catch(_){}qwSetAmt();}}
-      else if(k==="size")QW.size=v;
-      else if(k==="race")QW.race=v;
+      if(k==="type"){QW.type=v;QW.ft=null;qwSetAmt();}
+      else if(k==="unit"){if(QW.unit!==v){QW.unit=v;QW.ft=null;try{localStorage.setItem("bb-quick-unit",v);}catch(_){}qwSetAmt();}}
+      else if(k==="size"){QW.size=v;QW.ft=null;}
+      else if(k==="race"){QW.race=v;QW.ft=null;}
+      else if(k==="recent"){const c=qwLoadRecent()[+v];if(c){for(const kk of QW_KEYS)QW[kk]=c[kk]??QW[kk];QW.ft=c.ft||null;QW.ftOpen=!!c.ft;}}
+      else if(k==="ft"){const [f,dir]=v.split(",");const R=qwBuild(QW),b=qwMainBlock(R.wp),w=b.steps.find(x=>x.p!=="recovery"),r=b.steps.find(x=>x.p==="recovery");
+        const ft=QW.ft||{n:b.n,rep:w.g[1],rec:r?r.g[1]:null},sg=dir==="+"?1:-1;
+        if(f==="n")ft.n=clamp(ft.n+sg,1,30);
+        else if(f==="rep")ft.rep=w.g[0]==='t'?Math.max(10,ft.rep+15*sg):Math.max(0.05,+(ft.rep+0.1*sg).toFixed(2));
+        else if(f==="rec"&&r)ft.rec=r.g[0]==='t'?Math.max(10,ft.rec+15*sg):Math.max(0.05,+(ft.rec+0.05*sg).toFixed(2));
+        QW.ft=ft;}
       else if(k==="dev")QW.dev=v;
       else if(k==="amt"){const st=QW.unit==="t"?5:0.5,lo=QW.unit==="t"?10:2,hi=QW.unit==="t"?240:42;QW.amt=clamp(+(QW.amt+(v==="+"?st:-st)).toFixed(1),lo,hi);}
       else if(k==="cancel"){closeModal();return;}
       else if(k==="send"){qwSend();return;}
       qwRender(m,b.dataset.qk);});
-    m.addEventListener("change",e=>{if(e.target.id==="qwWucd"){QW.wucd=e.target.checked;qwRender(m,"wucd");}});
+    m.addEventListener("change",e=>{const id=e.target.id;
+      if(id==="qwWucd"){QW.wucd=e.target.checked;qwRender(m,"wucd");}
+      else if(id==="qwRecDist"||id==="qwRecTime"){qwSavePaces({recDist:m.querySelector("#qwRecDist").value,recTime:m.querySelector("#qwRecTime").value.trim()});qwRender(m,id);}});
+    m.addEventListener("toggle",e=>{if(e.target.id==="qwFt")QW.ftOpen=e.target.open;},true);
     qwRender(m);
   });
 }
@@ -1129,30 +1167,47 @@ function qwRender(m,focusKey){
     shape=`<div class="qrow"><span class="lbl" id="qwSizeL">${t("qwSize")}</span><div class="qsizes" role="radiogroup" aria-labelledby="qwSizeL">${sizes}</div></div>
       <div class="qrow"><span class="lbl" id="qwRaceL">${t("qwRace")}</span><div class="seg" role="radiogroup" aria-labelledby="qwRaceL">${QW_RACES.map(([k])=>radio("race",k,Q.race===k,esc(cap(t("l"+k))))).join("")}</div></div>
       <label class="qcheck"><input type="checkbox" id="qwWucd" ${Q.wucd?"checked":""}> ${t("qwWucd")}</label>`;
+    const b=qwMainBlock(R.wp),w=b.steps.find(x=>x.p!=="recovery"),r=b.steps.find(x=>x.p==="recovery");
+    const stepper=(f,lbl,val)=>`<div class="qft"><span id="qwFt_${f}">${lbl}</span><div class="qstep" role="group" aria-labelledby="qwFt_${f}"><button type="button" class="btn" data-qk="ft:${f},-" aria-label="${esc(t("qwLess")+" · "+lbl)}">−</button><output aria-live="polite">${val}</output><button type="button" class="btn" data-qk="ft:${f},+" aria-label="${esc(t("qwMore")+" · "+lbl)}">+</button></div></div>`;
+    const isT=w.g[0]==='t';
+    shape+=`<details class="qfine" id="qwFt" ${Q.ftOpen?"open":""}><summary>${t("qwFt")}</summary><div class="qfts">
+      ${b.n>1?stepper("n",t("qwReps"),b.n):""}
+      ${stepper("rep",t(isT?"qwRepT":"qwRepD"),gTxt(w.g))}
+      ${r?stepper("rec",t(r.g[0]==='t'?"qwRecT":"qwRecD"),gTxt(r.g)):""}</div></details>`;
   }
-  const pacesLine=R.P.vdot?t("qwPacesPlan",{plan:esc(S.name)}):t("qwPacesEffort");
+  let pacesLine;
+  if(planHasPaces())pacesLine=`<p class="hint qpaces">${t("qwPacesPlan",{plan:esc(S.name)})}</p>`;
+  else{const qp=qwLoadPaces(),bad=+qp.recDist>0&&qp.recTime&&raceTimeSec(qp.recTime,+qp.recDist)==null;
+    const opts=[["0","none"],["5","l5k"],["10","l10k"],["21.0975","halfMarathon"],["42.195","marathon"]];
+    pacesLine=`<div class="qrow"><span class="lbl">${t("qwPaces")}</span><div class="qpacef">
+      <label>${t("recDist")}<select id="qwRecDist">${opts.map(([v,k])=>`<option value="${v}" ${qp.recDist===v?"selected":""}>${esc(t(k))}</option>`).join("")}</select></label>
+      <label>${t("recTime")}<input id="qwRecTime" inputmode="numeric" placeholder="${esc(t("recTimePh"))}" value="${esc(qp.recTime)}"></label></div>
+      <p class="hint qpaces">${bad?t("qwPacesBad"):R.P.vdot?t("qwPacesOwn"):t("qwPacesEffort")}</p></div>`;}
   const dev=DEVICES.find(d=>d.k===Q.dev)||DEVICES[0];
+  const recent=qwLoadRecent();
   body.innerHTML=`
+    ${recent.length?`<div class="qrow"><span class="lbl" id="qwRecL">${t("qwRecent")}</span><div class="qgrp" role="group" aria-labelledby="qwRecL">${recent.map((c,i)=>`<button type="button" class="qt qrec" data-qk="recent:${i}">${esc(qwRecentLbl(c))}</button>`).join("")}</div></div>`:""}
     <div class="qrow"><span class="lbl" id="qwTypeL">${t("qwType")}</span><div class="qtypes" role="radiogroup" aria-labelledby="qwTypeL">
       <div class="qgrp"><span class="qglbl">${t("grpEasy")}</span>${easyIds.map(typeBtn).join("")}</div>
       <div class="qgrp"><span class="qglbl">${t("grpQuality")}</span>${qIds.map(typeBtn).join("")}</div></div></div>
     <div class="qrow"><span class="lbl" id="qwUnitL">${t("qwUnit")}</span><div class="seg" role="radiogroup" aria-labelledby="qwUnitL">${radio("unit","d",Q.unit==="d",t("qwUnitD"))}${radio("unit","t",Q.unit==="t",t("qwUnitT"))}</div></div>
     ${shape}
-    <p class="hint qpaces">${pacesLine}</p>
+    ${pacesLine}
     <div class="qprev" style="--k:${effColor(R.eff)};--kt:${effText(R.eff)}">
       <div class="tses"><div class="tn"><b>${esc(R.name)}</b></div>
       <div class="tbig"><b id="qwKm">${(Math.round(R.km*10)/10).toLocaleString(LOC())}<small> km</small></b><span>${t("tdEst",{d:estDur(R.bar.sec)})}</span></div>${R.bar.html}
-      <p id="qwSteps">${esc(watchSummary(R.wp))}</p></div>
+      <p id="qwSteps">${esc(watchSummary(R.wp,R.P))}</p></div>
       <div class="seg qdev" role="radiogroup" aria-label="${esc(t("device"))}">${DEVICES.map(d=>radio("dev",d.k,Q.dev===d.k,esc(d.name()))).join("")}</div>
       <div class="actions"><button type="button" class="btn" data-qk="cancel">${t("cancel")}</button><button type="button" class="btn primary" id="qwSend" data-qk="send">${esc(dev.k==="other"?t("sendWatch"):t("sendTo",{dev:dev.name()}))}</button></div>
     </div>`;
-  if(focusKey){const f=body.querySelector(`[data-qk="${focusKey}"]`)||(focusKey==="wucd"?body.querySelector("#qwWucd"):null);f&&f.focus();}
+  if(focusKey){const f=body.querySelector(`[data-qk="${focusKey}"]`)||body.querySelector("#"+focusKey)||(focusKey==="wucd"?body.querySelector("#qwWucd"):null);f&&f.focus();}
 }
 function qwSend(){
   const R=qwBuild(QW);const day=iso(new Date());
   const tag=QW_EASY[QW.type]?`${String(QW.amt).replace(".","-")}${QW.unit==="t"?"min":"km"}`:t("qwSize_"+QW.size).toLowerCase();
   const file=`quick-${day}-${slug(R.name)}-${slug(tag)}`;
   const title=`${R.name} · ${R.main.replace(/<\/?b>/g,"")}`;
+  qwPushRecent(QW);
   setDevice(QW.dev);document.querySelectorAll('#plan .today [data-act="twatch"]').forEach(b=>b.textContent=sendLbl(b.dataset.n||""));
   closeModal();
   exportWorkouts(QW.dev,[{title,fitTitle:title,file,wp:R.wp,paces:R.P}],file);
@@ -1330,7 +1385,7 @@ const PACE_TOL={easy:25,tempo:8,interval:8,rep:6,race:6,mp:8};
 const paceLbl=k=>t("pl_"+k);
 function gTxt(g){if(g[0]==='d'){const m=Math.round(g[1]*1000);return m<1000||m%1000?(m>=1000?(m/1000).toLocaleString(LOC(),{maximumFractionDigits:1})+" km":m+" m"):m/1000+" km";}const z=g[1];return z>=60?(z%60?Math.floor(z/60)+":"+String(z%60).padStart(2,"0")+" min":z/60+" min"):z+" s";}
 function stepTxt(x,P){return gTxt(x.g)+(x.pace?" @ "+(P.vdot?P.txt[x.pace]:paceLbl(x.pace)):"")+(x.p==="recovery"?t("recoverySfx"):"");}
-function watchSummary(wp){const P=paces(S.inputs);const parts=[];if(wp.wu)parts.push(t("warmup")+" "+gTxt(wp.wu));
+function watchSummary(wp,P){P=P||paces(S.inputs);const parts=[];if(wp.wu)parts.push(t("warmup")+" "+gTxt(wp.wu));
   for(const b of wp.blocks){const st=b.steps.map(x=>stepTxt(x,P)).join(", ");parts.push(b.n>1?`${b.n} × (${st})`:st);}
   if(wp.cd)parts.push(t("cooldown")+" "+gTxt(wp.cd));return parts.join(" · ");}
 function rescaleWatch(wp,delta){wp=JSON.parse(JSON.stringify(wp));
