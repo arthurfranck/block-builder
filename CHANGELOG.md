@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.33] - 2026-11-18
+
+### Changed
+- The Quick workout button under Goal reads "Quick workout", without the arrow.
+
 ## [1.1.32] - 2026-11-18
 
 ### Added

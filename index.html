@@ -411,7 +411,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
       <section class="sec">
         <h3 data-i18n="secGoal">Goal</h3>
         <div class="seg" id="goalSeg" role="group" data-i18n-aria="secGoal"><button type="button" data-goal="race" data-i18n="goalRace">Train for a race</button><button type="button" data-goal="fitness" data-i18n="goalFit">Personal plan</button></div>
-        <div class="goalquick"><span data-i18n="qwEmpty">Just want one session?</span><button type="button" class="btn sm ghost" id="btnQuickGoal"><span data-i18n="qwOpen">Quick workout</span> <span aria-hidden="true">→</span></button></div>
+        <div class="goalquick"><span data-i18n="qwEmpty">Just want one session?</span><button type="button" class="btn sm ghost" id="btnQuickGoal"><span data-i18n="qwOpen">Quick workout</span></button></div>
         <div class="field"><span class="lbl" id="distLbl">Distance</span>
           <div class="seg" id="distSeg"></div>
         </div>
@@ -478,7 +478,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.32";
+const VERSION = "1.1.33";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
