@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.30] - 2026-11-18
+
+### Added
+- Quick workout, step 4 (BB-58): with a plan open, "Also add it to …" (off by default) puts the workout on a day you choose in the plan as well as sending it. It then counts in the plan's weekly checks like any run you add.
+
 ## [1.1.29] - 2026-11-18
 
 ### Added

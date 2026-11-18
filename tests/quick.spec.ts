@@ -153,3 +153,29 @@ test('a new, empty plan offers a quick workout', async ({ app, page }) => {
   await expect(sheet(page).getByRole('heading')).toHaveText('Quick workout');
   await expect(sheet(page).locator('#qwRecDist')).toBeVisible();
 });
+
+/* ---------- step 4: add to plan ---------- */
+test('Add to plan puts the workout on the chosen day as well as sending it', async ({ app, page }) => {
+  const before = await app.plan();
+  await openQuick(app);
+  const s = sheet(page);
+  await expect(s.locator('#qwAdd')).not.toBeChecked();
+  await s.locator('#qwAdd').check();
+  /* frozen today (Fri 6 Nov) is before the plan: the date starts on its first day, Mon 9 Nov */
+  await expect(s.locator('#qwAddDate')).toHaveValue('2026-11-09');
+  await s.locator('#qwAddDate').fill('2026-11-11');
+  await s.locator('[data-qk="dev:garmin"]').click();
+  await app.download(() => s.locator('#qwSend').click());
+  const after = await app.plan();
+  expect(after[0].sessions).toHaveLength(before[0].sessions.length + 1);
+  const added = after[0].sessions.find((x) => x.day === 2)!;
+  expect(added.name).toBe('Tempo');
+  expect(added.kind).toBe('tempo');
+});
+
+test('Add to plan is not offered without a plan', async ({ app, page }) => {
+  await page.locator('#btnNew').click();
+  await app.showPlan();
+  await page.locator('#plan .qempty [data-act="quick"]').click();
+  await expect(sheet(page).locator('#qwAdd')).toHaveCount(0);
+});

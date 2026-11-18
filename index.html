@@ -275,6 +275,8 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 .qpacef label{display:grid;gap:4px;font-size:13px;color:var(--muted)}
 .qpacef select,.qpacef input{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:7px 9px;font-size:16px;min-width:0}
 .qrec{font-weight:500;font-size:13.5px}
+.qadd{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:6px;font-size:14px}
+.qadd input{border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:6px;padding:6px 8px;font-size:16px}
 .qempty{margin:12px 0 0;font-size:14px;color:var(--muted)}
 .linkbtn{border:0;background:none;padding:0;color:var(--ink);font:inherit;font-weight:600;text-decoration:underline;cursor:pointer}
 .devices{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
@@ -458,7 +460,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.29";
+const VERSION = "1.1.30";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -552,7 +554,7 @@ deleted:"Plan deleted.",delFail:"Couldn't delete that plan.",newQ:"Start a new p
 langEdited:"Hand-edited sessions keep their current text. Use Rebuild from settings to translate them.",
 tdToday:"Today",tdWeek:"Week {n} · {phase}",tdRest:"Rest day",tdRestT:"No run planned today.",tdNext:"Next: <b>{when}</b>, {name} {km} km",
 tdBefore:"Plan starts {d}",tdBeforeT:"First run: <b>{when}</b>, {name} {km} km",tdDone:"Plan finished",tdDoneT:"The last week ended on {d}.",
-tdEdit:"Edit",tdWatchTitle:"{name} · {d}",qwOpen:"Quick workout",qwTitle:"Quick workout",qwAnyway:"Run anyway? Build a quick workout",qwType:"Type",qwUnit:"Measure by",qwUnitD:"Distance",qwUnitT:"Time",qwDist:"Distance",qwDur:"Duration",qwLess:"Less",qwMore:"More",qwSize:"Size",qwSize_s:"Short",qwSize_m:"Medium",qwSize_l:"Long",qwRace:"Target race",qwWucd:"Warm-up and cool-down",qwPacesPlan:"Paces from your plan, {plan}.",qwPacesEffort:"No race time: the watch shows effort, not pace.",qwPaces:"Your paces",qwPacesOwn:"Paces from this race, kept for quick workouts only.",qwPacesBad:"That time doesn't fit the race. Try mm:ss or h:mm:ss.",qwFt:"Fine-tune",qwFtShort:"tuned",qwReps:"Reps",qwRepD:"Rep distance",qwRepT:"Rep time",qwRecD:"Recovery distance",qwRecT:"Recovery time",qwRecent:"Recent",qwEmpty:"Just want one session?",qwEmptyGo:"Build a quick workout",tdEst:"≈ {d}",durMin:"{m} min",durHM:"{h} h {m}",tdJog:"jog",sendTo:"Send to {dev}",
+tdEdit:"Edit",tdWatchTitle:"{name} · {d}",qwOpen:"Quick workout",qwTitle:"Quick workout",qwAnyway:"Run anyway? Build a quick workout",qwType:"Type",qwUnit:"Measure by",qwUnitD:"Distance",qwUnitT:"Time",qwDist:"Distance",qwDur:"Duration",qwLess:"Less",qwMore:"More",qwSize:"Size",qwSize_s:"Short",qwSize_m:"Medium",qwSize_l:"Long",qwRace:"Target race",qwWucd:"Warm-up and cool-down",qwPacesPlan:"Paces from your plan, {plan}.",qwPacesEffort:"No race time: the watch shows effort, not pace.",qwPaces:"Your paces",qwPacesOwn:"Paces from this race, kept for quick workouts only.",qwPacesBad:"That time doesn't fit the race. Try mm:ss or h:mm:ss.",qwFt:"Fine-tune",qwFtShort:"tuned",qwReps:"Reps",qwRepD:"Rep distance",qwRepT:"Rep time",qwRecD:"Recovery distance",qwRecT:"Recovery time",qwRecent:"Recent",qwEmpty:"Just want one session?",qwAdd:"Also add it to {plan}",qwAddOn:"On",qwAddHint:"It then counts in the plan's weekly checks, like any run you add.",qwEmptyGo:"Build a quick workout",tdEst:"≈ {d}",durMin:"{m} min",durHM:"{h} h {m}",tdJog:"jog",sendTo:"Send to {dev}",
 tdHeat:"<b>Hot today (feels {v}°).</b> Easy and tempo paces {s} s/km slower.",tdHeatHard:" Run the hard parts by effort, not pace.",wxAdd:"Add a city for today's weather",wxDriest:"driest {h}",
 wxTitle:"Weather",wxSet:"Add a city to see today's forecast for your run.",wxCity:"City",wxCityPh:"e.g. Paris",wxGo:"Show forecast",wxGeo:"Use my location",
 wxChange:"Change",wxLoading:"Loading forecast…",wxNoCity:"No city called “{q}”. Try adding the country, like “Deauville, France”.",
@@ -650,7 +652,7 @@ deleted:"Plan supprimé.",delFail:"Impossible de supprimer ce plan.",newQ:"Comme
 langEdited:"Les séances modifiées à la main gardent leur texte. Utilisez « Recalculer depuis les réglages » pour les traduire.",
 tdToday:"Aujourd'hui",tdWeek:"Semaine {n} · {phase}",tdRest:"Repos",tdRestT:"Pas de sortie prévue aujourd'hui.",tdNext:"Prochaine : <b>{when}</b>, {name} {km} km",
 tdBefore:"Le plan commence le {d}",tdBeforeT:"Première sortie : <b>{when}</b>, {name} {km} km",tdDone:"Plan terminé",tdDoneT:"La dernière semaine s'est terminée le {d}.",
-tdEdit:"Modifier",tdWatchTitle:"{name} · {d}",qwOpen:"Séance rapide",qwTitle:"Séance rapide",qwAnyway:"Envie de courir ? Créez une séance rapide",qwType:"Type",qwUnit:"Mesurer en",qwUnitD:"Distance",qwUnitT:"Temps",qwDist:"Distance",qwDur:"Durée",qwLess:"Moins",qwMore:"Plus",qwSize:"Format",qwSize_s:"Court",qwSize_m:"Moyen",qwSize_l:"Long",qwRace:"Course visée",qwWucd:"Échauffement et retour au calme",qwPacesPlan:"Allures de votre plan, {plan}.",qwPacesEffort:"Pas de temps de course : la montre indique l'effort, pas l'allure.",qwPaces:"Vos allures",qwPacesOwn:"Allures tirées de cette course, gardées pour les séances rapides seulement.",qwPacesBad:"Ce temps ne correspond pas à la course. Essayez mm:ss ou h:mm:ss.",qwFt:"Ajuster",qwFtShort:"ajustée",qwReps:"Répétitions",qwRepD:"Distance par répétition",qwRepT:"Durée par répétition",qwRecD:"Distance de récup",qwRecT:"Durée de récup",qwRecent:"Récentes",qwEmpty:"Juste une séance ?",qwEmptyGo:"Créez une séance rapide",tdEst:"≈ {d}",durMin:"{m} min",durHM:"{h} h {m}",tdJog:"récup",sendTo:"Envoyer sur {dev}",
+tdEdit:"Modifier",tdWatchTitle:"{name} · {d}",qwOpen:"Séance rapide",qwTitle:"Séance rapide",qwAnyway:"Envie de courir ? Créez une séance rapide",qwType:"Type",qwUnit:"Mesurer en",qwUnitD:"Distance",qwUnitT:"Temps",qwDist:"Distance",qwDur:"Durée",qwLess:"Moins",qwMore:"Plus",qwSize:"Format",qwSize_s:"Court",qwSize_m:"Moyen",qwSize_l:"Long",qwRace:"Course visée",qwWucd:"Échauffement et retour au calme",qwPacesPlan:"Allures de votre plan, {plan}.",qwPacesEffort:"Pas de temps de course : la montre indique l'effort, pas l'allure.",qwPaces:"Vos allures",qwPacesOwn:"Allures tirées de cette course, gardées pour les séances rapides seulement.",qwPacesBad:"Ce temps ne correspond pas à la course. Essayez mm:ss ou h:mm:ss.",qwFt:"Ajuster",qwFtShort:"ajustée",qwReps:"Répétitions",qwRepD:"Distance par répétition",qwRepT:"Durée par répétition",qwRecD:"Distance de récup",qwRecT:"Durée de récup",qwRecent:"Récentes",qwEmpty:"Juste une séance ?",qwAdd:"L'ajouter aussi à {plan}",qwAddOn:"Le",qwAddHint:"Elle compte alors dans les vérifications hebdo du plan, comme toute séance ajoutée.",qwEmptyGo:"Créez une séance rapide",tdEst:"≈ {d}",durMin:"{m} min",durHM:"{h} h {m}",tdJog:"récup",sendTo:"Envoyer sur {dev}",
 tdHeat:"<b>Chaud aujourd'hui (ressenti {v}°).</b> Allures facile et tempo {s} s/km plus lentes.",tdHeatHard:" Faites les parties dures à l'effort, pas à l'allure.",wxAdd:"Ajoutez une ville pour la météo du jour",wxDriest:"plus sec {h}",
 wxTitle:"Météo",wxSet:"Ajoutez une ville pour voir la météo du jour pour votre sortie.",wxCity:"Ville",wxCityPh:"ex. Paris",wxGo:"Voir la météo",wxGeo:"Utiliser ma position",
 wxChange:"Changer",wxLoading:"Chargement de la météo…",wxNoCity:"Aucune ville nommée « {q} ». Ajoutez le pays, par exemple « Deauville, France ».",
@@ -1123,7 +1125,7 @@ function qwBuild(Q){
 }
 function openQuick(type){
   const unit=qwLoadUnit();
-  Object.assign(QW,{type:type||QW.type||"tempo",size:QW.size||"m",unit,wucd:QW.wucd!==false,dev:getDevice(),ft:null,ftOpen:false,
+  Object.assign(QW,{type:type||QW.type||"tempo",size:QW.size||"m",unit,wucd:QW.wucd!==false,dev:getDevice(),ft:null,ftOpen:false,add:false,addDate:qwDefaultDate(),
     race:QW.race||(S.inputs.goal!=="fitness"&&QW_RACES.some(r=>r[0]===S.inputs.dist)?S.inputs.dist:"10k")});
   qwSetAmt();
   modal(`<h2>${t("qwTitle")}</h2><div class="qw" id="qwBody"></div>`,m=>{
@@ -1146,10 +1148,22 @@ function openQuick(type){
       qwRender(m,b.dataset.qk);});
     m.addEventListener("change",e=>{const id=e.target.id;
       if(id==="qwWucd"){QW.wucd=e.target.checked;qwRender(m,"wucd");}
+      else if(id==="qwAdd"){QW.add=e.target.checked;qwRender(m,"qwAdd");}
+      else if(id==="qwAddDate"){if(e.target.value)QW.addDate=e.target.value;}
       else if(id==="qwRecDist"||id==="qwRecTime"){qwSavePaces({recDist:m.querySelector("#qwRecDist").value,recTime:m.querySelector("#qwRecTime").value.trim()});qwRender(m,id);}});
     m.addEventListener("toggle",e=>{if(e.target.id==="qwFt")QW.ftOpen=e.target.open;},true);
     qwRender(m);
   });
+}
+/* add to plan (BB-58 step 4): off by default; the run then counts in the plan's +10% and spacing checks like any hand edit */
+const qwPlanOpen=()=>!!(S.plan&&S.plan.weeks.length&&!missingSetup(S.inputs).length);
+function qwPlanRange(){const st=parseISO(S.plan.weeks[0].start);return [st,addDays(st,7*S.plan.weeks.length-1)];}
+function qwDefaultDate(){if(!qwPlanOpen())return "";const [a,b]=qwPlanRange(),d=new Date();d.setHours(12,0,0,0);return iso(d<a?a:d>b?b:d);}
+function qwAddToPlan(R,dateIso){
+  const [st]=qwPlanRange(),d=parseISO(dateIso),wi=Math.floor(Math.round((d-st)/864e5)/7),w=S.plan.weeks[wi];if(!w)return false;
+  const def=TYPE_DEFS.find(x=>x[0]===QW.type)||["easy","easy"];
+  const s={id:uid(),day:dow(d),typeId:QW.type,name:R.name,kind:def[1],km:Math.round(R.km*2)/2,desc:watchSummary(R.wp,R.P),note:"",watch:JSON.parse(JSON.stringify(R.wp))};
+  w.sessions.push(s);w.sessions.sort((a,b)=>a.day-b.day);touched();return true;
 }
 function qwSetAmt(){const d=QW_EASY[QW.type];if(d)QW.amt=QW.unit==="t"?d.min:d.km;}
 function qwRender(m,focusKey){
@@ -1193,6 +1207,8 @@ function qwRender(m,focusKey){
     <div class="qrow"><span class="lbl" id="qwUnitL">${t("qwUnit")}</span><div class="seg" role="radiogroup" aria-labelledby="qwUnitL">${radio("unit","d",Q.unit==="d",t("qwUnitD"))}${radio("unit","t",Q.unit==="t",t("qwUnitT"))}</div></div>
     ${shape}
     ${pacesLine}
+    ${qwPlanOpen()?(()=>{const [a,b]=qwPlanRange();return `<div class="qrow"><label class="qcheck"><input type="checkbox" id="qwAdd" ${Q.add?"checked":""}> ${t("qwAdd",{plan:esc(S.name)})}</label>
+      ${Q.add?`<label class="qadd">${t("qwAddOn")} <input type="date" id="qwAddDate" min="${iso(a)}" max="${iso(b)}" value="${esc(Q.addDate)}"></label><p class="hint qpaces">${t("qwAddHint")}</p>`:""}</div>`;})():""}
     <div class="qprev" style="--k:${effColor(R.eff)};--kt:${effText(R.eff)}">
       <div class="tses"><div class="tn"><b>${esc(R.name)}</b></div>
       <div class="tbig"><b id="qwKm">${(Math.round(R.km*10)/10).toLocaleString(LOC())}<small> km</small></b><span>${t("tdEst",{d:estDur(R.bar.sec)})}</span></div>${R.bar.html}
@@ -1208,6 +1224,7 @@ function qwSend(){
   const file=`quick-${day}-${slug(R.name)}-${slug(tag)}`;
   const title=`${R.name} · ${R.main.replace(/<\/?b>/g,"")}`;
   qwPushRecent(QW);
+  if(QW.add&&qwPlanOpen())qwAddToPlan(R,QW.addDate);
   setDevice(QW.dev);document.querySelectorAll('#plan .today [data-act="twatch"]').forEach(b=>b.textContent=sendLbl(b.dataset.n||""));
   closeModal();
   exportWorkouts(QW.dev,[{title,fitTitle:title,file,wp:R.wp,paces:R.P}],file);
