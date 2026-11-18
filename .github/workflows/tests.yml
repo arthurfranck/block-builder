@@ -14,7 +14,7 @@ jobs:
     # runs apt (apt install-deps used to hang on the runner's dpkg lock and time out at 12 min, BB-60).
     # The tag must match playwright-core in package-lock.json, or the browsers won't be found.
     container:
-      image: mcr.microsoft.com/playwright:v1.65.0-noble
+      image: mcr.microsoft.com/playwright:v1.65.1-noble
       options: --user 1001 --ipc=host
     timeout-minutes: 20
     strategy:
