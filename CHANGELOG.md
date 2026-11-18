@@ -2,6 +2,17 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.24] - 2026-11-18
+
+### Changed
+- Today card as hero (BB-28): today's run leads with its distance in large type and an estimated time, a bar drawing the workout step by step (warm-up, each rep and recovery, cool-down, coloured by effort) and the target paces it uses. **Send to watch** is the main button, named after the device you last used (e.g. "Send to Apple Watch"), with Edit beside it. The forecast folds into one line that opens the full forecast; the open/closed choice is remembered.
+
+### Added
+- Heat note on the Today card: when it feels 22° or more at the driest slot left today, easy and tempo paces show 10 s/km slower (20 s/km from 28°) and hard parts are to be run by effort. The watch file keeps the plan paces.
+
+### Fixed
+- Before the plan starts, the first run's date on the Today card no longer shows in the large title font.
+
 ## [1.1.23] - 2026-11-12
 
 ### Changed
