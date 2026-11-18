@@ -179,3 +179,68 @@ test('Add to plan is not offered without a plan', async ({ app, page }) => {
   await page.locator('#plan .qempty [data-act="quick"]').click();
   await expect(sheet(page).locator('#qwAdd')).toHaveCount(0);
 });
+
+/* ---------- fixes from the iPhone test (2026-11-18) ---------- */
+test('reps can go down to 1 and back up', async ({ app, page }) => {
+  await openQuick(app);
+  const s = sheet(page);
+  await s.locator('[data-qk="type:intervals"]').click();
+  await s.locator('#qwFt summary').click();
+  const reps = s.locator('.qft').nth(0).locator('output');
+  for (let n = +(await reps.innerText()); n > 1; n--) await s.locator('[data-qk="ft:n,-"]').click();
+  await expect(reps).toHaveText('1');
+  await expect(s.locator('#qwSteps')).not.toContainText(' × (');
+  await s.locator('[data-qk="ft:n,+"]').click();
+  await expect(reps).toHaveText('2');
+  await expect(s.locator('#qwSteps')).toContainText('2 × (');
+});
+
+test('recoveries stay in time when measuring by distance', async ({ app, page }) => {
+  await openQuick(app);
+  const s = sheet(page);
+  await s.locator('[data-qk="unit:d"]').click();
+  await s.locator('[data-qk="type:intervals"]').click();
+  await expect(s.locator('#qwSteps')).toContainText(/\d+ min recovery/);
+  await s.locator('#qwFt summary').click();
+  await expect(s.locator('.qft').nth(2)).toContainText('Recovery time');
+});
+
+test('fine-tune takes a typed target pace, shows it is tuned, and resets', async ({ app, page }) => {
+  await openQuick(app);
+  const s = sheet(page);
+  await s.locator('[data-qk="type:intervals"]').click();
+  await s.locator('#qwFt summary').click();
+  await expect(s.locator('#qwFt .qtag')).toHaveCount(0);
+  await s.locator('#qwPace').fill('abc');
+  await s.locator('#qwPace').blur();
+  await expect(s.locator('#qwPaceHint')).toHaveText('Type a pace like 4:30 (between 2:30 and 10:00 per km).');
+  await s.locator('#qwPace').fill('4:05');
+  await s.locator('#qwPace').blur();
+  await expect(s.locator('#qwSteps')).toContainText('@ 4:05/km');
+  await expect(s.locator('#qwFt .qtag')).toHaveText('Tuned');
+  await s.locator('[data-qk="ftreset:1"]').click();
+  await expect(s.locator('#qwSteps')).not.toContainText('4:05');
+  await expect(s.locator('#qwFt .qtag')).toHaveCount(0);
+});
+
+test('a typed target pace works without any race time', async ({ app, page }) => {
+  await app.configure({ recDist: '0' });
+  await openQuick(app);
+  const s = sheet(page);
+  await s.locator('#qwFt summary').click();
+  await s.locator('#qwPace').fill('4:40');
+  await s.locator('#qwPace').blur();
+  await expect(s.locator('#qwSteps')).toContainText('@ 4:40/km');
+  await s.locator('[data-qk="dev:garmin"]').click();
+  const { buf } = await app.download(() => s.locator('#qwSend').click());
+  expect(zipNames(buf)).toHaveLength(1);
+});
+
+test('the sheet fits inside the visible screen', async ({ app, page }) => {
+  await openQuick(app);
+  const box = await sheet(page).boundingBox();
+  const h = await page.evaluate(() => window.innerHeight);
+  expect(box!.y).toBeGreaterThanOrEqual(0);
+  expect(box!.y + box!.height).toBeLessThanOrEqual(h);
+  await expect(sheet(page).locator('#qwSend')).toBeInViewport();
+});
