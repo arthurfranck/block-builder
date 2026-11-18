@@ -259,24 +259,57 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 .ver{max-width:1500px;margin:0 auto;padding:0 16px calc(24px + env(safe-area-inset-bottom,0px));font-size:12px;color:var(--muted)}
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 14px;border-radius:8px;font-size:14px;z-index:60}
 @media (prefers-reduced-motion:no-preference){.ses{transition:border-color .15s}}
-/* today: session of the day beside the local forecast */
-.today{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);background:var(--surface);border:1px solid var(--accent-line);box-shadow:inset 0 0 0 1px var(--accent-line),var(--lift);border-radius:10px;overflow:hidden}
+/* today: the run of the day as hero (BB-28). Main column: name, big distance, workout bar; side: paces, heat, weather line, send */
+.today{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(250px,1fr);background:var(--surface);border:1px solid var(--accent-line);box-shadow:inset 0 0 0 1px var(--accent-line),var(--lift);border-radius:12px;overflow:hidden}
 @media (max-width:760px){.today{grid-template-columns:minmax(0,1fr)}}
-.today>div{padding:12px 14px 14px;display:grid;gap:8px;align-content:start;min-width:0}
-.today .wxp{background:color-mix(in srgb,var(--surface-2) 55%,var(--surface))}
-
+.today>div{padding:14px 16px;display:grid;gap:12px;align-content:start;min-width:0}
+.today .tside{border-left:1px solid var(--line);align-content:space-between}
+@media (max-width:760px){.today .tside{border-left:0;padding-top:0}}
+.today .tside>div:first-child{display:grid;gap:10px;align-content:start}
 .today .eyebrow{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font-family:var(--f-body);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .today .eyebrow b{color:var(--ink);font-weight:700}
-.tses{position:relative;display:grid;gap:4px;padding:2px 0 2px 12px}
-.tses::before{content:"";position:absolute;left:0;top:3px;bottom:3px;width:4px;border-radius:2px;background:var(--k)}
-.tses .tn{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
-.tses .tn b{font-family:var(--f-display);font-stretch:125%;font-weight:800;font-size:24px;line-height:1.05;color:var(--kt,var(--k))}
-.tses .tn span{font-family:var(--f-body);font-size:15px}
-.tses p{margin:0;font-size:14.5px;max-width:62ch}
-.tses .acts{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
-.today .rest b{font-family:var(--f-display);font-stretch:125%;font-weight:800;font-size:24px;line-height:1.05;color:var(--recovery)}
+.tses{display:grid;gap:10px}
+.tses+.tses{border-top:1px solid var(--line);padding-top:12px}
+.tses .tn b{font-family:var(--f-display);font-stretch:125%;font-weight:800;font-size:18px;line-height:1.1;color:var(--kt,var(--k))}
+.tbig{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px}
+.tbig b{font-family:var(--f-display);font-stretch:125%;font-weight:800;font-size:54px;line-height:.9;letter-spacing:-.02em}
+.tbig b small{font-size:21px;letter-spacing:0}
+.tbig span{color:var(--muted);font-size:14px}
+@media (min-width:761px){.tbig b{font-size:64px}}
+.tses p{margin:0;font-size:13.5px;color:var(--muted);max-width:62ch}
+/* workout bar: one segment per step, width = estimated time, colour = effort (shared with BB-58) */
+.wbar{display:flex;gap:2px;height:20px;border-radius:6px;overflow:hidden}
+.wbar i{display:block;min-width:3px}
+.wbar i.rec{opacity:.55}
+.wbarlbl{display:flex;flex-wrap:wrap;justify-content:space-between;gap:2px 10px;margin-top:5px;font-size:12px;color:var(--muted)}
+.wbarlbl span{white-space:nowrap}
+.wbarlbl b{color:var(--ink);font-weight:600}
+.tpaces{display:flex;flex-wrap:wrap;gap:6px}
+.tpaces:empty{display:none}
+.pc{display:inline-flex;align-items:baseline;gap:6px;padding:5px 9px;border-radius:7px;background:var(--surface-2);font-size:12.5px;color:var(--muted)}
+.pc::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--c);align-self:center}
+.pc b{color:var(--ink);font-size:14px;font-weight:600}
+.pc s{font-size:12px}
+.theat{background:var(--warn-bg);color:var(--warn-ink);border-radius:8px;padding:8px 10px;font-size:13px}
+.theat:empty{display:none}
+.tcta{display:flex;flex-wrap:wrap;gap:8px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.tcta .btn{min-height:44px;border-radius:10px}
+.tcta .btn.primary{flex:1 1 auto;font-size:15px}
+.tcta .btn:not(.primary){flex:0 0 auto;padding-inline:18px}
+.today .rest>b{font-family:var(--f-display);font-stretch:125%;font-weight:800;font-size:28px;line-height:1.05;color:var(--recovery)}
+.today .rest{display:grid;gap:6px}
 .today .rest p,.today .tnext{margin:0;font-size:14px;color:var(--muted)}
 .today .tnext b{color:var(--ink);font-weight:600}
+/* weather: one line that opens the full forecast */
+.wxline{display:flex;align-items:center;gap:8px;width:100%;min-height:36px;padding:4px 0;border:0;border-top:1px solid var(--line);background:none;cursor:pointer;text-align:left;font-size:13px;color:var(--muted)}
+@media (min-width:761px){.wxline{border-top:0}}
+.wxline svg{width:22px;height:22px;flex:none;color:var(--ink)}
+.wxline b{color:var(--ink);font-weight:600}
+.wxline .chev{margin-left:auto;flex:none;transition:transform .15s}
+.wxline[aria-expanded="true"] .chev{transform:rotate(180deg)}
+@media (prefers-reduced-motion:reduce){.wxline .chev{transition:none}}
+.wxmore{display:grid;gap:8px}
 .wxnow{display:flex;align-items:center;gap:12px;min-width:0}
 .wxnow svg{width:40px;height:40px;flex:none;color:var(--ink)}
 .wxnow .tmp{font-family:var(--f-display);font-stretch:125%;font-weight:800;font-size:36px;line-height:.9;font-variant-numeric:tabular-nums}
@@ -393,7 +426,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.23";
+const VERSION = "1.1.24";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -487,7 +520,8 @@ deleted:"Plan deleted.",delFail:"Couldn't delete that plan.",newQ:"Start a new p
 langEdited:"Hand-edited sessions keep their current text. Use Rebuild from settings to translate them.",
 tdToday:"Today",tdWeek:"Week {n} · {phase}",tdRest:"Rest day",tdRestT:"No run planned today.",tdNext:"Next: <b>{when}</b>, {name} {km} km",
 tdBefore:"Plan starts {d}",tdBeforeT:"First run: <b>{when}</b>, {name} {km} km",tdDone:"Plan finished",tdDoneT:"The last week ended on {d}.",
-tdEdit:"Edit",tdWatchTitle:"{name} · {d}",
+tdEdit:"Edit",tdWatchTitle:"{name} · {d}",tdEst:"≈ {d}",durMin:"{m} min",durHM:"{h} h {m}",tdJog:"jog",sendTo:"Send to {dev}",
+tdHeat:"<b>Hot today (feels {v}°).</b> Easy and tempo paces {s} s/km slower.",tdHeatHard:" Run the hard parts by effort, not pace.",wxAdd:"Add a city for today's weather",wxDriest:"driest {h}",
 wxTitle:"Weather",wxSet:"Add a city to see today's forecast for your run.",wxCity:"City",wxCityPh:"e.g. Paris",wxGo:"Show forecast",wxGeo:"Use my location",
 wxChange:"Change",wxLoading:"Loading forecast…",wxNoCity:"No city called “{q}”. Try adding the country, like “Deauville, France”.",
 wxBlocked:"The forecast couldn't load. Check your connection, then use Change to try again.",
@@ -584,7 +618,8 @@ deleted:"Plan supprimé.",delFail:"Impossible de supprimer ce plan.",newQ:"Comme
 langEdited:"Les séances modifiées à la main gardent leur texte. Utilisez « Recalculer depuis les réglages » pour les traduire.",
 tdToday:"Aujourd'hui",tdWeek:"Semaine {n} · {phase}",tdRest:"Repos",tdRestT:"Pas de sortie prévue aujourd'hui.",tdNext:"Prochaine : <b>{when}</b>, {name} {km} km",
 tdBefore:"Le plan commence le {d}",tdBeforeT:"Première sortie : <b>{when}</b>, {name} {km} km",tdDone:"Plan terminé",tdDoneT:"La dernière semaine s'est terminée le {d}.",
-tdEdit:"Modifier",tdWatchTitle:"{name} · {d}",
+tdEdit:"Modifier",tdWatchTitle:"{name} · {d}",tdEst:"≈ {d}",durMin:"{m} min",durHM:"{h} h {m}",tdJog:"récup",sendTo:"Envoyer sur {dev}",
+tdHeat:"<b>Chaud aujourd'hui (ressenti {v}°).</b> Allures facile et tempo {s} s/km plus lentes.",tdHeatHard:" Faites les parties dures à l'effort, pas à l'allure.",wxAdd:"Ajoutez une ville pour la météo du jour",wxDriest:"plus sec {h}",
 wxTitle:"Météo",wxSet:"Ajoutez une ville pour voir la météo du jour pour votre sortie.",wxCity:"Ville",wxCityPh:"ex. Paris",wxGo:"Voir la météo",wxGeo:"Utiliser ma position",
 wxChange:"Changer",wxLoading:"Chargement de la météo…",wxNoCity:"Aucune ville nommée « {q} ». Ajoutez le pays, par exemple « Deauville, France ».",
 wxBlocked:"La météo n'a pas pu se charger. Vérifiez votre connexion, puis utilisez Changer pour réessayer.",
@@ -1158,7 +1193,7 @@ function renderPlan(){
 
 
 /* ---------- today: session of the day + forecast (Open-Meteo, no key) ---------- */
-const WX={loc:(()=>{try{const v=JSON.parse(localStorage.getItem("bb-wx")||"null");return v&&isFinite(v.lat)&&isFinite(v.lon)?v:null;}catch(_){return null;}})(),data:null,at:0,busy:false,err:"",editing:false};
+const WX={loc:(()=>{try{const v=JSON.parse(localStorage.getItem("bb-wx")||"null");return v&&isFinite(v.lat)&&isFinite(v.lon)?v:null;}catch(_){return null;}})(),data:null,at:0,busy:false,err:"",editing:false,open:(()=>{try{return localStorage.getItem("bb-wx-open")==="1";}catch(_){return false;}})(),heat:null};
 function wxSaveLoc(l){WX.loc=l;WX.data=null;WX.at=0;WX.err="";WX.editing=false;try{localStorage.setItem("bb-wx",JSON.stringify(l));}catch(_){}}
 function wmoKey(c){c=+c;if(c===0)return 0;if(c===1)return 1;if(c===2)return 2;if(c===3)return 3;if(c===45||c===48)return 45;if(c>=51&&c<=55)return 51;if(c===56||c===57)return 56;if(c===61||c===63)return 61;if(c===65)return 65;if(c===66||c===67)return 66;if(c>=71&&c<=77)return 71;if(c>=80&&c<=82)return 80;if(c===85||c===86)return 85;if(c>=95)return 95;return 3;}
 function wxIcon(c){const k=wmoKey(c);const sun=`<circle cx="20" cy="20" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><g stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 4v4M20 32v4M4 20h4M32 20h4M8.7 8.7l2.8 2.8M28.5 28.5l2.8 2.8M8.7 31.3l2.8-2.8M28.5 11.5l2.8-2.8"/></g>`;
@@ -1177,7 +1212,7 @@ async function wxLoad(force){
   if(!WX.loc||WX.busy)return;if(!force&&WX.data&&Date.now()-WX.at<30*60e3)return;
   WX.busy=true;WX.err="";renderWx();
   const {lat,lon}=WX.loc;
-  const u=`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunset&timezone=auto&forecast_days=1`;
+  const u=`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,apparent_temperature,precipitation_probability,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunset&timezone=auto&forecast_days=1`;
   try{const r=await fetch(u);if(!r.ok)throw new Error("http "+r.status);WX.data=await r.json();WX.at=Date.now();}
   catch(_){WX.err="blocked";}
   WX.busy=false;renderWx();
@@ -1197,52 +1232,123 @@ function wxGeo(){
   WX.busy=true;WX.err="";renderWx();
   try{navigator.geolocation.getCurrentPosition(p=>{WX.busy=false;wxSaveLoc({name:"",lat:p.coords.latitude,lon:p.coords.longitude,country:""});wxLoad(true);},fail,{timeout:10000,maximumAge:30*60e3});}catch(_){fail();}
 }
+function wxBestSlot(D){
+  const c=D.current||{},H=D.hourly||{};const nowH=String(c.time||"").slice(0,13);
+  const idx=(H.time||[]).map((tm,i)=>({tm,i})).filter(o=>o.tm.slice(0,13)>=nowH&&+o.tm.slice(11,13)<=22);
+  let best=null;if(idx.length>1)for(const o of idx){const p=H.precipitation_probability[o.i]??0;if(!best||p<best.p||(p===best.p&&H.temperature_2m[o.i]>best.tp))best={i:o.i,p,tp:H.temperature_2m[o.i]};}
+  return {idx,best};
+}
+/* heat: feels-like at the driest slot left today (or now). >=22° easy/tempo +10 s/km, >=28° +20 s/km */
+function wxHeat(D){
+  if(!D)return null;const c=D.current||{},H=D.hourly||{};const {best}=wxBestSlot(D);
+  const at=best&&H.apparent_temperature?H.apparent_temperature[best.i]:c.apparent_temperature;
+  if(!isFinite(at))return null;const add=at>=28?20:at>=22?10:0;
+  return add?{feels:Math.round(at),add}:null;
+}
 function renderWx(){
   const el=document.getElementById("wx");if(!el)return;
   const D=WX.data;
   const errMsg=WX.err==="blocked"?t("wxBlocked"):WX.err==="geo"?t("wxGeoFail"):WX.err.startsWith("nocity:")?t("wxNoCity",{q:esc(WX.err.slice(7))}):"";
-  const head=`<div class="eyebrow"><b>${t("wxTitle")}</b>${WX.loc&&!WX.editing?`<span>${esc(WX.loc.name||`${WX.loc.lat.toFixed(2)}, ${WX.loc.lon.toFixed(2)}`)}</span>`:""}</div>`;
+  const open=WX.open||WX.editing||!!errMsg;
+  const city=WX.loc?esc(WX.loc.name||`${WX.loc.lat.toFixed(2)}, ${WX.loc.lon.toFixed(2)}`):"";
+  const chev=`<svg class="chev" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+  let sum,more;
   if(!WX.loc||WX.editing){
     const sug=(S.inputs.race&&S.inputs.race.city)||(WX.loc&&WX.loc.name)||"";
-    el.innerHTML=`${head}<span class="hint">${t("wxSet")}</span>
+    sum=`${wxIcon(2)}<span>${WX.loc?`<b>${t("wxTitle")}</b> · ${city}`:t("wxAdd")}</span>`;
+    more=`<span class="hint">${t("wxSet")}</span>
       <form id="wxForm"><input id="wxQ" aria-label="${esc(t("wxCity"))}" placeholder="${esc(t("wxCityPh"))}" value="${esc(sug)}" autocomplete="address-level2"><button class="btn sm primary" type="submit" ${WX.busy?"disabled":""}>${t("wxGo")}</button></form>
       <div class="wxloc">${navigator.geolocation?`<button type="button" class="icon-btn" data-act="wxgeo">${t("wxGeo")}</button>`:""}${WX.busy?`<span>${t("wxLoading")}</span>`:""}</div>
       ${errMsg?`<span class="hint">${errMsg}</span>`:""}`;
-    return;
-  }
-  const change=`<div class="wxloc">${D?`<span>${t("wxUpd",{t:new Date(WX.at).toLocaleTimeString(LOC(),{hour:"2-digit",minute:"2-digit"})})}</span>`:""}<button type="button" class="icon-btn" data-act="wxedit">${t("wxChange")}</button></div>`;
-  if(!D){el.innerHTML=`${head}<span class="hint">${WX.busy?t("wxLoading"):errMsg}</span>${change}`;return;}
-  const c=D.current||{},dd=D.daily||{},H=D.hourly||{};
-  const nowH=String(c.time||"").slice(0,13);
-  const idx=(H.time||[]).map((tm,i)=>({tm,i})).filter(o=>o.tm.slice(0,13)>=nowH&&+o.tm.slice(11,13)<=22);
-  const step=idx.length>8?2:1;const hrs=idx.filter((_,j)=>j%step===0);
-  let best=null;if(idx.length>1)for(const o of idx){const p=H.precipitation_probability[o.i]??0;if(!best||p<best.p||(p===best.p&&H.temperature_2m[o.i]>best.tp))best={i:o.i,p,tp:H.temperature_2m[o.i]};}
-  const wk=wmoKey(c.weather_code);
-  el.innerHTML=`${head}
-    <div class="wxnow">${wxIcon(c.weather_code)}<span class="tmp">${Math.round(c.temperature_2m)}°</span><span class="dsc"><b>${t("wmo"+wk)}</b><span>${t("wxFeels",{v:Math.round(c.apparent_temperature)})}</span></span></div>
+  }else{
+    const change=`<div class="wxloc">${D?`<span>${t("wxUpd",{t:new Date(WX.at).toLocaleTimeString(LOC(),{hour:"2-digit",minute:"2-digit"})})}</span>`:""}<button type="button" class="icon-btn" data-act="wxedit">${t("wxChange")}</button></div>`;
+    if(!D){sum=`${wxIcon(3)}<span><b>${t("wxTitle")}</b> · ${city}${WX.busy?` · ${t("wxLoading")}`:""}</span>`;more=`${errMsg?`<span class="hint">${errMsg}</span>`:""}${change}`;}
+    else{
+      const c=D.current||{},dd=D.daily||{},H=D.hourly||{};
+      const {idx,best}=wxBestSlot(D);
+      const step=idx.length>8?2:1;const hrs=idx.filter((_,j)=>j%step===0);
+      const wk=wmoKey(c.weather_code);
+      sum=`${wxIcon(c.weather_code)}<span><b>${Math.round(c.temperature_2m)}°</b> ${esc(t("wmo"+wk).toLowerCase())} · ${t("wxRain",{p:dd.precipitation_probability_max?dd.precipitation_probability_max[0]??0:0})}${best?` · ${t("wxDriest",{h:hm(H.time[best.i])})}`:""} · ${city}</span>`;
+      more=`<div class="wxnow">${wxIcon(c.weather_code)}<span class="tmp">${Math.round(c.temperature_2m)}°</span><span class="dsc"><b>${t("wmo"+wk)}</b><span>${t("wxFeels",{v:Math.round(c.apparent_temperature)})}</span></span></div>
     <div class="wxfacts"><span>${t("wxHiLo",{h:`<b>${Math.round(dd.temperature_2m_max[0])}</b>`,l:`<b>${Math.round(dd.temperature_2m_min[0])}</b>`})}</span><span>${t("wxRain",{p:`<b>${dd.precipitation_probability_max[0]??0}</b>`})}</span><span>${t("wxWind",{w:`<b>${Math.round(c.wind_speed_10m)}</b>`})}</span>${dd.sunset?`<span>${t("wxSun",{t:`<b>${hm(dd.sunset[0])}</b>`})}</span>`:""}</div>
     ${hrs.length?`<div class="wxhours">${hrs.map(o=>`<div class="wxh ${best&&best.i===o.i?"best":""}"><span class="hr">${hm(o.tm)}</span><span class="tp">${Math.round(H.temperature_2m[o.i])}°</span><span class="pp">${H.precipitation_probability[o.i]??0}%</span></div>`).join("")}</div>`:""}
     ${best?`<span class="wxbest">${t("wxBest",{h:hm(H.time[best.i]),p:best.p,tp:Math.round(best.tp)})}</span>`:""}
     ${change}`;
+    }
+  }
+  el.innerHTML=`<button type="button" class="wxline" data-act="wxtoggle" aria-expanded="${open}" aria-controls="wxMore">${sum}${chev}</button><div class="wxmore" id="wxMore" ${open?"":"hidden"}>${more}</div>`;
+  WX.heat=wxHeat(D);applyHeat();
 }
+
+/* ---------- workout shape: watchPlan() steps with estimated time and effort colour (Today bar now, BB-58 preview later) ---------- */
+const PACE_EFF={interval:"hard",rep:"hard",tempo:"tempo",mp:"tempo"};
+function stepEffort(x,sesE){
+  if(x.p==="recovery")return "recovery";
+  if(PACE_EFF[x.pace])return PACE_EFF[x.pace];
+  if(x.pace==="race")return sesE==="race"?"race":"tempo";
+  if(x.pace==="easy")return sesE==="long"?"long":"easy";
+  return sesE==="easy"||sesE==="long"?"hard":sesE;
+}
+/* seconds per km for a step: its pace, else a jog for recoveries, else by effort */
+function stepSecKm(x,e,P){return x.pace?P.sec[x.pace]:e==="recovery"?P.sec.easy*1.1:e==="hard"?P.sec.interval:e==="tempo"?P.sec.tempo:P.sec.easy;}
+function workoutSegs(wp,sesE,P){
+  const segs=[];
+  const add=(x,e,role)=>{const spk=stepSecKm(x,e,P);const sec=x.g[0]==='t'?x.g[1]:x.g[1]*spk;const km=x.g[0]==='d'?x.g[1]:sec/spk;segs.push({e,sec,km,role,pace:x.pace||null});};
+  if(wp.wu)add({p:'work',g:wp.wu,pace:'easy'},"easy","wu");
+  for(const b of wp.blocks)for(let r=0;r<Math.max(1,b.n);r++)for(const x of b.steps)add(x,stepEffort(x,sesE),x.p==="recovery"?"rec":"main");
+  if(wp.cd)add({p:'work',g:wp.cd,pace:'easy'},"easy","cd");
+  return segs;
+}
+function estDur(sec){const m=Math.max(1,Math.round(sec/60));if(m<60)return t("durMin",{m});const r=Math.round(m/5)*5;return t("durHM",{h:Math.floor(r/60),m:String(r%60).padStart(2,"0")});}
+function workoutBar(wp,sesE,P){
+  const segs=workoutSegs(wp,sesE,P);
+  const bar=`<div class="wbar" role="img" aria-label="${esc(watchSummary(wp))}">${segs.map(g=>`<i class="${g.role==="rec"?"rec":""}" style="flex:${Math.max(1,Math.round(g.sec))} 1 0;background:${effColor(g.e)}"></i>`).join("")}</div>`;
+  const main=wp.blocks.map(b=>{const w=b.steps.find(x=>x.p!=="recovery")||b.steps[0],rec=b.steps.find(x=>x.p==="recovery");
+    if(b.n>1)return `<b>${b.n} × ${gTxt(w.g)}</b>${rec?` · ${gTxt(rec.g)} ${t("tdJog")}`:""}`;
+    return b.steps.map(x=>`<b>${gTxt(x.g)}</b>${x.pace?" "+paceLbl(x.pace):""}`).join(" + ");}).join(" + ");
+  const lbl=`<div class="wbarlbl">${wp.wu?`<span><b>${gTxt(wp.wu)}</b> ${t("warmup").toLowerCase()}</span>`:""}<span>${main}</span>${wp.cd?`<span><b>${gTxt(wp.cd)}</b> ${t("cooldown").toLowerCase()}</span>`:""}</div>`;
+  return {html:`<div>${bar}${lbl}</div>`,sec:segs.reduce((a,g)=>a+g.sec,0),segs};
+}
+/* paces used by today's run(s), hard ones first; heat slows easy, tempo and marathon pace */
+let TD={keys:[],eff:{},hard:false};
+const HEAT_KEYS=new Set(["easy","tempo","mp"]);
+function paceChips(){
+  const P=paces(S.inputs),add=WX.heat?WX.heat.add:0;
+  return TD.keys.map(k=>{const e=TD.eff[k]||"easy";
+    const val=P.vdot?(add&&HEAT_KEYS.has(k)?`<b>${fmtPace(P.sec[k]+add).replace("/km","")}</b>/km <s>${P.txt[k].replace("/km","")}</s>`:`<b>${P.txt[k].replace("/km","")}</b>/km`):`<b>${esc(P.txt[k])}</b>`;
+    return `<span class="pc" data-k="${k}" style="--c:${effColor(e)}">${esc(cap(paceLbl(k)))} ${val}</span>`;}).join("");
+}
+function applyHeat(){
+  const pe=document.getElementById("tdPaces"),he=document.getElementById("tdHeat");
+  if(pe)pe.innerHTML=paceChips();
+  if(he){const h=WX.heat;he.innerHTML=h&&(TD.keys.length||TD.hard)?t("tdHeat",{v:h.feels,s:h.add})+(TD.hard?t("tdHeatHard"):""):"";}
+}
+function sendLbl(name){const d=DEVICES.find(x=>x.k===getDevice())||DEVICES[0];const b=d.k==="other"?t("sendWatch"):t("sendTo",{dev:d.name()});return name?`${b} · ${name}`:b;}
 function renderToday(){
+  TD={keys:[],eff:{},hard:false};
   const P=S.plan;if(!P||!P.weeks.length)return "";
   const today=new Date();today.setHours(12,0,0,0);const td=dow(today);
   const st0=parseISO(P.weeks[0].start),end=addDays(st0,7*P.weeks.length-1);
   const wi=P.weeks.findIndex(w=>{const st=parseISO(w.start);return today>=st&&today<addDays(st,7);});
   const whenOf=(w,s)=>fmtDay(sessionDate(w,s));
   const nextAfter=(wi0,d0)=>{for(let i=Math.max(wi0,0);i<P.weeks.length;i++){const ss=P.weeks[i].sessions.filter(s=>i>wi0||s.day>d0).sort((a,b)=>a.day-b.day);if(ss.length)return {w:P.weeks[i],s:ss[0]};}return null;};
-  let eb=`<b>${t("tdToday")}</b><span>${cap(fmtDay(today))}</span>`,body="";
+  let eb=`<b>${t("tdToday")}</b><span>${cap(fmtDay(today))}</span>`,body="",cta="";
   if(today<st0){const n=nextAfter(0,-1);
     body=`<div class="rest"><b>${t("tdBefore",{d:fmtDate(st0)})}</b>${n?`<p class="tnext">${t("tdBeforeT",{when:whenOf(n.w,n.s),name:esc(n.s.name.toLowerCase()),km:n.s.km})}</p>`:""}</div>`;}
   else if(wi<0||today>end){body=`<div class="rest"><b>${t("tdDone")}</b><p>${t("tdDoneT",{d:fmtDate(end)})}</p></div>`;}
   else{const w=P.weeks[wi];eb+=`<span style="color:${phaseText(w.phase)}">${t("tdWeek",{n:w.n,phase:phaseLbl(w.phase)})}</span>`;
     const ss=w.sessions.filter(s=>s.day===td);
-    if(ss.length)body=ss.map(s=>`<div class="tses" style="--k:${effColor(sesEffort(s))};--kt:${effText(sesEffort(s))}"><div class="tn"><b>${esc(s.name)}</b><span>${esc(s.km)} km</span></div>${s.desc?`<p>${esc(s.desc)}</p>`:""}
-      <div class="acts"><button type="button" class="btn sm" data-act="tedit" data-w="${wi}" data-s="${s.id}">${t("tdEdit")}</button><button type="button" class="btn sm" data-act="twatch" data-w="${wi}" data-s="${s.id}">${t("sendWatch")}</button></div></div>`).join("");
+    if(ss.length){const Pc=paces(S.inputs);const hard=[],easy=[];
+      body=ss.map(s=>{const e=sesEffort(s),wp=s.watch||watchPlan(s.kind,s.km),wb=workoutBar(wp,e,Pc);
+        for(const g of wb.segs){if(g.role==="main"&&(g.e==="hard"||g.e==="race"))TD.hard=true;}
+        for(const g of wb.segs)if(g.pace&&!TD.eff[g.pace]){TD.eff[g.pace]=g.e;(g.pace==="easy"?easy:hard).push(g.pace);}
+        return `<div class="tses" style="--k:${effColor(e)};--kt:${effText(e)}"><div class="tn"><b>${esc(s.name)}</b></div>
+        <div class="tbig"><b>${esc(s.km)}<small> km</small></b><span>${t("tdEst",{d:estDur(wb.sec)})}</span></div>${wb.html}${s.desc?`<p>${esc(s.desc)}</p>`:""}</div>`;}).join("");
+      TD.keys=[...hard,...easy];
+      cta=`<div class="tcta">${ss.map(s=>`<button type="button" class="btn primary" data-act="twatch" data-w="${wi}" data-s="${s.id}" data-n="${ss.length>1?esc(s.name):""}">${esc(sendLbl(ss.length>1?s.name:""))}</button><button type="button" class="btn" data-act="tedit" data-w="${wi}" data-s="${s.id}">${t("tdEdit")}${ss.length>1?`<span class="sr"> ${esc(s.name)}</span>`:""}</button>`).join("")}</div>`;}
     else{const n=nextAfter(wi,td);body=`<div class="rest"><b>${t("tdRest")}</b><p>${t("tdRestT")}</p></div>${n?`<p class="tnext">${t("tdNext",{when:whenOf(n.w,n.s),name:esc(n.s.name.toLowerCase()),km:n.s.km})}</p>`:""}`;}
   }
-  return `<section class="today" aria-label="${esc(t("tdToday"))}"><div><div class="eyebrow">${eb}</div>${body}</div><div class="wxp" id="wx" aria-live="polite"></div></section>`;
+  return `<section class="today" aria-label="${esc(t("tdToday"))}"><div class="tmain"><div class="eyebrow">${eb}</div>${body}</div><div class="tside"><div><div class="tpaces" id="tdPaces"></div><div class="theat" id="tdHeat" role="note"></div><div class="wxp" id="wx" aria-live="polite"></div></div>${cta}</div></section>`;
 }
 $("#plan").addEventListener("submit",e=>{if(e.target.id!=="wxForm")return;e.preventDefault();const q=$("#wxQ");if(q)wxFind(q.value);});
 
@@ -1340,6 +1446,7 @@ $("#plan").addEventListener("click",e=>{
   else if(act==="tedit"){openEditor(+a.dataset.w,a.dataset.s);}
   else if(act==="twatch"){const w=S.plan.weeks[+a.dataset.w],s=w.sessions.find(x=>x.id===a.dataset.s);if(s)sendToWatch([{w,s}],t("tdWatchTitle",{name:s.name,d:fmtDay(sessionDate(w,s))}),`${slug(S.name)}-${iso(sessionDate(w,s))}`);}
   else if(act==="wxedit"){WX.editing=true;WX.err="";renderWx();const q=$("#wxQ");q&&q.focus();}
+  else if(act==="wxtoggle"){WX.open=!(WX.open||WX.editing);if(!WX.open)WX.editing=false;try{localStorage.setItem("bb-wx-open",WX.open?"1":"0");}catch(_){}renderWx();const q=$("#wxQ");if(WX.open&&q&&!WX.loc)q.focus();}
   else if(act==="wxgeo"){wxGeo();}
   else if(act==="add"){addSession(+a.dataset.w,+a.dataset.d);}
   else if(act==="wwatch"){const w=S.plan.weeks[+a.dataset.w];sendToWatch(w.sessions.map(s=>({w,s})),t("sendTitleWeek",{n:w.n,c:w.sessions.length}),`${slug(S.name)}-week-${String(w.n).padStart(2,"0")}`);}
@@ -1522,7 +1629,7 @@ function sendToWatch(list,title,zipBase){
     const upd=()=>{m.querySelectorAll(".device").forEach(b=>b.setAttribute("aria-checked",b.dataset.dev===cur));m.querySelector("#devHelp").textContent=DEVICES.find(d=>d.k===cur).help();};
     m.querySelector(".devices").onclick=e=>{const b=e.target.closest(".device");if(b){cur=b.dataset.dev;upd();}};
     m.querySelector("#dCancel").onclick=closeModal;
-    m.querySelector("#dGo").onclick=()=>{setDevice(cur);closeModal();exportWorkouts(cur,list,zipBase);};
+    m.querySelector("#dGo").onclick=()=>{setDevice(cur);document.querySelectorAll('#plan .today [data-act="twatch"]').forEach(b=>b.textContent=sendLbl(b.dataset.n||""));closeModal();exportWorkouts(cur,list,zipBase);};
     upd();
   });
 }

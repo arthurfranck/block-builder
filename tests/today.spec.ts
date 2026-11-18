@@ -14,6 +14,12 @@ const FORECAST = (() => {
   };
 })();
 
+async function openWeather(page: Page) {
+  const line = page.locator('#wx .wxline');
+  if ((await line.getAttribute('aria-expanded')) !== 'true') await line.click();
+  await expect(page.locator('#wxMore')).toBeVisible();
+}
+
 async function mockWeather(page: Page, ok = true) {
   await page.route('https://geocoding-api.open-meteo.com/**', (r) =>
     ok ? r.fulfill({ json: /name=Nowhere/.test(r.request().url()) ? {} : { results: [{ name: 'Deauville', latitude: 49.36, longitude: 0.07, country: 'France' }] } }) : r.abort());
@@ -41,7 +47,9 @@ test("on a run day the Today card shows today's run", async ({ app, page }) => {
   const card = page.locator('#plan .today');
   await expect(card).toContainText('Week 1');
   await expect(card.locator('.tses .tn b')).toHaveText(fri.name);
-  await expect(card.locator('.tses .tn span')).toHaveText(`${fri.km} km`);
+  await expect(card.locator('.tses .tbig b')).toHaveText(`${fri.km} km`);
+  await expect(card.locator('.tses .tbig span')).toHaveText(/^≈ \d+ min$/);
+  await expect(card.locator('.wbar i').first()).toBeVisible();
 });
 
 test("Edit on the Today card opens today's run", async ({ app, page }) => {
@@ -62,6 +70,7 @@ test('on a rest day the Today card names the next run', async ({ app, page }) =>
 test('a city shows the forecast, the driest slot and is remembered', async ({ app, page }) => {
   await mockWeather(page);
   await app.showPlan();
+  await openWeather(page);
   await page.locator('#wxQ').fill('Deauville');
   await page.locator('#wxForm button[type="submit"]').click();
   const wx = page.locator('#wx');
@@ -73,13 +82,14 @@ test('a city shows the forecast, the driest slot and is remembered', async ({ ap
   await expect(wx.locator('.wxh.best .hr')).toHaveText('15:00');
   await expect(wx.locator('.wxbest')).toContainText('15:00, 5% rain');
   await page.reload();
-  await expect(page.locator('#wx .eyebrow')).toContainText('Deauville');
+  await expect(page.locator('#wx .wxline')).toContainText('Deauville');
   await expect(page.locator('#wx .tmp')).toHaveText('8°');
 });
 
 test('an unknown city says so', async ({ app, page }) => {
   await mockWeather(page);
   await app.showPlan();
+  await openWeather(page);
   await page.locator('#wxQ').fill('Nowhere');
   await page.locator('#wxForm button[type="submit"]').click();
   await expect(page.locator('#wx')).toContainText('No city called “Nowhere”');
@@ -88,7 +98,83 @@ test('an unknown city says so', async ({ app, page }) => {
 test('a failed forecast request explains what to do', async ({ app, page }) => {
   await mockWeather(page, false);
   await app.showPlan();
+  await openWeather(page);
   await page.locator('#wxQ').fill('Deauville');
   await page.locator('#wxForm button[type="submit"]').click();
   await expect(page.locator('#wx')).toContainText("The forecast couldn't load.");
+});
+
+/* ---------- BB-28: Today as hero ---------- */
+/** Week 1 of a 13-week plan starts Monday 2 November; Tuesday 3 November is the hill session. */
+async function onHillDay(app: import('./helpers').App, page: Page) {
+  await app.configure({ weeks: 13, recDist: '10', recTime: '46:00' });
+  await page.clock.setFixedTime(new Date('2026-11-03T09:00:00+01:00'));
+  await app.setField('curVol', 26);
+  await app.showPlan();
+  await expect(page.locator('#plan .today .tses .tn b')).toHaveText('Hill repeats');
+}
+
+test('the workout bar draws warm-up, every rep and recovery, and cool-down', async ({ app, page }) => {
+  await onHillDay(app, page);
+  const card = page.locator('#plan .today');
+  const n = +(/(\d+) ×/.exec((await card.locator('.wbarlbl').innerText()))![1]);
+  await expect(card.locator('.wbar i')).toHaveCount(2 + 2 * n);
+  await expect(card.locator('.wbar i.rec')).toHaveCount(n);
+  await expect(card.locator('.wbarlbl')).toContainText('2 km warm-up');
+  await expect(card.locator('.wbarlbl')).toContainText('2 km cool-down');
+  await expect(card.locator('.wbar')).toHaveAttribute('aria-label', /Warm-up 2 km/);
+});
+
+test('the Today card lists the paces of the run, from the recent race', async ({ app, page }) => {
+  await onHillDay(app, page);
+  const chip = page.locator('#tdPaces .pc[data-k="easy"]');
+  await expect(chip).toHaveText(/^Easy \d:\d\d\/km$/);
+  await expect(page.locator('#tdHeat')).toBeEmpty();
+});
+
+test('a hot day slows easy paces and says to run hard parts by effort', async ({ app, page }) => {
+  const hot = JSON.parse(JSON.stringify(FORECAST));
+  hot.hourly.apparent_temperature = hot.hourly.time.map(() => 27.4);
+  await page.route('https://geocoding-api.open-meteo.com/**', (r) => r.fulfill({ json: { results: [{ name: 'Nice', latitude: 43.7, longitude: 7.27, country: 'France' }] } }));
+  await page.route('https://api.open-meteo.com/**', (r) => r.fulfill({ json: hot }));
+  await onHillDay(app, page);
+  const before = (await page.locator('#tdPaces .pc[data-k="easy"] b').innerText()).trim();
+  await openWeather(page);
+  await page.locator('#wxQ').fill('Nice');
+  await page.locator('#wxForm button[type="submit"]').click();
+  await expect(page.locator('#tdHeat')).toContainText('Hot today (feels 27°). Easy and tempo paces 10 s/km slower.');
+  await expect(page.locator('#tdHeat')).toContainText('by effort, not pace');
+  const [m, sec] = before.split(':').map(Number);
+  const slower = `${Math.floor((m * 60 + sec + 10) / 60)}:${String((m * 60 + sec + 10) % 60).padStart(2, '0')}`;
+  await expect(page.locator('#tdPaces .pc[data-k="easy"] b')).toHaveText(slower);
+  await expect(page.locator('#tdPaces .pc[data-k="easy"] s')).toHaveText(before);
+});
+
+test('the weather is one line that opens the full forecast, and remembers it', async ({ app, page }) => {
+  await mockWeather(page);
+  await app.showPlan();
+  const line = page.locator('#wx .wxline');
+  await expect(line).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('#wxMore')).toBeHidden();
+  await openWeather(page);
+  await page.locator('#wxQ').fill('Deauville');
+  await page.locator('#wxForm button[type="submit"]').click();
+  await expect(line).toContainText('8° rain · rain 80% · driest 15:00 · Deauville');
+  await line.click();
+  await expect(line).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('#wxMore')).toBeHidden();
+  await page.reload();
+  await app.showPlan();
+  await expect(page.locator('#wx .wxline')).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.locator('#wx .wxline')).toContainText('Deauville');
+});
+
+test('Send on the Today card names the device last used', async ({ app, page }) => {
+  await app.configure({ weeks: 13 });
+  const send = page.locator('#plan .today [data-act="twatch"]');
+  await expect(send).toHaveText('Send to Apple Watch');
+  await send.click();
+  await app.modal().locator('[data-dev="garmin"]').click();
+  await app.download(() => app.modal().locator('#dGo').click());
+  await expect(send).toHaveText('Send to Garmin');
 });
