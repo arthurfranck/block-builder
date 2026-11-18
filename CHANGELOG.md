@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.25] - 2026-11-18
+
+### Changed
+- The plan engine (paces, plan building, warnings and week checks) now lives in its own file, `engine.js`, next to `index.html` (BB-7). Plans come out the same; the engine is now tested on its own, including the five athlete profiles from the November audit. The page still works opened from disk.
+
 ## [1.1.24] - 2026-11-18
 
 ### Changed

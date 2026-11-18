@@ -3,7 +3,8 @@
   "private": true,
   "description": "Automated tests for Block Builder. The app itself is index.html and needs no install.",
   "scripts": {
-    "test": "playwright test",
+    "test": "node --test tests/engine/*.unit.mjs && playwright test",
+    "test:engine": "node --test tests/engine/*.unit.mjs",
     "test:desktop": "playwright test --project=desktop-*",
     "test:mobile": "playwright test --project=iphone-*",
     "test:chrome": "playwright test --project=desktop-chrome",

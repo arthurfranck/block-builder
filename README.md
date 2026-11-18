@@ -32,7 +32,7 @@ Plans are saved in the visitor's browser (`localStorage`) only. The weather city
 
 ## Tech
 
-- One file for the app: `index.html` (HTML, CSS and JavaScript, no build step), plus vendored third-party code in `vendor/` (see `vendor/README.md`).
+- Two files for the app, no build step: `index.html` (HTML, CSS and the interface) and `engine.js` (the plan engine: paces, plan generation, warnings and week checks, with no DOM or storage, tested on its own in Node). `engine.js` is a classic script rather than an ES module so the page still works opened from disk. Plus vendored third-party code in `vendor/` (see `vendor/README.md`).
 - External resources:
   - Google Fonts (Archivo, expanded and heavy, for the brand and big numbers; Inter for everything else)
   - [Open-Meteo](https://open-meteo.com) forecast and geocoding APIs (free, no key), called only once a city or location is set
@@ -50,7 +50,9 @@ To serve it the way the tests and CI do, run `node tests/serve.mjs 8765` and ope
 
 ## Tests
 
-Automated tests use [Playwright](https://playwright.dev) and [axe-core](https://github.com/dequelabs/axe-core-npm) for accessibility. They live in `tests/` and run on six setups:
+Automated tests use [Playwright](https://playwright.dev) and [axe-core](https://github.com/dequelabs/axe-core-npm) for accessibility. They live in `tests/` and run on six setups. The plan engine (`engine.js`) also has Node unit tests in `tests/engine/` (`npm run test:engine`, no browser): paces, watch workouts, and the five athlete profiles from the November audit checked against the plan rules (taper length, cutbacks, +10% a week, hard runs per week and their spacing, nothing hard near race day). `npm test` runs both.
+
+Browser setups:
 
 | Setup | Engine | Screen |
 |---|---|---|
@@ -89,6 +91,7 @@ Every test starts on a frozen date (Friday 6 November 2026, Paris time) with emp
 | `mobile.spec.ts` | Plan/Settings tabs, gear on the brand row and plan name on its own line, 16px fields, tap targets, sideways grid scroll; side-by-side layout on desktop |
 | `layout.spec.ts` | nothing sticks out of the page, run colours follow effort (setup chips match the plan grid), gear menu (theme and language hidden until opened, Escape and outside tap close it), theme picker (dark default, light kept after reload, Auto follows the device), volt accent only on today and the main button, no script errors, type (Archivo for the brand and big numbers, Inter elsewhere, capitals only on small labels), cards separated by surface instead of borders with only Today lifted |
 | `security.spec.ts` | Content Security Policy present and not broken by the page or either export, WorkoutKit not fetched from a CDN, a tampered jsPDF file refused |
+| `file.spec.ts` | the page opened from disk (file://) loads the engine and builds a plan |
 | `a11y.spec.ts` | WCAG 2.1 A/AA checks on each view and dialog, dark and light |
 
 GitHub Actions runs every setup on each push and pull request (`.github/workflows/tests.yml`) and keeps each setup's HTML report for 14 days. Jobs run inside Playwright's own Docker image, which already has the browsers and their system libraries, so nothing is installed through apt. The tests serve the page with a small Node server (`tests/serve.mjs`). `main` is protected: all six setups must pass before a pull request can merge or a push can land, admins included, and force-pushes are blocked. GitHub Pages publishes `main` as soon as it changes, so only tested code goes live.
