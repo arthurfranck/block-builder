@@ -2,6 +2,19 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.31] - 2026-11-18
+
+### Added
+- Quick workout fine-tune takes a **target pace** you type (min:sec per km) for the reps; the watch alerts you around it, even without a race time (BB-58).
+
+### Changed
+- Fine-tune stands out: a bordered row with an icon, what it changes, a "Tuned" tag once used, and Reset fine-tune.
+- Jog recoveries stay in time when a quick workout is measured by distance.
+
+### Fixed
+- On iPhone Chrome, the quick workout (and every other dialog) was taller than the visible screen, so its top and its buttons sat behind the browser bars. Dialogs now fit the visible screen.
+- Lowering the reps to 1 in fine-tune no longer hides the reps control.
+
 ## [1.1.30] - 2026-11-18
 
 ### Added
