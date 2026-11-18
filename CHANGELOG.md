@@ -2,6 +2,14 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.1.27] - 2026-11-18
+
+### Fixed
+- Watch export: two runs with the same name on the same day no longer share a file name, so one no longer overwrites the other when the zip is opened; the second gets `-2` (BB-15).
+
+### Changed
+- Watch export works from a workout's own title and file name instead of its plan week, ready for single workouts outside a plan (BB-58, step 1). Plan exports look the same.
+
 ## [1.1.26] - 2026-11-18
 
 ### Changed
