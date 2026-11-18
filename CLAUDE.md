@@ -2,7 +2,7 @@
 
 ## Keep README.md current (required)
 
-Every commit that changes `index.html` must update `README.md` in the same commit:
+Every commit that changes `index.html` or `engine.js` must update `README.md` in the same commit:
 
 - **Features:** add, change or remove bullets so they match what the page actually does.
 - **Where plans are stored / Tech / Run locally:** update if storage, hosting, dependencies or external resources change.
@@ -11,7 +11,7 @@ Before committing, reread the whole README against the current `index.html` and 
 
 ## Changelog and version (required)
 
-`CHANGELOG.md` is the only changelog; README.md just links to it. For every release that changes `index.html`:
+`CHANGELOG.md` is the only changelog; README.md just links to it. For every release that changes `index.html` or `engine.js`:
 
 - Bump `const VERSION` in `index.html` (semantic versioning).
 - Add a `## [x.y.z] - YYYY-MM-DD` section at the top of `CHANGELOG.md` ([Keep a Changelog](https://keepachangelog.com) headings), saying what changed for the person using the page.
@@ -20,7 +20,7 @@ The tests read the version from `index.html` and fail if the footer or the top `
 
 ## Run the tests (required)
 
-Before every commit that changes `index.html`, run `npm test` and make sure it passes. If WebKit can't be installed where you work, run at least `npm run test:chrome` and say in the commit message that the WebKit setups were not run locally (CI runs them all).
+Before every commit that changes `index.html` or `engine.js`, run `npm test` and make sure it passes. If WebKit can't be installed where you work, run at least `npm run test:chrome` and say in the commit message that the WebKit setups were not run locally (CI runs them all).
 
 - A change to what the page does needs a test change in the same commit: add or update tests in `tests/` for the new or changed behaviour.
 - Never delete or loosen a failing test to make the suite pass; fix the page, or ask.
@@ -29,7 +29,8 @@ Before every commit that changes `index.html`, run `npm test` and make sure it p
 
 ## Project facts
 
-- The whole app is `index.html`. There is no build step.
+- The app is `index.html` plus `engine.js` (the plan engine: paces, generate, warnings, week checks; no DOM, no storage). `engine.js` is a classic script exposing `BBEngine`, not an ES module, so the page still opens from disk (file://). There is no build step.
+- Engine changes need a Node test in `tests/engine/engine.unit.mjs` (`npm run test:engine`, also run by `npm test` and CI). Re-check the five athlete profiles there when changing how plans are built.
 - It is served by GitHub Pages from `main`, root folder: https://arthurfranck.github.io/block-builder/
 - `main` is protected: the six Tests jobs must pass before anything lands. Work on a branch and open a pull request; don't try to push to `main` directly.
 - Plans live in `localStorage` under the key `bb-plans`. The export format is `{app:"block-builder", version:1, plans:{…}}`. Keep import backward compatible.
@@ -37,6 +38,6 @@ Before every commit that changes `index.html`, run `npm test` and make sure it p
 
 ## Claude Code setup (`.claude/`)
 
-- `settings.json` has a PreToolUse hook (`hooks/test-before-commit.sh`): before any `git commit`, if `index.html` differs from HEAD, it runs `npm run test:chrome` and blocks the commit when it fails. It does not replace the full `npm test` run above.
+- `settings.json` has a PreToolUse hook (`hooks/test-before-commit.sh`): before any `git commit`, if `index.html` or `engine.js` differs from HEAD, it runs `npm run test:engine` and `npm run test:chrome` and blocks the commit when it fails. It does not replace the full `npm test` run above.
 - `launch.json` serves the repo with `node tests/serve.mjs 8765` (the same server the tests and CI use) for the preview pane.
 - `/release <id> [patch|minor|major]` (`commands/release.md`) walks through branch, version bump, CHANGELOG, README, tests, commit and pull request for one backlog item.
