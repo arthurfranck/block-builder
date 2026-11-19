@@ -260,3 +260,16 @@ describe('BB-42 · recovery weeks after the race', () => {
     assert.deepEqual(E.warnings(inp, types(), plan, false).map((x) => x.split(' ')[0]), w0);
   });
 });
+
+describe('BB-34 · what a new plan still needs', () => {
+  test('blank distance, race date and weeks are missing, in setup order, each tied to its step', () => {
+    const blank = { goal: 'race', dist: '', raceDate: '', weeks: '', curVol: '', curLong: '', runs: 0 };
+    const m = E.missingSetup(blank);
+    assert.deepEqual(m, ['needDist', 'needDate', 'needWeeks', 'needVol', 'needLong', 'needRuns']);
+    assert.deepEqual(m.map((k) => E.SETUP_STEP[k]), [2, 2, 2, 3, 3, 4]);
+    assert.deepEqual(E.missingSetup({ ...blank, goal: 'fitness' }).includes('needDate'), false);
+    const g = E.genInputs(blank);
+    assert.ok(E.DISTS.some((d) => d.k === g.dist) && /^\d{4}-\d\d-\d\d$/.test(g.raceDate) && g.weeks === 12);
+    assert.ok(E.generate(g, types()).weeks.length === 12, 'a stand-in plan can still be built behind the message');
+  });
+});
