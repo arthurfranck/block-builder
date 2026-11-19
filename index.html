@@ -238,6 +238,35 @@ tr.wnote td p{margin:0;padding:8px 12px;background:var(--surface-2);border-radiu
 tr.wnote td p b{font-weight:600;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.07em;margin-right:6px}
 tr.wwarn td{border-left:0;padding:0 10px 10px 144px;font-size:13.5px}
 tr.wwarn td p{margin:0;padding:8px 12px;background:var(--warn-bg);color:var(--warn-ink);border-radius:6px;max-width:80ch}
+/* phone plan view (BB-23): the same table, shown as one card per week with a row per day; earlier weeks fold away.
+   Desktop keeps the grid and drag and drop. */
+.mpast{display:none}
+@media (max-width:760px){
+  .grid-wrap{overflow:visible;background:none;border-radius:0}
+  table.grid{min-width:0;display:block;table-layout:auto}
+  table.grid thead{display:none}
+  table.grid tbody{display:grid;gap:10px}
+  table.grid tbody tr{display:block}
+  table.grid tr.wrow{background:var(--surface);border-radius:10px;padding:10px 10px 4px;scroll-margin-top:64px}
+  table.grid tr.wrow.now{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--ink) 30%,transparent)}
+  table.grid td{display:block;border:0;padding:0}
+  table.grid td.wk{padding:0 0 8px}
+  .wkcell{grid-template-columns:4px minmax(0,1fr)}
+  .wkcell>div{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px}
+  .wkcell .meta{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}
+  .wbtn{margin:0 0 0 auto}
+  table.grid td.day{position:relative;height:auto;min-height:0;padding:6px 0 6px 46px;border-top:1px solid var(--line)}
+  table.grid td.day::before{content:attr(data-dl);position:absolute;left:0;top:12px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+  td.day .ses{min-height:0}
+  td.day .ses+.ses{margin-top:5px}
+  .ses .d{-webkit-line-clamp:2}
+  td.day .empty{min-height:36px;flex-direction:row;justify-content:flex-start;gap:6px;padding:0 8px}
+  tr.wwarn td,tr.wnote td{padding:0}
+  tr.wwarn td p,tr.wnote td p{max-width:none}
+  .mpast{display:block;width:100%;margin-bottom:10px;min-height:40px}
+  .grid-wrap:not(.show-past) tr.past{display:none}
+  table.grid tr.past{opacity:.6}
+}
 tr.wwarn td p b{font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.07em;margin-right:6px}
 tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);font-weight:500}
 
@@ -482,7 +511,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.4.1";
+const VERSION = "1.5.0";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -551,7 +580,7 @@ loadProfile:"Load profile",longRunLeg:"long run",
 
 sendAll:"Send all runs to watch",exportCal:"Export calendar",exportCsv:"Export CSV",exportFmt:"Export format",fmtCsv:"CSV (spreadsheet)",fmtPdf:"PDF (printable)",exportGo:"Export",
 pdfBuilding:"Building PDF…",pdfLoadFail:"Couldn't load the PDF builder. Check your connection and try again.",pdfFail:"Couldn't build the PDF: {m}",pdfGenerated:"Generated {d}",pdfPage:"Page {p} of {n}",pdfRace:"Race",rebuildFrom:"Rebuild from settings",
-week:"Week",wAbbr:"W",sendWatch:"Send to watch",sendWatchWeek:"Send week {n} to watch",watchShort:"Watch",rest:"Rest",tabPlan:"Plan",tabSetup:"Settings",seePlan:"See the plan",editSettings:"Edit settings",addRun:"+ Add run",noteBadge:"NOTE",
+week:"Week",showPast:"Show {n} earlier week(s)",hidePast:"Hide {n} earlier week(s)",wAbbr:"W",sendWatch:"Send to watch",sendWatchWeek:"Send week {n} to watch",watchShort:"Watch",rest:"Rest",tabPlan:"Plan",tabSetup:"Settings",seePlan:"See the plan",editSettings:"Edit settings",addRun:"+ Add run",noteBadge:"NOTE",
 svgTitle:"Week {n}: {km} km, {phase}",svgNow:"this week",svgToday:"today",svgRace:"race week",svgAria:"Weekly kilometres by week",
 editRace:"Edit race",removeRace:"Remove race",raceOptional:"Optional: name your race so it shows in the header with a countdown.",
 findOn:"Find {lbl} races on Finishers",addMyRace:"Add my race",raceUrl:"Race page link (optional)",raceUrlPh:"Paste the race's Finishers page",
@@ -662,7 +691,7 @@ loadProfile:"Profil de charge",longRunLeg:"sortie longue",
 
 sendAll:"Envoyer toutes les séances à la montre",exportCal:"Exporter le calendrier",exportCsv:"Exporter en CSV",exportFmt:"Format d'export",fmtCsv:"CSV (tableur)",fmtPdf:"PDF (imprimable)",exportGo:"Exporter",
 pdfBuilding:"Création du PDF…",pdfLoadFail:"Impossible de charger le générateur de PDF. Vérifiez votre connexion et réessayez.",pdfFail:"Impossible de créer le PDF : {m}",pdfGenerated:"Créé le {d}",pdfPage:"Page {p} sur {n}",pdfRace:"Course",rebuildFrom:"Recalculer depuis les réglages",
-week:"Semaine",wAbbr:"S",sendWatch:"Envoyer à la montre",sendWatchWeek:"Envoyer la semaine {n} à la montre",watchShort:"Montre",rest:"Repos",tabPlan:"Plan",tabSetup:"Réglages",seePlan:"Voir le plan",editSettings:"Modifier les réglages",addRun:"+ Ajouter une sortie",noteBadge:"NOTE",
+week:"Semaine",showPast:"Afficher {n} semaine(s) passée(s)",hidePast:"Masquer {n} semaine(s) passée(s)",wAbbr:"S",sendWatch:"Envoyer à la montre",sendWatchWeek:"Envoyer la semaine {n} à la montre",watchShort:"Montre",rest:"Repos",tabPlan:"Plan",tabSetup:"Réglages",seePlan:"Voir le plan",editSettings:"Modifier les réglages",addRun:"+ Ajouter une sortie",noteBadge:"NOTE",
 svgTitle:"Semaine {n} : {km} km, {phase}",svgNow:"cette semaine",svgToday:"aujourd'hui",svgRace:"semaine de course",svgAria:"Kilomètres par semaine",
 editRace:"Modifier la course",removeRace:"Retirer la course",raceOptional:"Facultatif : indiquez votre course pour l'afficher en haut de page avec un compte à rebours.",
 findOn:"Trouver des courses ({lbl}) sur Finishers",addMyRace:"Ajouter ma course",raceUrl:"Lien de la page de la course (facultatif)",raceUrlPh:"Collez la page Finishers de la course",
@@ -935,19 +964,23 @@ function renderPlan(){
     <span class="exp"><select id="expFmt" aria-label="${esc(t("exportFmt"))}"><option value="csv" ${S.exportFmt==="csv"?"selected":""}>${t("fmtCsv")}</option><option value="pdf" ${S.exportFmt==="pdf"?"selected":""}>${t("fmtPdf")}</option></select><button class="btn sm" data-act="export">${t("exportGo")}</button></span>
     <button class="btn sm ghost" data-act="rebuild">${t("rebuildFrom")}</button>
   </div>`;
-  h+=`<div class="grid-wrap"><table class="grid"><thead><tr><th class="wk">${t("week")}</th>${DAYS.map(d=>`<th>${d}</th>`).join("")}</tr></thead><tbody>`;
+  /* BB-23: weeks before the current one fold away on phones; a finished plan shows them all */
+  const pastN=nowI>0?nowI:0;
+  if(pastN)h+=`<button type="button" class="btn sm ghost mpast" data-act="past" aria-expanded="${!!S.showPast}">${t(S.showPast?"hidePast":"showPast",{n:pastN})}</button>`;
+  h+=`<div class="grid-wrap${S.showPast?" show-past":""}"><table class="grid"><thead><tr><th class="wk">${t("week")}</th>${DAYS.map(d=>`<th>${d}</th>`).join("")}</tr></thead><tbody>`;
   weeks.forEach((w,wi)=>{
     const st=parseISO(w.start),en=addDays(st,6);
-    h+=`<tr class="${w.cutback?"cutback":""}"><td class="wk"><div class="wkcell"><span class="bar" style="background:${phaseColor(w.phase)}"></span><div>
+    const rc=(wi<pastN?" past":"")+(wi===nowI?" now":"");
+    h+=`<tr class="wrow${w.cutback?" cutback":""}${rc}"><td class="wk"><div class="wkcell"><span class="bar" style="background:${phaseColor(w.phase)}"></span><div>
       <div class="n">${t("wAbbr")}${esc(w.n)}</div><div class="meta"><span>${fmtShort(st)} – ${fmtShort(en)}</span><span class="ph" data-cut="${t("cutback")}" style="color:${phaseText(w.phase)}">${phaseLbl(w.phase)}</span><span class="km">${totals[wi].toFixed(1)} km</span></div>
       <button class="btn sm ghost wbtn" data-act="wwatch" data-w="${wi}" aria-label="${esc(t("sendWatchWeek",{n:w.n}))}" title="${esc(t("sendWatchWeek",{n:w.n}))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3M12 10v2l1.5 1"/></svg>${t("watchShort")}</button></div></div></td>`;
     for(let d=0;d<7;d++){
       const ss=w.sessions.filter(s=>s.day===d);
-      h+=`<td class="day" data-w="${wi}" data-d="${d}">${ss.length?ss.map(s=>`<button type="button" class="ses ${s.kind==="race"?"race":""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${effColor(sesEffort(s))};--kt:${effText(sesEffort(s))}"><span class="t">${esc(s.name)}</span><span class="k">${esc(s.km)} km</span><span class="d">${esc(s.desc)}</span>${s.note?`<span class="nb">${t("noteBadge")}</span>`:""}</button>`).join(""):`<div class="empty" tabindex="0" role="button" aria-label="${esc(t("rest")+" "+t("addRun")+" · "+t("eTitle",{n:w.n,day:DAYS[d]}))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t("rest")}</span><span class="plus">${t("addRun")}</span></div>`}</td>`;
+      h+=`<td class="day" data-w="${wi}" data-d="${d}" data-dl="${esc(DAYS[d])}">${ss.length?ss.map(s=>`<button type="button" class="ses ${s.kind==="race"?"race":""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${effColor(sesEffort(s))};--kt:${effText(sesEffort(s))}"><span class="t">${esc(s.name)}</span><span class="k">${esc(s.km)} km</span><span class="d">${esc(s.desc)}</span>${s.note?`<span class="nb">${t("noteBadge")}</span>`:""}</button>`).join(""):`<div class="empty" tabindex="0" role="button" aria-label="${esc(t("rest")+" "+t("addRun")+" · "+t("eTitle",{n:w.n,day:DAYS[d]}))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t("rest")}</span><span class="plus">${t("addRun")}</span></div>`}</td>`;
     }
     h+=`</tr>`;
-    weekChecks(w,I,weeks[wi-1]).forEach(c=>{h+=`<tr class="wwarn" data-check="${c.k}"><td colspan="8"><p><b>${t("wkWarn")}</b>${esc(c.txt)}</p></td></tr>`;});
-    if(w.note)h+=`<tr class="wnote"><td colspan="8"><p><b>${t("note")}</b>${esc(w.note)}</p></td></tr>`;
+    weekChecks(w,I,weeks[wi-1]).forEach(c=>{h+=`<tr class="wwarn${rc}" data-check="${c.k}"><td colspan="8"><p><b>${t("wkWarn")}</b>${esc(c.txt)}</p></td></tr>`;});
+    if(w.note)h+=`<tr class="wnote${rc}"><td colspan="8"><p><b>${t("note")}</b>${esc(w.note)}</p></td></tr>`;
   });
   h+=`</tbody></table></div>`;
   $("#plan").innerHTML=h;
@@ -1418,6 +1451,7 @@ $("#plan").addEventListener("click",e=>{
   else if(act==="allwatch"){sendToWatch(planWorkouts(S.plan.weeks.flatMap(w=>w.sessions.map(s=>({w,s})))),t("sendTitleAll",{c:S.plan.weeks.reduce((a,w)=>a+w.sessions.length,0)}),`${slug(S.name)}-all`);}
   else if(act==="ics")exportICS();
   else if(act==="csv")exportCSV();
+  else if(act==="past"){S.showPast=!S.showPast;renderPlan();}
   else if(act==="export"){const f=$("#expFmt");S.exportFmt=f?f.value:"csv";if(S.exportFmt==="pdf")exportPDF(a);else exportCSV();}
 });
 $("#plan").addEventListener("change",e=>{if(e.target.id==="expFmt"){S.exportFmt=e.target.value;try{localStorage.setItem("bb-export-fmt",S.exportFmt);}catch(_){}}});

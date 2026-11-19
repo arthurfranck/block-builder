@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.5.0] - 2026-11-19
+
+### Changed
+- On phones the plan is a list of week cards with a row per day, instead of a wide grid you had to scroll sideways (BB-23). Earlier weeks fold behind "Show N earlier weeks", so this week comes first, outlined; shown again, they are dimmed. Desktop keeps the grid and drag and drop.
+
 ## [1.4.1] - 2026-11-19
 
 ### Fixed

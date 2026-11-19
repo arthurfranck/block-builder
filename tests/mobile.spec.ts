@@ -67,11 +67,40 @@ test.describe('phone layout', () => {
     expect((await page.locator('#setup .see-plan').boundingBox())!.height).toBeGreaterThanOrEqual(44);
   });
 
-  test('the week grid scrolls sideways inside its box, not the page', async ({ app, page }) => {
+  test('weeks are cards with a row per day, with no sideways scroll (BB-23)', async ({ app, page }) => {
+    const width = page.viewportSize()!.width;
     const grid = await page.locator('.grid-wrap').evaluate((e) => ({ scroll: e.scrollWidth, client: e.clientWidth }));
-    expect(grid.scroll).toBeGreaterThan(grid.client);
+    expect(grid.scroll).toBeLessThanOrEqual(grid.client);
     const doc = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, width: innerWidth }));
     expect(doc.scroll).toBeLessThanOrEqual(doc.width);
+    await expect(page.locator('table.grid thead')).toBeHidden();
+    // the 7 days of week 1 stack top to bottom, each labelled, inside the screen
+    const days = page.locator('table.grid tr.wrow').first().locator('td.day');
+    await expect(days).toHaveCount(7);
+    const boxes = await days.evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return { x: r.x, y: r.y, r: r.right, h: r.height, lbl: getComputedStyle(e, '::before').content }; }));
+    boxes.forEach((b, i) => {
+      expect(b.x).toBeGreaterThanOrEqual(0);
+      expect(b.r).toBeLessThanOrEqual(width);
+      if (i) expect(b.y).toBeGreaterThanOrEqual(boxes[i - 1].y + boxes[i - 1].h - 1);
+    });
+    expect(boxes.map((b) => b.lbl)).toEqual(['"Mon"', '"Tue"', '"Wed"', '"Thu"', '"Fri"', '"Sat"', '"Sun"']);
+  });
+
+  test('earlier weeks fold away so the current week comes first, and can be shown dimmed (BB-23)', async ({ app, page }) => {
+    // 12 weeks to 3 Jan 2027: week 1 starts 12 Oct, so on 6 Nov the current week is week 4
+    await app.configure({ raceDate: '2027-01-03' });
+    await app.showPlan();
+    const toggle = page.locator('#plan .mpast');
+    await expect(toggle).toHaveText('Show 3 earlier week(s)');
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(page.locator('table.grid tr.wrow:visible').first()).toHaveClass(/\bnow\b/);
+    await expect(page.locator('table.grid tr.wrow.now .wkcell .n')).toHaveText('W4');
+    await expect(page.locator('table.grid tr.past:visible')).toHaveCount(0);
+    await toggle.tap();
+    await expect(toggle).toHaveText('Hide 3 earlier week(s)');
+    await expect(page.locator('table.grid tr.wrow.past:visible')).toHaveCount(3);
+    expect(+(await page.locator('table.grid tr.wrow.past').first().evaluate((e) => getComputedStyle(e).opacity))).toBeLessThan(1);
+    expect(await app.plan()).toHaveLength(12);
   });
 
   test('tapping a run opens the editor, which fits the screen', async ({ app, page }) => {
@@ -107,6 +136,14 @@ test.describe('phone layout', () => {
 
 test.describe('desktop layout', () => {
   test.beforeEach(({ mobile }) => desktopOnly(mobile));
+
+  test('keeps the week grid with every week, and no fold button (BB-23)', async ({ app, page }) => {
+    await app.configure({ raceDate: '2027-01-03' });
+    await app.showPlan();
+    await expect(page.locator('table.grid thead')).toBeVisible();
+    await expect(page.locator('#plan .mpast')).toBeHidden();
+    await expect(page.locator('table.grid tr.wrow:visible')).toHaveCount(12);
+  });
 
   test('settings and plan side by side, no tabs', async ({ app, page }) => {
     await expect(page.locator('#mtabs')).toBeHidden();
