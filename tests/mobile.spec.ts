@@ -112,6 +112,32 @@ test.describe('phone layout', () => {
     await expect(page.locator('#eOk')).toBeVisible();
   });
 
+  test('dialogs open as bottom sheets: full width, resting on the bottom edge (BB-33)', async ({ app, page }) => {
+    const { width, height } = page.viewportSize()!;
+    for (const open of [() => app.session(0, 0).tap(), () => page.locator('#btnPlans').tap()]) {
+      await open();
+      const m = app.modal();
+      await m.evaluate((e) => Promise.all(e.getAnimations().map((a) => a.finished)));
+      const b = (await m.boundingBox())!;
+      expect(b.x).toBe(0);
+      expect(Math.round(b.width)).toBe(width);
+      expect(Math.abs(b.y + b.height - height)).toBeLessThanOrEqual(1);
+      expect(b.y).toBeGreaterThanOrEqual(0);
+      expect(await m.evaluate((e) => getComputedStyle(e).borderTopLeftRadius)).toBe('16px');
+      await page.keyboard.press('Escape');
+      await expect(m).toHaveCount(0);
+    }
+  });
+
+  test('the sheet slides up, and simply appears when the phone asks for less motion (BB-33)', async ({ app, page }) => {
+    await app.session(0, 0).tap();
+    expect(await app.modal().evaluate((e) => getComputedStyle(e).animationName)).toBe('sheetUp');
+    await page.keyboard.press('Escape');
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await app.session(0, 0).tap();
+    expect(await app.modal().evaluate((e) => getComputedStyle(e).animationName)).toBe('none');
+  });
+
   test('opening the run editor does not focus a field, so no picker or keyboard pops up', async ({ app, page }) => {
     await app.session(0, 0).tap();
     await expect(app.modal()).toBeVisible();
@@ -136,6 +162,14 @@ test.describe('phone layout', () => {
 
 test.describe('desktop layout', () => {
   test.beforeEach(({ mobile }) => desktopOnly(mobile));
+
+  test('dialogs stay centred, not bottom sheets (BB-33)', async ({ app, page }) => {
+    await app.session(0, 0).click();
+    const b = (await app.modal().boundingBox())!, v = page.viewportSize()!;
+    expect(Math.abs(b.x + b.width / 2 - v.width / 2)).toBeLessThanOrEqual(2);
+    expect(b.width).toBeLessThanOrEqual(560);
+    expect(await app.modal().evaluate((e) => getComputedStyle(e).animationName)).toBe('none');
+  });
 
   test('keeps the week grid with every week, and no fold button (BB-23)', async ({ app, page }) => {
     await app.configure({ raceDate: '2027-01-03' });

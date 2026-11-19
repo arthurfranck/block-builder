@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.6.1] - 2026-11-19
+
+### Changed
+- On phones every dialog (run editor, Quick workout, My plans, confirmations) is a bottom sheet: full width, resting on the bottom edge with a grab bar, sliding up as it opens (BB-33). With Reduce Motion on, it appears without sliding. Desktop keeps the centred dialog.
+
 ## [1.6.0] - 2026-11-19
 
 ### Added
