@@ -221,3 +221,52 @@ test('recovery weeks after the race are saved and reopen (BB-42)', async ({ app,
   await app.showPlan();
   expect((await app.plan()).at(-1)!.phase).toBe('recovery');
 });
+
+test.describe('import of a plan that is already here (BB-4)', () => {
+  const T = 1790848800000; // updatedAt in the fixture
+  const seed = async (page: import('@playwright/test').Page, o: { name: string; updatedAt: number }) => {
+    const p = { ...fixturePlan(), ...o };
+    await page.evaluate((p) => localStorage.setItem('bb-plans', JSON.stringify({ 'spring-10k-v1': p })), p);
+  };
+  const importFixture = async (app: import('./helpers').App, page: import('@playwright/test').Page) => {
+    await page.locator('#btnPlans').click();
+    const [chooser] = await Promise.all([page.waitForEvent('filechooser'), page.locator('#pImport').click()]);
+    await chooser.setFiles(FIXTURE);
+  };
+  const names = (app: import('./helpers').App) => app.modal().locator('.pl .info b');
+
+  test('a copy changed more recently here is kept, and the file is added beside it', async ({ app, page }) => {
+    await seed(page, { name: 'Spring 10K (edited here)', updatedAt: T + 60000 });
+    await app.open();
+    await importFixture(app, page);
+    await expect(app.toast()).toHaveText('Imported 1 plan(s). 1 added as a copy, because the plan here was changed more recently.');
+    await expect(names(app)).toHaveText(['Spring 10K (edited here)', 'Spring 10K (imported)'], { useInnerText: true });
+  });
+
+  test('an older copy here is replaced by the newer file', async ({ app, page }) => {
+    await seed(page, { name: 'Old spring plan', updatedAt: T - 60000 });
+    await app.open();
+    await importFixture(app, page);
+    await expect(app.toast()).toHaveText('Imported 1 plan(s).');
+    await expect(names(app)).toHaveText(['Spring 10K']);
+  });
+
+  test('the same version is not imported twice', async ({ app, page }) => {
+    await seed(page, { name: 'Spring 10K', updatedAt: T });
+    await app.open();
+    await importFixture(app, page);
+    await expect(app.toast()).toHaveText('Nothing new: 1 plan(s) already up to date.');
+    await expect(names(app)).toHaveText(['Spring 10K']);
+  });
+
+  test('the open plan reloads when a newer copy replaces it, so autosave cannot overwrite it', async ({ app, page }) => {
+    await seed(page, { name: 'Old spring plan', updatedAt: T - 60000 });
+    await app.open();
+    await page.locator('#btnPlans').click();
+    await app.modal().getByRole('button', { name: 'Open' }).click();
+    await expect(page.locator('#planName')).toHaveValue('Old spring plan');
+    await importFixture(app, page);
+    await expect(app.toast()).toHaveText('Imported 1 plan(s).');
+    await expect(page.locator('#planName')).toHaveValue('Spring 10K');
+  });
+});
