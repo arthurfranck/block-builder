@@ -15,7 +15,11 @@ What the page does, rule by rule. The [README](../README.md) has the one-line ve
 - **Goals:** train for a race (5K, 10K, half marathon, marathon, or a custom distance) or build a personal plan over a set number of weeks.
 - **New plan:** starts empty. Pick runs per week, enter your weekly volume and longest run, and the plan builds. Only Easy run is switched on until you add more types.
 - **Runs per week:** 1 to 7.
-- **Phases:** base, build, peak and taper, with cutback weeks. Taper long runs step down from the longest run the plan actually reached (75%, then 60%).
+- **Experience level:** New to running, Regular (the default, and what plans saved before 1.2.0 use) or Experienced, under "Your running now".
+  - New to running: no hard runs in the base phase (strides only, if switched on), then at most 1 hard run a week; a cutback week every 3rd week; shorter minimum runs (easy 3 km, recovery 2.5 km, hard 4 km instead of 4, 3 and 5).
+  - Regular: up to 2 hard runs a week from 5 runs a week; a cutback week every 4th week.
+  - Experienced: up to 2 hard runs a week from 4 runs a week, but only when the running days leave a day's gap around both hard runs and the long run (otherwise 1); a cutback week every 4th week.
+- **Phases:** base, build, peak and taper, with cutback weeks (every 4th week, every 3rd for new runners; none before the last base-to-taper week or in plans of fewer than 5 weeks before the taper). Taper long runs step down from the longest run the plan actually reached (75%, then 60%).
 - **Weekly increase:** each full week stays within +10% of the last full week before it. After rounding, easy runs are shortened first, then the hard runs, then the long run.
 - **Long run limits:** the long run is kept to about 40% of the week (45% at 3 runs a week, 50% at 2), to 2:30 for a half marathon and 3:00 for a marathon at your easy pace, and grows by at most 2 km or 15 minutes (whichever is more) on the last full week's long run, starting from your current longest run. The km it gives up go to the easy runs.
 - **Paces:** worked out from a recent race result (easy, tempo, intervals, race pace). The finish time is read to fit the race: "1:45" for a half means 1 h 45 min, a lone "52" for a 10K means 52 minutes, and the field shows the reading (1:45:00). A time that fits no reading for that race is flagged instead of being ignored.
@@ -25,7 +29,7 @@ What the page does, rule by rule. The [README](../README.md) has the one-line ve
 
 - **Goal readiness:** for a half or a full marathon, the plan warns when it peaks too low for the race (longest run under about 60% of a half or 75% of a marathon, or biggest week under about 30 or 45 km) and suggests more weeks or the Personal plan goal.
 - **Weeks that still jump:** if every run is already at its minimum distance (low volume with many runs), the plan says which weeks still go over +10% and suggests fewer runs. A hand edit that makes a week jump is flagged too.
-- **Hard runs per week:** a week with more hard runs than its runs per week allow (1 at 4 runs or fewer, 2 above), whether built that way or edited, gets a warning line right under it and a line in the warnings above the plan.
+- **Hard runs per week:** a week with more hard runs than its runs per week allow (new runners: 1; regular: 1 at 4 runs or fewer, 2 above; experienced: 1 at 3 runs or fewer, 2 above), whether built that way or edited, gets a warning line right under it and a line in the warnings above the plan.
 - **Spacing:** the same goes for a hard run on the day next to another hard run, the long run or race day (Sunday into Monday counts), and for a week with runs on all 7 days.
 - **Running days:** picking 3 or more days in a row at 4 runs a week or fewer, days that leave every run next to the long run, or 7 runs a week gives one warning about the days chosen, not one per week.
 

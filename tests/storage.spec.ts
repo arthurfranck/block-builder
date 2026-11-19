@@ -191,3 +191,19 @@ test('leaving the page with an unsaved plan asks first', async ({ app, page }) =
   await page.close({ runBeforeUnload: true });
   expect(await dialog).toBe('beforeunload');
 });
+
+test('the experience level is saved with the plan, and older plans open as Regular (BB-49)', async ({ app, page }) => {
+  await app.pick('#levelSeg [data-level="new"]');
+  await page.locator('#btnSave').click();
+  await expect(app.toast()).toHaveText('Plan saved.');
+  expect((Object.values(await stored(page)) as any[])[0].inputs.level).toBe('new');
+
+  const old = fixturePlan();
+  delete old.inputs.level;
+  await page.evaluate((p) => localStorage.setItem('bb-plans', JSON.stringify({ [p.id]: p })), old);
+  await app.open();
+  await page.locator('#btnPlans').click();
+  await app.modal().getByRole('button', { name: 'Open' }).click();
+  await app.showSetup();
+  await expect(page.locator('#levelSeg [data-level="regular"]')).toHaveAttribute('aria-pressed', 'true');
+});

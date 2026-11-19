@@ -56,6 +56,10 @@ const kmIn=(sec,secKm)=>sec/secKm;
 const LONG_SHARE=runs=>runs<=1?1:runs===2?0.5:runs===3?0.45:0.4;
 const LONG_MAX_MIN={"hm":150,"m":180};
 const LONG_STEP_KM=2, LONG_STEP_MIN=15;
+/* experience level (BB-49): missing or unknown = regular, so plans saved before 1.2.0 build as they did */
+const LEVELS=["new","regular","experienced"];
+function levelOf(inp){return LEVELS.includes(inp&&inp.level)?inp.level:"regular";}
+const CUT_EVERY=lv=>lv==="new"?3:4; /* cutback week rhythm */
 function distKm(inp){const d=DISTS.find(x=>x.k===inp.dist);return d&&d.km?d.km:clamp(+inp.customKm||10,3,100);}
 function missingSetup(I){const m=[];if(!(+I.runs>=1))m.push("needRuns");if(!(+I.curVol>0))m.push("needVol");if(!(+I.curLong>0))m.push("needLong");return m;}
 function genInputs(I){return {...I,runs:+I.runs>=1?+I.runs:5,days:+I.runs>=1?I.days:[],curVol:+I.curVol>0?I.curVol:30,curLong:+I.curLong>0?I.curLong:12};}
@@ -148,7 +152,8 @@ function generate(inp,types){
   const nb=W-taperN;
   const nBase=Math.max(1,Math.round(nb*0.4)), nPeak=Math.max(1,Math.round(nb*0.25)), nBuild=Math.max(0,nb-nBase-nPeak);
   const phaseOf=i=>i>=nb?"taper":i<nBase?"base":i<nBase+nBuild?"build":"peak";
-  const cut=i=>i<nb-1&&nb>=5&&(i+1)%4===0;
+  const lv=levelOf(inp), every=CUT_EVERY(lv);
+  const cut=i=>i<nb-1&&nb>=5&&(i+1)%every===0;
   const V0=clamp(+inp.curVol||25,5,200);
   const fac={"5k":1.25,"10k":1.3,"hm":1.4,"m":1.55}[c], floor={"5k":20,"10k":25,"hm":32,"m":45}[c], perRun=c==="m"?16:13;
   let peakV=Math.max(V0,Math.min(Math.max(V0*fac,floor),runs*perRun));
@@ -182,10 +187,13 @@ function generate(inp,types){
     if(raceWeek){if(!days.includes(raceDow)){const idx=days.indexOf(longD);days[idx]=raceDow;days.sort((a,b)=>a-b);}longD=raceDow;}
     let hk=Math.min(maxHardRuns(inp),phase==="base"||phase==="taper"?1:2);
     if(isCut)hk=Math.max(1,hk-1);
+    if(lv==="new"&&phase==="base")hk=0; /* BB-49: new runners build the habit first; strides only */
     if(!hardTypes.length)hk=0;
     if(raceWeek&&runs<=3)hk=0;
     const others=days.filter(d=>d!==longD);
-    const hardDays=pickHardDays(others,Math.min(hk,others.length),longD,raceWeek);
+    let hardDays=pickHardDays(others,Math.min(hk,others.length),longD,raceWeek);
+    /* BB-49: experienced runners get a second hard run at 4 runs only when the days leave a gap around it */
+    if(lv==="experienced"&&hardDays.length>1&&hardDays.some((d,j)=>cyc(d,longD)<=1||hardDays.some((e,m)=>m>j&&cyc(d,e)<=1)))hardDays=pickHardDays(others,1,longD,raceWeek);
     const target=vols[i];
     const ctxBase={p:phase==="taper"?0.5:p,D,c,taper:phase==="taper",P,phase,cut:isCut};
     const sessions=[];
@@ -226,7 +234,7 @@ function generate(inp,types){
       if(w.km==null){km=clamp(Math.round(target*0.17*scale),6,16);if(raceWeek)km=Math.min(km,8);}
       else km=w.wucd+w.km;
       if(raceWeek)km=Math.min(km,c==="m"?14:9);
-      km=r05(Math.max(km,5));
+      km=r05(Math.max(km,lv==="new"?4:5));
       return {id:uid(),day:d,typeId:t.id,name:t.name,kind:"hard",km,desc:fill(t.tpl,{...P.txt,km,work:fill(w.text,P.txt)}),note:"",watch:watchPlan("hard",km,w)};
     });
     let hs=build(1),hScale=1;
@@ -242,7 +250,7 @@ function generate(inp,types){
     const wt=x=>x.t.kind==="recovery"?0.7:1;
     const sumW=roles.reduce((a,x)=>a+wt(x),0)||1;
     const rem=Math.max(0,target-(longKm||0)-hardKm);
-    const minKm=x=>x.t.kind==="recovery"?3:4;
+    const minKm=x=>lv==="new"?(x.t.kind==="recovery"?2.5:3):(x.t.kind==="recovery"?3:4); /* BB-49: shorter minimum runs for new runners */
     const easyKm=roles.map(x=>{
       let km;
       if(raceWeek){km=(x.d===(longD+6)%7)?(c==="m"?5:4):clamp(Math.round(peakV*0.09),4,8);}
@@ -327,10 +335,12 @@ function warnings(inp,types,plan,edited){
   return w;
 }
 
-/* ---------- week checks (BB-57 hard runs, BB-44 spacing; hard-pace share BB-48 to come) ----------
+/* ---------- week checks (BB-57 hard runs by level BB-49, BB-44 spacing; hard-pace share BB-48 to come) ----------
    Problems the plan or a hand edit can fix, checked on the weeks as shown and reported on the week itself.
    Setup problems stay in warnings() above. */
-function maxHardRuns(inp){return +inp.runs<=4?1:2;} /* most hard runs in a week: generator, setup warning and week check share it; BB-49 will make it depend on experience level */
+/* most hard runs in a week: generator, setup warning and week check share it. BB-49: by experience level,
+   new = 1 at any number of runs, regular = 2 from 5 runs, experienced = 2 from 4 runs */
+function maxHardRuns(inp){const r=+inp.runs,lv=levelOf(inp);return lv==="new"?1:r<=(lv==="experienced"?3:4)?1:2;}
 /* the running days leave no day at least 2 days from the long run (Sun next to Mon), so a hard run can't avoid it: a setup warning, not a week one */
 function longBoxedIn(inp){
   const r=+inp.runs;if(r<2||r>4)return false;
@@ -341,7 +351,7 @@ function longBoxedIn(inp){
 function weekChecks(w,inp,prev){
   const out=[],ss=w.sessions.filter(s=>s.kind!=="race");
   const nHard=ss.filter(s=>s.kind==="hard").length,m=maxHardRuns(inp);
-  if(nHard>m)out.push({k:"tooHard",txt:t("wk_tooHard",{n:nHard,r:inp.runs,m})});
+  if(nHard>m)out.push({k:"tooHard",txt:t(levelOf(inp)==="new"?"wk_tooHardNew":"wk_tooHard",{n:nHard,r:inp.runs,m})});
   /* spacing (BB-44): a hard run on the same or the next day as another hard run, the long run or race day,
      including the previous week's Sunday. Days in a row without hard runs are a setup matter (warnings()). */
   const key=s=>s.kind==="hard"?"hard":s.kind==="long"||s.kind==="race"?"long":null;
@@ -357,7 +367,7 @@ function weekCheckSummary(plan,inp){
   plan.weeks.forEach((w,i)=>weekChecks(w,inp,plan.weeks[i-1]).forEach(c=>(by[c.k]=by[c.k]||[]).push(w.n)));
   const wl=a=>t(a.length>1?"wkLn":"wkL1",{n:a.join(", ")});
   const out=[];
-  if(by.tooHard)out.push(t("wa_wkTooHard",{w:wl(by.tooHard),r:inp.runs}));
+  if(by.tooHard)out.push(t(levelOf(inp)==="new"?"wa_wkTooHardNew":"wa_wkTooHard",{w:wl(by.tooHard),r:inp.runs}));
   if(by.b2b)out.push(t("wa_wkB2B",{w:wl(by.b2b)}));
   if(by.noRest)out.push(t("wa_wkNoRest",{w:wl(by.noRest)}));
   return out;
@@ -365,7 +375,7 @@ function weekCheckSummary(plan,inp){
 
 const BBEngine = {
   setLocale(o) { Object.assign(LOCALE, o); },
-  DISTS, PHASES, DEFAULT_DAYS, TYPE_DEFS, uid, clamp, r05, iso, parseISO, addDays, dow, raceTimeSec, REC_LBL, REC_EX, badRaceTime, badTimeMsg, vdotOf, velAt, raceTimeMin, fmtPace, fmtDur, durSec, kmIn, LONG_SHARE, LONG_MAX_MIN, distKm, missingSetup, genInputs, distLabel, cat, paces, effectiveDays, cyc, pickHardDays, workFor, fill, watchPlan, generate, raceDesc, warnings, maxHardRuns, longBoxedIn, weekChecks, weekCheckSummary
+  DISTS, PHASES, DEFAULT_DAYS, TYPE_DEFS, uid, clamp, r05, iso, parseISO, addDays, dow, raceTimeSec, REC_LBL, REC_EX, badRaceTime, badTimeMsg, vdotOf, velAt, raceTimeMin, fmtPace, fmtDur, durSec, kmIn, LONG_SHARE, LONG_MAX_MIN, LEVELS, levelOf, CUT_EVERY, distKm, missingSetup, genInputs, distLabel, cat, paces, effectiveDays, cyc, pickHardDays, workFor, fill, watchPlan, generate, raceDesc, warnings, maxHardRuns, longBoxedIn, weekChecks, weekCheckSummary
 };
 root.BBEngine = BBEngine;
 if (typeof module === "object" && module.exports) module.exports = BBEngine;

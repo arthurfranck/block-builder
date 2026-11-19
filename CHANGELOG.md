@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.2.0] - 2026-11-19
+
+### Added
+- Experience level under "Your running now": New to running, Regular or Experienced (BB-49). New runners get no hard runs in the base phase, then one a week at most, a lighter week every 3rd week and shorter easy runs, so week 1 no longer starts above your weekly volume. Experienced runners can have 2 hard runs a week from 4 runs a week when the days leave a gap. Regular builds the plan as before, and plans you saved earlier open as Regular.
+
 ## [1.1.33] - 2026-11-18
 
 ### Changed
