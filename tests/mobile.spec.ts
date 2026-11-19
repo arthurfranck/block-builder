@@ -12,27 +12,65 @@ test.describe('phone layout', () => {
     expect(name.width).toBeGreaterThan(200);
   });
 
-  test('Plan and Settings tabs show one panel at a time', async ({ app, page }) => {
-    await expect(page.locator('#mtabs')).toBeVisible();
+  test('with a plan, the page shows the plan with an Edit plan button instead of tabs (BB-29)', async ({ app, page }) => {
+    await expect(page.locator('#mtabs')).toBeHidden();
+    await expect(page.locator('#btnEditPlan')).toBeVisible();
     await expect(page.locator('#plan')).toBeVisible();
+    await expect(page.locator('#plan .today')).toBeVisible();
     await expect(page.locator('#setup')).toBeHidden();
-    await page.locator('#mtabs [data-tab="setup"]').click();
-    await expect(page.locator('#setup')).toBeVisible();
+  });
+
+  test('Edit plan opens the settings as a sheet over the plan, which follows edits live (BB-29)', async ({ app, page }) => {
+    const before = (await app.plan()).length;
+    await page.locator('#btnEditPlan').tap();
+    const sheet = page.locator('#setup[role="dialog"]');
+    await expect(sheet).toBeVisible();
+    await expect(sheet).toHaveAttribute('aria-modal', 'true');
+    await expect(sheet.locator('#sheetTitle')).toHaveText('Edit plan');
+    await expect(sheet.locator('.sec h3')).toHaveText(['Goal', 'Race', 'Your running now', 'Week shape', 'Run types']);
+    await sheet.evaluate((e) => Promise.all(e.getAnimations().map((a) => a.finished)));
+    const b = (await sheet.boundingBox())!, v = page.viewportSize()!;
+    expect(Math.abs(b.y + b.height - v.height)).toBeLessThanOrEqual(1);
+    expect(Math.round(b.width)).toBe(v.width);
+    expect(await page.locator('header.top').evaluate((e) => (e as HTMLElement).inert)).toBe(true);
+    await app.setField('weeks', before + 2);
+    expect(await app.plan()).toHaveLength(before + 2);
+    await page.locator('#btnSheetDone').tap();
+    await expect(sheet).toHaveCount(0);
+    await expect(page.locator('#setup')).toBeHidden();
+    await expect(page.locator('#btnEditPlan')).toBeFocused();
+    expect(await page.locator('header.top').evaluate((e) => (e as HTMLElement).inert)).toBe(false);
+  });
+
+  test('Escape, a tap outside, and "Edit settings" in the banner open and close the sheet (BB-29)', async ({ app, page }) => {
+    await page.locator('#plan .banner.info [data-tabgo="setup"]').tap();
+    await expect(page.locator('#setup[role="dialog"]')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('#setup')).toBeHidden();
+    await page.locator('#btnEditPlan').tap();
+    await page.locator('#sheetBg').tap({ position: { x: 10, y: 10 } });
+    await expect(page.locator('#setup')).toBeHidden();
+  });
+
+  test('a new plan keeps the Plan and Settings tabs until the setup is complete', async ({ app, page }) => {
+    await page.locator('#btnNew').tap();
+    await page.locator('#introNav [data-intro="skip"]').tap();
+    await expect(page.locator('#mtabs')).toBeVisible();
+    await expect(page.locator('#btnEditPlan')).toBeHidden();
+    await page.locator('#mtabs [data-tab="plan"]').tap();
+    await expect(page.locator('#setup')).toBeHidden();
+    await expect(page.locator('#mtabs [data-tab="plan"]')).toHaveAttribute('aria-selected', 'true');
+    await page.locator('#mtabs [data-tab="setup"]').tap();
     await expect(page.locator('#plan')).toBeHidden();
-    await expect(page.locator('#mtabs [data-tab="setup"]')).toHaveAttribute('aria-selected', 'true');
+    await app.configure({ dist: '10k', raceDate: '2027-02-28', weeks: 10, runs: 3, curVol: 20, curLong: 8 });
+    await expect(page.locator('#mtabs')).toBeHidden();
+    await expect(page.locator('#btnEditPlan')).toBeVisible();
   });
 
-  test('"See the plan" and "Edit settings" switch tabs', async ({ app, page }) => {
-    await page.locator('#plan .banner.info [data-tabgo="setup"]').click();
-    await expect(page.locator('#setup')).toBeVisible();
-    await page.locator('#setup .see-plan').click();
-    await expect(page.locator('#plan')).toBeVisible();
-  });
-
-  test('the tabs stay on screen when scrolling', async ({ app, page }) => {
+  test('the Edit plan button stays on screen when scrolling', async ({ app, page }) => {
     await page.evaluate(() => window.scrollTo(0, 1500));
-    const box = await page.locator('#mtabs').boundingBox();
-    expect(box!.y).toBeLessThanOrEqual(1);
+    const box = await page.locator('#btnEditPlan').boundingBox();
+    expect(box!.y).toBeLessThanOrEqual(12);
   });
 
   const smallFields = (page: import('@playwright/test').Page, scope: string) =>
@@ -59,12 +97,12 @@ test.describe('phone layout', () => {
   });
 
   test('main controls are big enough to tap', async ({ app, page }) => {
-    for (const sel of ['#mtabs [data-tab="plan"]', '#mtabs [data-tab="setup"]', '#btnSave', '#btnPlans', '#btnNew']) {
+    for (const sel of ['#btnEditPlan', '#btnSave', '#btnPlans', '#btnNew']) {
       const b = await page.locator(sel).boundingBox();
       expect.soft(b!.height, sel).toBeGreaterThanOrEqual(32);
     }
     await app.showSetup();
-    expect((await page.locator('#setup .see-plan').boundingBox())!.height).toBeGreaterThanOrEqual(44);
+    expect((await page.locator('#btnSheetDone').boundingBox())!.height).toBeGreaterThanOrEqual(44);
   });
 
   test('weeks are cards with a row per day, with no sideways scroll (BB-23)', async ({ app, page }) => {

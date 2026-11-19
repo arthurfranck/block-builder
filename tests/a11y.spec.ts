@@ -62,6 +62,7 @@ test('display and language panel', async ({ app, page }) => {
 
 test('light theme', async ({ app, page }) => {
   await app.setTheme('light');
+  await app.closePrefs();
   await app.showPlan();
   await clean(page, 'light theme, plan view');
   await app.showSetup();

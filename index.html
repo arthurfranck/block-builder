@@ -76,7 +76,7 @@ header.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px;padding-
 .countdown .rm{font-size:13px;color:var(--muted)}
 @media (max-width:640px){.hello{flex-wrap:wrap}.countdown{flex-basis:100%}}
 /* phone: Plan / Settings tabs, compact header, 16px fields to stop iOS focus zoom */
-.mtabs,.m-only{display:none}
+.mtabs,.m-only,.mbar,.sheet-head{display:none}
 @media (max-width:900px){
   .mtabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;position:sticky;top:0;z-index:20;background:var(--bg);padding:8px 0;margin:-4px 0 12px;border-bottom:1px solid var(--line)}
   .mtabs button{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:9px;font-weight:600;cursor:pointer;min-height:40px}
@@ -119,6 +119,26 @@ a.btn{text-decoration:none;display:inline-block;color:var(--ink)}
 @media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
 aside.setup{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding-right:4px}
 @media (max-width:900px){aside.setup{position:static;max-height:none;overflow:visible}}
+/* BB-29: on phones, once the plan is complete, the tabs give way to the plan (Today first) and an Edit plan button;
+   the settings open as a bottom sheet over it. A new plan's steps and an incomplete setup keep the full-page settings. */
+@media (max-width:900px){
+  body.planmode .mtabs{display:none}
+  body.planmode .mbar{display:block;position:sticky;top:0;z-index:20;background:var(--bg);padding:8px 0;margin:-4px 0 12px;border-bottom:1px solid var(--line)}
+  body.planmode .mbar .btn{width:100%;min-height:44px}
+  body.planmode main.plan{display:block}
+  body.planmode aside.setup{display:none}
+  body.planmode .see-plan{display:none}
+  body.planmode.sheet{overflow:hidden}
+  body.planmode.sheet .sheet-bg{display:block;position:fixed;inset:0;background:rgb(0 0 0 / .42);z-index:55}
+  body.planmode.sheet aside.setup{display:block;position:fixed;top:auto;left:0;right:0;bottom:0;z-index:60;max-height:calc(100vh - 24px);overflow:auto;overscroll-behavior:contain;
+    background:var(--bg);border-radius:16px 16px 0 0;border-top:1px solid var(--line);padding:0 16px max(18px,env(safe-area-inset-bottom,0px))}
+  @supports (height:100dvh){body.planmode.sheet aside.setup{max-height:calc(100dvh - 24px)}}
+  body.planmode.sheet aside.setup:focus{outline:none}
+  body.planmode.sheet .sheet-head{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:2;background:var(--bg);padding:18px 0 10px;margin-bottom:4px;border-bottom:1px solid var(--line)}
+  body.planmode.sheet .sheet-head h2{flex:1;margin:0;font-family:var(--f-body);font-size:19px;font-weight:600}
+  body.planmode.sheet .sheet-head .btn{min-height:44px}
+}
+@media (max-width:900px) and (prefers-reduced-motion:no-preference){body.planmode.sheet aside.setup{animation:sheetUp .26s cubic-bezier(.2,.8,.2,1)}body.planmode.sheet .sheet-bg{animation:sheetBg .2s ease-out}}
 .sec{padding-block:16px;display:grid;gap:10px}
 .sec:first-child{border-top:0;padding-top:0}
 .sec h3{margin:0;font-family:var(--f-body);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
@@ -270,7 +290,7 @@ tr.wwarn td p{margin:0;padding:8px 12px;background:var(--warn-bg);color:var(--wa
 tr.wwarn td p b{font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.07em;margin-right:6px}
 tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);font-weight:500}
 
-.modal-bg{position:fixed;inset:0;background:rgb(0 0 0 / .42);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.modal-bg{position:fixed;inset:0;background:rgb(0 0 0 / .42);display:flex;align-items:center;justify-content:center;padding:16px;z-index:70}
 .modal{background:var(--surface);color:var(--ink);border-radius:12px;width:min(560px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:18px;display:grid;gap:12px;border:1px solid var(--line)}
 .modal:focus{outline:none}
 /* dialogs fit the visible screen: iPhone Chrome and Safari toolbars cover part of 100vh (dynamic viewport units where supported) */
@@ -472,8 +492,11 @@ aside.setup[data-step="1"] #goalSeg,aside.setup[data-step="1"] .goalquick{displa
   </header>
 
   <div class="mtabs" role="tablist" id="mtabs"><button type="button" role="tab" data-tab="plan" aria-selected="true" data-i18n="tabPlan">Plan</button><button type="button" role="tab" data-tab="setup" aria-selected="false" data-i18n="tabSetup">Settings</button></div>
+  <div class="mbar" id="mbar"><button type="button" class="btn" id="btnEditPlan" aria-haspopup="dialog" data-i18n="editPlan">Edit plan</button></div>
+  <div class="sheet-bg" id="sheetBg" hidden></div>
   <div class="layout">
     <aside class="setup" id="setup">
+      <div class="sheet-head"><h2 id="sheetTitle" data-i18n="editPlan">Edit plan</h2><button type="button" class="btn primary" id="btnSheetDone" data-i18n="done">Done</button></div>
       <section class="sec" data-step="1">
         <h3 data-i18n="secGoal">Goal</h3>
         <div class="icards" id="introCards"></div>
@@ -552,13 +575,13 @@ aside.setup[data-step="1"] #goalSeg,aside.setup[data-step="1"] .goalquick{displa
 <script>
 (() => {
 "use strict";
-const VERSION = "1.6.1";
+const VERSION = "1.7.0";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
 const I18N={
 en:{
-planNameLabel:"Plan name",secGoal:"Goal",secRace:"Race",secFocus:"Focus and dates",secYourWeek:"Your week",icRace:"A plan that builds to race day and tapers into it.",icFit:"Get fitter week by week, no race date.",icQuick:"One workout for your watch, no plan needed.",introStep:"Step {n} of 4 · {name}",introNext:"Next",introBack:"Back",introDone:"Build my plan",introSkip:"Show all settings",introNeed:"Before going on:",introWait:"Your plan's shape shows here once the steps are filled in.",needDist:"Choose a distance.",needDate:"Pick the race date.",needWeeks:"Enter the weeks of training (3 to 30).",goalRace:"Train for a race",goalFit:"Personal plan",focusDist:"Focus distance",startDate:"Start date",focusHint:"Sets the paces and how long the long runs get. No race, no taper: the plan just builds week by week.",fitHint:"Starts Monday {s}, ends Sunday {e}.",fitBlock:"{n}-week personal plan",hFitStarts:"Your {n}-week plan starts Monday {d}.",hFitIn:"Week {n} of {t}, {phase} phase{cut}.",hFitDone:"Your {n}-week plan finished on {d}. Set a new start date to plan the next block.",wa_pastFit:"Week 1 started on {d}. Move the start date if you want the plan to begin now.",planMetaFit:"{lbl} focus · {w} weeks · starts {d}",myPlans:"My plans",newPlan:"New plan",savePlan:"Save plan",language:"Language",theme:"Theme",thDark:"Dark",thLight:"Light",thAuto:"Auto",thHint:"Auto follows your device.",prefs:"Display and language",
+planNameLabel:"Plan name",editPlan:"Edit plan",done:"Done",secGoal:"Goal",secRace:"Race",secFocus:"Focus and dates",secYourWeek:"Your week",icRace:"A plan that builds to race day and tapers into it.",icFit:"Get fitter week by week, no race date.",icQuick:"One workout for your watch, no plan needed.",introStep:"Step {n} of 4 · {name}",introNext:"Next",introBack:"Back",introDone:"Build my plan",introSkip:"Show all settings",introNeed:"Before going on:",introWait:"Your plan's shape shows here once the steps are filled in.",needDist:"Choose a distance.",needDate:"Pick the race date.",needWeeks:"Enter the weeks of training (3 to 30).",goalRace:"Train for a race",goalFit:"Personal plan",focusDist:"Focus distance",startDate:"Start date",focusHint:"Sets the paces and how long the long runs get. No race, no taper: the plan just builds week by week.",fitHint:"Starts Monday {s}, ends Sunday {e}.",fitBlock:"{n}-week personal plan",hFitStarts:"Your {n}-week plan starts Monday {d}.",hFitIn:"Week {n} of {t}, {phase} phase{cut}.",hFitDone:"Your {n}-week plan finished on {d}. Set a new start date to plan the next block.",wa_pastFit:"Week 1 started on {d}. Move the start date if you want the plan to begin now.",planMetaFit:"{lbl} focus · {w} weeks · starts {d}",myPlans:"My plans",newPlan:"New plan",savePlan:"Save plan",language:"Language",theme:"Theme",thDark:"Dark",thLight:"Light",thAuto:"Auto",thHint:"Auto follows your device.",prefs:"Display and language",
 secRace:"Race",distance:"Distance",customKm:"Custom distance (km)",raceDate:"Race date",weeks:"Weeks of training",
 secNow:"Your running now",curVol:"Weekly volume (km)",curLong:"Longest recent run (km)",recDist:"Recent race",none:"None",
 halfMarathon:"Half marathon",marathon:"Marathon",recTime:"Finish time",recTimePh:"h:mm:ss or mm:ss",
@@ -669,7 +692,7 @@ wxSun:"sunset {t}",wxBest:"Driest slot left today: <b>{h}</b>, {p}% rain, {tp}°
 wmo0:"Clear",wmo1:"Mostly clear",wmo2:"Partly cloudy",wmo3:"Overcast",wmo45:"Fog",wmo51:"Drizzle",wmo56:"Freezing drizzle",wmo61:"Rain",wmo65:"Heavy rain",wmo66:"Freezing rain",wmo71:"Snow",wmo80:"Showers",wmo85:"Snow showers",wmo95:"Thunderstorm"
 },
 fr:{
-planNameLabel:"Nom du plan",secGoal:"Objectif",secRace:"Course",secFocus:"Distance et dates",secYourWeek:"Votre semaine",icRace:"Un plan qui monte jusqu'à la course puis s'allège avant.",icFit:"Progresser semaine après semaine, sans date de course.",icQuick:"Une séance pour votre montre, sans plan.",introStep:"Étape {n} sur 4 · {name}",introNext:"Suivant",introBack:"Retour",introDone:"Créer mon plan",introSkip:"Voir tous les réglages",introNeed:"Avant de continuer :",introWait:"La forme de votre plan s'affiche ici une fois les étapes remplies.",needDist:"Choisissez une distance.",needDate:"Choisissez la date de la course.",needWeeks:"Indiquez les semaines d'entraînement (3 à 30).",goalRace:"Préparer une course",goalFit:"Plan perso",focusDist:"Distance de référence",startDate:"Date de début",focusHint:"Elle fixe les allures et la longueur des sorties longues. Pas de course, pas d'affûtage : le plan progresse simplement semaine après semaine.",fitHint:"Du lundi {s} au dimanche {e}.",fitBlock:"Plan perso {n} semaines",hFitStarts:"Votre plan de {n} semaines commence le lundi {d}.",hFitIn:"Semaine {n} sur {t}, phase {phase}{cut}.",hFitDone:"Votre plan de {n} semaines s'est terminé le {d}. Indiquez une nouvelle date de début pour préparer la suite.",wa_pastFit:"La semaine 1 a commencé le {d}. Déplacez la date de début pour que le plan démarre maintenant.",planMetaFit:"Base {lbl} · {w} semaines · début le {d}",myPlans:"Mes plans",newPlan:"Nouveau plan",savePlan:"Enregistrer",language:"Langue",theme:"Thème",thDark:"Sombre",thLight:"Clair",thAuto:"Auto",thHint:"Auto suit le réglage de l'appareil.",prefs:"Affichage et langue",
+planNameLabel:"Nom du plan",editPlan:"Modifier le plan",done:"OK",secGoal:"Objectif",secRace:"Course",secFocus:"Distance et dates",secYourWeek:"Votre semaine",icRace:"Un plan qui monte jusqu'à la course puis s'allège avant.",icFit:"Progresser semaine après semaine, sans date de course.",icQuick:"Une séance pour votre montre, sans plan.",introStep:"Étape {n} sur 4 · {name}",introNext:"Suivant",introBack:"Retour",introDone:"Créer mon plan",introSkip:"Voir tous les réglages",introNeed:"Avant de continuer :",introWait:"La forme de votre plan s'affiche ici une fois les étapes remplies.",needDist:"Choisissez une distance.",needDate:"Choisissez la date de la course.",needWeeks:"Indiquez les semaines d'entraînement (3 à 30).",goalRace:"Préparer une course",goalFit:"Plan perso",focusDist:"Distance de référence",startDate:"Date de début",focusHint:"Elle fixe les allures et la longueur des sorties longues. Pas de course, pas d'affûtage : le plan progresse simplement semaine après semaine.",fitHint:"Du lundi {s} au dimanche {e}.",fitBlock:"Plan perso {n} semaines",hFitStarts:"Votre plan de {n} semaines commence le lundi {d}.",hFitIn:"Semaine {n} sur {t}, phase {phase}{cut}.",hFitDone:"Votre plan de {n} semaines s'est terminé le {d}. Indiquez une nouvelle date de début pour préparer la suite.",wa_pastFit:"La semaine 1 a commencé le {d}. Déplacez la date de début pour que le plan démarre maintenant.",planMetaFit:"Base {lbl} · {w} semaines · début le {d}",myPlans:"Mes plans",newPlan:"Nouveau plan",savePlan:"Enregistrer",language:"Langue",theme:"Thème",thDark:"Sombre",thLight:"Clair",thAuto:"Auto",thHint:"Auto suit le réglage de l'appareil.",prefs:"Affichage et langue",
 secRace:"Course",distance:"Distance",customKm:"Distance personnalisée (km)",raceDate:"Date de la course",weeks:"Semaines d'entraînement",
 secNow:"Votre niveau actuel",curVol:"Volume hebdo (km)",curLong:"Plus longue sortie récente (km)",recDist:"Course récente",none:"Aucune",
 halfMarathon:"Semi-marathon",marathon:"Marathon",recTime:"Temps final",recTimePh:"h:mm:ss ou mm:ss",
@@ -972,7 +995,7 @@ let chartW=0;
 function drawProfile(){const el=$("#profileChart");if(!el||!S.plan)return;chartW=el.clientWidth;el.innerHTML=profileSVG(S.plan.weeks,chartW);}
 try{new ResizeObserver(()=>{const el=$("#profileChart");if(el&&Math.abs(el.clientWidth-chartW)>4)drawProfile();}).observe($("#plan"));}catch(_){}
 function renderPlan(){
-  const P=S.plan, I=S.inputs; if(!P)return;
+  const P=S.plan, I=S.inputs; if(!P)return;syncMode();
   const miss=missingSetup(I);
   if(miss.length){const h0=$("#hello");if(h0)h0.innerHTML="";$("#plan").innerHTML=`<div class="banner info"><span>${esc(t("needTitle"))}</span><ul>${miss.map(k=>`<li>${esc(t(k))}</li>`).join("")}</ul><button class="btn sm m-only" type="button" data-tabgo="setup">${t("editSettings")}</button></div><p class="qempty">${t("qwEmpty")} <button type="button" class="linkbtn" data-act="quick">${t("qwEmptyGo")}</button></p>`;return;}
   renderHello();
@@ -1514,7 +1537,7 @@ let modalOpener=null,lastTrigger=null;
 /* Safari doesn't focus a button on click, so remember the last control pressed */
 document.addEventListener("pointerdown",e=>{const c=e.target.closest&&e.target.closest("button,a[href],[tabindex]");if(c&&!c.closest("#modalRoot"))lastTrigger=c;},true);
 function openerKey(el){if(el.id)return "#"+CSS.escape(el.id);const at=["data-act","data-w","data-s","data-d"].filter(a=>el.hasAttribute(a));return at.length?at.map(a=>`[${a}="${CSS.escape(el.getAttribute(a))}"]`).join(""):null;}
-function modal(html,onMount){const root=$("#modalRoot");if(!root.firstChild){const a=document.activeElement;const o=a&&a!==document.body&&!a.closest("#modalRoot")?a:lastTrigger;modalOpener=o?{el:o,key:openerKey(o)}:null;}
+function modal(html,onMount){const root=$("#modalRoot");if(!root.firstChild){const a=document.activeElement;const o=a&&a!==document.body&&!a.closest("#modalRoot")&&a.id!=="setup"?a:lastTrigger; /* the Edit plan sheet itself is no opener: Safari leaves focus on it when a button inside is tapped (BB-29) */modalOpener=o?{el:o,key:openerKey(o)}:null;}
   root.innerHTML=`<div class="modal-bg"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;const bg=root.firstChild;bg.addEventListener("click",e=>{if(e.target===bg)closeModal();});const m=bg.firstChild;
   const h=m.querySelector("h2");if(h){h.id="modalTitle";m.setAttribute("aria-labelledby","modalTitle");}
   onMount&&onMount(m);m.tabIndex=-1;m.focus({preventScroll:true});return m;}
@@ -1937,6 +1960,7 @@ function openPlans(){
 const phoneLayout=()=>{try{return matchMedia("(max-width:900px)").matches;}catch(_){return false;}};
 const STEP_NAMES=()=>["secGoal",S.inputs.goal==="fitness"?"secFocus":"secRace","secNow","secYourWeek"];
 function renderIntro(){
+  syncMode();
   const A=$("#setup"),nav=$("#introNav"),n=S.intake||0;if(!A||!nav)return;
   if(n)A.dataset.step=n;else delete A.dataset.step;
   nav.hidden=!n;if(!n){nav.innerHTML="";return;}
@@ -1972,7 +1996,29 @@ function newPlan(){
 /* ---------- header ---------- */
 $("#planName").addEventListener("change",e=>{S.nameAuto=!e.target.value.trim();S.name=e.target.value.trim()||t("trainingBlock");e.target.value=S.name;markDirty();});
 $("#btnSave").onclick=()=>savePlan(false);
-function setTab(tab){document.body.dataset.tab=tab;document.querySelectorAll("#mtabs [data-tab]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===tab)));const L=$(".layout"),m=$("#mtabs");if(L&&m){const top=L.getBoundingClientRect().top;const h=m.offsetHeight+12;if(top<h)window.scrollTo({top:Math.max(0,top+scrollY-h)});}}
+/* ---------- phones: plan mode and the Edit plan sheet (BB-29) ---------- */
+let sheetOpener=null;
+function syncMode(){const on=!S.intake&&!missingSetup(S.inputs).length;document.body.classList.toggle("planmode",on);if(!on&&document.body.classList.contains("sheet"))closeSheet(true);}
+const INERT=()=>[...document.querySelectorAll("header.top,#mtabs,#mbar,main.plan,footer.ver,.hello")];
+function openSheet(){
+  if(!document.body.classList.contains("planmode")||!phoneLayout())return false;
+  if(document.body.classList.contains("sheet"))return true;
+  const a=document.activeElement;sheetOpener=a&&a!==document.body?a:(lastTrigger&&lastTrigger.isConnected&&!lastTrigger.closest("#setup")?lastTrigger:$("#btnEditPlan")); /* Safari doesn't focus a tapped button */
+  const A=$("#setup");document.body.classList.add("sheet");$("#sheetBg").hidden=false;
+  A.setAttribute("role","dialog");A.setAttribute("aria-modal","true");A.setAttribute("aria-labelledby","sheetTitle");A.tabIndex=-1;A.scrollTop=0;
+  INERT().forEach(el=>el.inert=true);A.focus({preventScroll:true});return true;}
+function closeSheet(quiet){
+  if(!document.body.classList.contains("sheet"))return;
+  const A=$("#setup");document.body.classList.remove("sheet");$("#sheetBg").hidden=true;
+  ["role","aria-modal","aria-labelledby"].forEach(k=>A.removeAttribute(k));A.removeAttribute("tabindex");
+  INERT().forEach(el=>el.inert=false);
+  const o=sheetOpener;sheetOpener=null;if(!quiet&&o&&o.isConnected)o.focus({preventScroll:true});}
+$("#btnEditPlan").addEventListener("click",openSheet);
+$("#btnSheetDone").addEventListener("click",()=>closeSheet());
+$("#sheetBg").addEventListener("click",()=>closeSheet());
+/* capture phase: runs before the dialog's own Escape handler, so Escape on a dialog opened from the sheet closes only that dialog */
+document.addEventListener("keydown",e=>{if(e.key!=="Escape"||!document.body.classList.contains("sheet")||$("#modalRoot").firstChild)return;closeSheet();},true);
+function setTab(tab){if(document.body.classList.contains("planmode")&&phoneLayout()){if(tab==="setup")openSheet();else closeSheet();return;}document.body.dataset.tab=tab;document.querySelectorAll("#mtabs [data-tab]").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===tab)));const L=$(".layout"),m=$("#mtabs");if(L&&m){const top=L.getBoundingClientRect().top;const h=m.offsetHeight+12;if(top<h)window.scrollTo({top:Math.max(0,top+scrollY-h)});}}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-tab],[data-tabgo]");if(b&&(b.closest("#mtabs")||b.dataset.tabgo))setTab(b.dataset.tab||b.dataset.tabgo);});
 $("#btnPlans").onclick=openPlans;
 $("#btnNew").onclick=newPlan;

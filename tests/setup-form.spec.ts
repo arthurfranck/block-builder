@@ -292,9 +292,9 @@ test.describe('experience level (BB-49)', () => {
 
   test('the choice is in French too', async ({ app, page }) => {
     await app.pick('#levelSeg [data-level="experienced"]');
+    await app.showPlan();
     await app.setLang('fr');
-    await page.locator('#langSel').press('Escape');
-    await expect(page.locator('#prefsPanel')).toBeHidden();
+    await app.closePrefs();
     await app.showSetup();
     await expect(page.locator('#levelSeg [data-level="experienced"]')).toHaveText('Confirmé');
     await expect(page.locator('#levelHint')).toContainText('à partir de 4 sorties');
