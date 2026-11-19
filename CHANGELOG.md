@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.3.0] - 2026-11-19
+
+### Added
+- "Why this run" for every built-in run type: what the run is for and how it should feel (effort out of 10, talk test). It shows in the run editor (and changes with the type), in the Quick workout sheet, and as a "Run types in this plan" table at the end of the PDF (BB-43).
+
 ## [1.2.0] - 2026-11-19
 
 ### Added

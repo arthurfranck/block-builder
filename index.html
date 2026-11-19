@@ -131,6 +131,8 @@ aside.setup{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto
 .field input,.field select,textarea{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:7px 9px;width:100%;min-width:0}
 textarea{resize:vertical;font-size:13.5px;line-height:1.4}
 .hint{font-size:12.5px;color:var(--muted)}
+.hint.why{margin:6px 0 0;line-height:1.45}
+.hint.why b{color:var(--ink);font-weight:600}
 .seg{display:flex;flex-wrap:wrap;gap:4px}
 .seg button{border:1px solid var(--line);background:var(--surface);border-radius:5px;padding:5px 9px;cursor:pointer;font-weight:600;font-size:13.5px}
 .seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
@@ -479,7 +481,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.2.0";
+const VERSION = "1.3.0";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -496,6 +498,17 @@ d5k:"5K",d10k:"10K",dhm:"Half",dm:"Marathon",dcustom:"Custom",l5k:"5K",l10k:"10K
 kEasy:"Easy",kRecovery:"Recovery",kLong:"Long",kHard:"Quality",
 ph_base:"base",ph_build:"build",ph_peak:"peak",ph_taper:"taper",cutback:"cutback",
 days:"Mon|Tue|Wed|Thu|Fri|Sat|Sun",days1:"M|T|W|T|F|S|S",
+whyLbl:"Why this run:",pdfWhyHead:"Run types in this plan",pdfWhyCol:"Why, and how it should feel",
+why_easy:"Builds your aerobic base and lets you recover between harder days. Easy: about 3-4 out of 10, you can talk in full sentences.",
+why_long:"Builds endurance: legs, heart and fuelling get used to long time on your feet. Steady: about 4-5 out of 10, you can still talk in sentences.",
+why_recovery:"Loosens your legs after a hard day or the long run without adding fatigue. Very easy: 2-3 out of 10, slower than feels natural.",
+why_strides:"Keeps your legs quick and your form relaxed without tiring you. Easy run, then short bursts at about 8 out of 10 with full recovery.",
+why_tempo:"Raises the pace you can hold for a long time (your threshold). Comfortably hard: about 7 out of 10, a few words at a time.",
+why_intervals:"Raises your top aerobic engine (VO2max) and your speed. Hard: about 8-9 out of 10, no talking during the reps.",
+why_hills:"Builds leg strength and power with less pounding than flat speed work. Hard uphill: about 8 out of 10, jog or walk back down.",
+why_fartlek:"Brings in speed by feel, without a fixed pace. Faster bits at about 7-8 out of 10, easy running in between.",
+why_progression:"Teaches you to finish strong on tired legs. Starts easy (3-4 out of 10) and ends comfortably hard (about 7 out of 10).",
+why_racepace:"Rehearses the exact pace and rhythm of your race. Race effort: about 7-8 out of 10 for a half or marathon, 8-9 for a 5K or 10K.",
 ty_easy:"Easy run",tp_easy:"{km} km relaxed at {easy}. You should be able to talk in full sentences.",
 ty_long:"Long run",tp_long:"{km} km steady at {easy}. {work}",
 ty_recovery:"Recovery run",tp_recovery:"{km} km very easy, slower than {easy}. Short and loose.",
@@ -595,6 +608,17 @@ d5k:"5 km",d10k:"10 km",dhm:"Semi",dm:"Marathon",dcustom:"Autre",l5k:"5 km",l10k
 kEasy:"Facile",kRecovery:"Récupération",kLong:"Longue",kHard:"Qualité",
 ph_base:"foncier",ph_build:"développement",ph_peak:"spécifique",ph_taper:"affûtage",cutback:"allégée",
 days:"Lun|Mar|Mer|Jeu|Ven|Sam|Dim",days1:"L|M|M|J|V|S|D",
+whyLbl:"Pourquoi cette séance :",pdfWhyHead:"Types de séances du plan",pdfWhyCol:"Pourquoi, et quelles sensations",
+why_easy:"Construit votre fond et vous laisse récupérer entre les séances plus dures. Facile : environ 3-4 sur 10, vous parlez en phrases complètes.",
+why_long:"Développe l'endurance : jambes, cœur et ravitaillement s'habituent à courir longtemps. Régulier : environ 4-5 sur 10, vous pouvez encore parler en phrases.",
+why_recovery:"Délie les jambes après une séance dure ou la sortie longue sans ajouter de fatigue. Très facile : 2-3 sur 10, plus lent que naturellement.",
+why_strides:"Garde des jambes vives et une foulée relâchée sans vous fatiguer. Footing, puis courtes accélérations à environ 8 sur 10, récupération complète.",
+why_tempo:"Relève l'allure que vous tenez longtemps (votre seuil). Soutenu mais contrôlé : environ 7 sur 10, quelques mots à la fois.",
+why_intervals:"Développe votre moteur aérobie maximal (VMA) et votre vitesse. Dur : environ 8-9 sur 10, impossible de parler pendant les répétitions.",
+why_hills:"Renforce les jambes et la puissance avec moins de chocs que la vitesse sur le plat. Dur en montée : environ 8 sur 10, descente en trottinant ou en marchant.",
+why_fartlek:"Introduit la vitesse aux sensations, sans allure fixe. Passages rapides à environ 7-8 sur 10, footing entre les deux.",
+why_progression:"Apprend à finir fort sur des jambes fatiguées. Commence facile (3-4 sur 10) et finit soutenu (environ 7 sur 10).",
+why_racepace:"Répète l'allure et le rythme exacts de votre course. Effort de course : environ 7-8 sur 10 pour un semi ou un marathon, 8-9 pour un 5 ou 10 km.",
 ty_easy:"Sortie facile",tp_easy:"{km} km tranquille à {easy}. Vous devez pouvoir parler en phrases complètes.",
 ty_long:"Sortie longue",tp_long:"{km} km régulier à {easy}. {work}",
 ty_recovery:"Footing de récupération",tp_recovery:"{km} km très facile, plus lent que {easy}. Court et relâché.",
@@ -1248,7 +1272,8 @@ function qwRender(m,focusKey){
     ${recent.length?`<div class="qrow"><span class="lbl" id="qwRecL">${t("qwRecent")}</span><div class="qgrp" role="group" aria-labelledby="qwRecL">${recent.map((c,i)=>`<button type="button" class="qt qrec" data-qk="recent:${i}">${esc(qwRecentLbl(c))}</button>`).join("")}</div></div>`:""}
     <div class="qrow"><span class="lbl" id="qwTypeL">${t("qwType")}</span><div class="qtypes" role="radiogroup" aria-labelledby="qwTypeL">
       <div class="qgrp"><span class="qglbl">${t("grpEasy")}</span>${easyIds.map(typeBtn).join("")}</div>
-      <div class="qgrp"><span class="qglbl">${t("grpQuality")}</span>${qIds.map(typeBtn).join("")}</div></div></div>
+      <div class="qgrp"><span class="qglbl">${t("grpQuality")}</span>${qIds.map(typeBtn).join("")}</div></div>
+      ${whyOf(Q.type)?`<p class="hint why" id="qwWhy">${whyHtml(Q.type)}</p>`:""}</div>
     <div class="qrow"><span class="lbl" id="qwUnitL">${t("qwUnit")}</span><div class="seg" role="radiogroup" aria-labelledby="qwUnitL">${radio("unit","d",Q.unit==="d",t("qwUnitD"))}${radio("unit","t",Q.unit==="t",t("qwUnitT"))}</div></div>
     ${shape}
     ${pacesLine}
@@ -1413,12 +1438,16 @@ document.addEventListener("keydown",e=>{const m=$("#modalRoot .modal");if(!m)ret
 function confirmBox(title,text,okLabel,ok){modal(`<h2>${esc(title)}</h2><p style="margin:0">${esc(text)}</p><div class="actions"><button class="btn" id="cNo">${t("cancel")}</button><button class="btn primary" id="cYes">${esc(okLabel)}</button></div>`,m=>{m.querySelector("#cNo").onclick=closeModal;m.querySelector("#cYes").onclick=()=>{closeModal();ok();};});}
 function toast(msg){const t=document.createElement("div");t.className="toast";t.textContent=msg;$("#toastRoot").appendChild(t);setTimeout(()=>t.remove(),Math.max(2600,msg.length*60));}
 
+/* "Why this run" (BB-43): purpose and how it should feel, for the built-in run types; custom types and race day have none */
+const whyOf=id=>TYPE_DEFS.some(d=>d[0]===id)?t("why_"+id):"";
+const whyHtml=id=>{const w=whyOf(id);return w?`<b>${t("whyLbl")}</b> ${esc(w)}`:"";};
 function openEditor(wi,id){
   const w=S.plan.weeks[wi];const s=w.sessions.find(x=>x.id===id);if(!s)return;
   const opts=[...S.types.filter(t=>t.on||t.id===s.typeId).map(t=>`<option value="${esc(t.id)}" ${t.id===s.typeId?"selected":""}>${esc(t.name)}</option>`),`<option value="race" ${s.typeId==="race"?"selected":""}>${t("raceDay")}</option>`].join("");
   modal(`<h2>${t("eTitle",{n:w.n,day:DAYS[s.day]})}</h2>
     <div class="row"><div class="field"><label for="eType">${t("runType")}</label><select id="eType">${opts}</select></div>
     <div class="field"><label for="eDay">${t("dayLbl")}</label><select id="eDay">${DAYS.map((d,i)=>`<option value="${i}" ${i===s.day?"selected":""}>${d}</option>`).join("")}</select></div></div>
+    <p class="hint why" id="eWhy" ${whyOf(s.typeId)?"":"hidden"}>${whyHtml(s.typeId)}</p>
     <div class="row"><div class="field"><label for="eKm">${t("distKm")}</label><input id="eKm" type="number" min="0" step="0.5" value="${esc(s.km)}"></div><div></div></div>
     <div class="field"><label for="eDesc">${t("desc")}</label><textarea id="eDesc" rows="4">${esc(s.desc)}</textarea></div>
     <div class="field"><span class="lbl">${t("watchWorkout")}</span><div class="watchsum" id="eWatch">${esc(watchSummary(s.watch||watchPlan(s.kind,s.km)))}</div><div class="hint">${t("watchHint")}</div></div>
@@ -1426,7 +1455,7 @@ function openEditor(wi,id){
     <div class="actions"><button class="btn ghost left" id="eDel">${t("deleteRun")}</button><button class="btn" id="eWatchBtn">${t("sendWatch")}</button><button class="btn" id="eCancel">${t("cancel")}</button><button class="btn primary" id="eOk">${t("saveChanges")}</button></div>`,m=>{
     m.querySelector("#eCancel").onclick=closeModal;
     m.querySelector("#eDel").onclick=()=>{w.sessions=w.sessions.filter(x=>x.id!==id);closeModal();touched();};
-    m.querySelector("#eType").onchange=ev=>{const ty=S.types.find(x=>x.id===ev.target.value);if(ty){const P=paces(S.inputs);const km=+m.querySelector("#eKm").value||s.km;const wk=workFor(ty,{p:0.5,D:distKm(S.inputs),c:cat(distKm(S.inputs)),taper:w.phase==="taper",P,phase:w.phase});m.querySelector("#eDesc").value=fill(ty.tpl,{...P.txt,km,work:fill(wk.text||"",P.txt)});}};
+    m.querySelector("#eType").onchange=ev=>{const wy=m.querySelector("#eWhy");wy.innerHTML=whyHtml(ev.target.value);wy.hidden=!whyOf(ev.target.value);const ty=S.types.find(x=>x.id===ev.target.value);if(ty){const P=paces(S.inputs);const km=+m.querySelector("#eKm").value||s.km;const wk=workFor(ty,{p:0.5,D:distKm(S.inputs),c:cat(distKm(S.inputs)),taper:w.phase==="taper",P,phase:w.phase});m.querySelector("#eDesc").value=fill(ty.tpl,{...P.txt,km,work:fill(wk.text||"",P.txt)});}};
     m.querySelector("#eWatchBtn").onclick=()=>{closeModal();sendToWatch(planWorkouts([{w,s}]),t("sendTitleRun",{n:w.n,day:DAYS[s.day],name:s.name,km:s.km}));};
     m.querySelector("#eOk").onclick=()=>{
       const tid=m.querySelector("#eType").value;const ty=S.types.find(x=>x.id===tid);
@@ -1672,6 +1701,14 @@ async function exportPDF(btn){
       didDrawCell:h=>{if(h.section!=="body")return;const m=meta[h.row.index];if(!m||m.type!=="week")return;
         const k=m.kinds[h.column.index];const c=h.column.index===0?PDF_PHASE[k]:PDF_KIND[k];if(!c)return;
         doc.setFillColor(...c);doc.rect(h.cell.x+.4,h.cell.y+.6,1.1,h.cell.height-1.2,"F");}
+    });
+    /* BB-43: one line per built-in run type the plan uses, in the order they first appear */
+    const used=[...new Set(W.flatMap(w=>w.sessions.map(s=>s.typeId)))].filter(id=>whyOf(id));
+    if(used.length)run(doc,{
+      startY:(doc.lastAutoTable?doc.lastAutoTable.finalY:M+21)+6, margin:{left:M,right:M,top:M,bottom:M+5}, rowPageBreak:"avoid",
+      head:[[t("pdfWhyHead"),t("pdfWhyCol")].map(pdfTxt)], body:used.map(id=>{const ty=S.types.find(x=>x.id===id);return [pdfTxt(ty&&ty.name||t("ty_"+id)),pdfTxt(whyOf(id))];}),
+      theme:"grid", styles:{font:"helvetica",fontSize:7.6,cellPadding:1.8,valign:"top",lineColor:[213,221,219],lineWidth:.2,textColor:[20,32,39]},
+      headStyles:{fillColor:[20,32,39],textColor:255,fontStyle:"bold",fontSize:8}, columnStyles:{0:{cellWidth:40,fontStyle:"bold"}}
     });
     const n=doc.internal.getNumberOfPages(), gen=t("pdfGenerated",{d:fmtDate(new Date())});
     for(let p=1;p<=n;p++){doc.setPage(p);doc.setFont("helvetica","normal");doc.setFontSize(7.5);doc.setTextColor(90,106,111);

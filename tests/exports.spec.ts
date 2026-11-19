@@ -43,6 +43,9 @@ test.describe('PDF', () => {
     expect(pdf).toContain('Half marathon block');
     expect(pdf).toContain('W12');
     expect(pdf).toContain('Race day');
+    // BB-43: a table of the run types used, with why and how each should feel
+    expect(pdf).toContain('Run types in this plan');
+    expect(pdf).toContain('out of 10');
   });
 
   test('without a connection the PDF option explains why it failed', async ({ app, page }) => {
