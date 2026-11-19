@@ -34,9 +34,9 @@ Every iOS browser, Chrome included, runs on WebKit, so the iPhone Chrome setup c
 
 | File | Covers |
 |---|---|
-| `engine/engine.unit.mjs` | paces, watch workouts, the five athlete profiles against the plan rules at each experience level, what each level changes (BB-49), recovery weeks after the race (BB-42) |
+| `engine/engine.unit.mjs` | paces, watch workouts, the five athlete profiles against the plan rules at each experience level, what each level changes (BB-49), recovery weeks after the race (BB-42), week 1 within the stated volume (BB-41) |
 | `plan-generation.spec.ts` | distances, weeks, dates, runs per week, fitness goal, load profile (phase bands, race flag, current week and today), summary numbers (weeks to go, units, French labels), recovery weeks after the race |
-| `plan-rules.spec.ts` | phase order, taper length, cutback and taper volume, one race on race day, long-run day, weekly increase, goal readiness, hard runs per week, hard runs back to back or next to the long run and no rest day (on the week and in the banner, also after edits), days in a row and 7 runs a week (setup warnings) |
+| `plan-rules.spec.ts` | phase order, taper length, cutback and taper volume, one race on race day, long-run day, weekly increase, goal readiness, hard runs per week, hard runs back to back or next to the long run and no rest day (on the week and in the banner, also after edits), days in a row and 7 runs a week (setup warnings), week 1 against the volume run now |
 | `setup-form.spec.ts` | paces, finish time read to fit the race distance, running days, run type chips and Customise workouts, warnings, New plan starting blank, experience level choice |
 | `editing.spec.ts` | edit, add, delete and move runs (drag and drop on desktop), hand edits vs settings, "why this run" line in the editor |
 | `today.spec.ts` | Today card before the plan, on a run day and on a rest day, Edit from the card, workout bar, paces, heat note, Send button naming the last device, one-line weather that opens and is remembered, forecast and driest slot (Open-Meteo mocked), unknown city, failed request |

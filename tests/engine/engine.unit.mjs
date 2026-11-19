@@ -106,7 +106,23 @@ for (const [name, { inp: p, on }] of Object.entries(PROFILES)) {
 }
 
 /* Known gaps, kept visible until their backlog items land. */
-test.todo('BB-41: week 1 stays within the stated weekly volume at Regular (profile A starts at 16 km for 15 km/wk; New starts at 15)');
+describe('BB-41 · week 1 against the volume run now', () => {
+  for (const level of ['regular', 'new', 'experienced']) for (const [name, { inp: p, on }] of Object.entries(PROFILES)) {
+    test(`${level} · profile ${name.split(' ·')[0]}: week 1 stays within the stated weekly volume`, () => {
+      const inp = { ...base, ...p, level }, plan = E.generate(inp, types(on));
+      assert.ok(km(plan.weeks[0]) <= p.curVol + 0.01, `week 1: ${km(plan.weeks[0])} km for ${p.curVol} km/wk`);
+      assert.ok(!E.warnings(inp, types(on), plan, false).some((x) => x.startsWith('wa_w1')));
+    });
+  }
+  test('when the shortest runs already add up to more, the plan says so', () => {
+    const inp = { ...base, dist: '10k', runs: 6, days: E.DEFAULT_DAYS[6], longDay: 6, curVol: 15, curLong: 6, weeks: 10 };
+    const plan = E.generate(inp, types());
+    assert.ok(km(plan.weeks[0]) > 15);
+    assert.deepEqual(E.warnings(inp, types(), plan, false).filter((x) => x.startsWith('wa_w1')).map((x) => x.split(' ')[0]), ['wa_w1']);
+    assert.deepEqual(E.warnings({ ...inp, level: 'new' }, types(), E.generate({ ...inp, level: 'new' }, types()), false).filter((x) => x.startsWith('wa_w1')).map((x) => x.split(' ')[0]), ['wa_w1New']);
+    assert.deepEqual(E.warnings(inp, types(), plan, true).filter((x) => x.startsWith('wa_w1')).map((x) => x.split(' ')[0]), ['wa_w1Edit']);
+  });
+});
 
 describe('BB-49 · experience level', () => {
   const A = { ...base, ...PROFILES['A · beginner half, 3 runs, 15 km/wk'].inp }, onA = PROFILES['A · beginner half, 3 runs, 15 km/wk'].on;

@@ -261,10 +261,11 @@ function generate(inp,types){
       if(!raceWeek&&x.t.kind!=="recovery")km=Math.min(km,Math.max(longKm-1,6));
       return r05(km);
     });
-    /* Rounding and the minimum distances can push a week well past +10% on the last full week.
+    /* Rounding and the minimum distances can push a week well past +10% on the last full week,
+       or week 1 past the volume the runner does now (BB-41).
        Trim back to that cap: easy runs first (0.5 km steps, longest first), then the hard runs, then the long run. */
-    if(!raceWeek&&!isCut&&phase!=="taper"&&refKm!=null){
-      const cap=refKm*1.1+0.01;
+    if(!raceWeek&&!isCut&&phase!=="taper"&&(refKm!=null||i===0)){
+      const cap=(i===0?V0:refKm*1.1)+0.01;
       const total=()=>(longKm||0)+hardKm+easyKm.reduce((a,b)=>a+b,0);
       while(total()>cap){
         let j=-1;easyKm.forEach((k,i)=>{if(k-0.5>=minKm(roles[i])&&(j<0||k>easyKm[j]))j=i;});
@@ -354,6 +355,8 @@ function warnings(inp,types,plan,edited){
   const wk=plan.weeks.map(x=>x.sessions.reduce((a,s)=>a+(+s.km||0),0));const steep=[];
   plan.weeks.forEach((x,i)=>{if(i===0||x.cutback||x.phase==="taper"||x.phase==="recovery")return;const r=plan.weeks[i-1].cutback?wk[i-2]:wk[i-1];if(r>0&&wk[i]>r*1.1+0.05)steep.push(x.n);});
   if(steep.length)w.push(t(edited?"wa_steepEdit":"wa_steep",{w:t(steep.length>1?"wkMany":"wkOne",{n:steep.join(", ")})}));
+  /* BB-41: week 1 above the volume run now, when even the shortest runs add up to more (the generator trims it otherwise) */
+  if(wk.length&&+inp.curVol>0&&wk[0]>+inp.curVol+0.05)w.push(t(edited?"wa_w1Edit":levelOf(inp)==="new"?"wa_w1New":"wa_w1",{km:+wk[0].toFixed(1),v:+inp.curVol,r:inp.runs}));
   w.push(...weekCheckSummary(plan,inp));
   if(badRaceTime(inp))w.push(badTimeMsg(inp));
   else if(!(+inp.recDist>0&&raceTimeSec(inp.recTime,+inp.recDist)))w.push(t("wa_noPace"));
