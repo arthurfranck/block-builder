@@ -255,3 +255,11 @@ test('the Goal row offers a quick workout without changing the goal', async ({ a
   expect(await pressed()).toBe(goal);
   await expect(page.locator('#btnQuickGoal')).toBeFocused();
 });
+
+test('the sheet says why the chosen type is worth running (BB-43)', async ({ app, page }) => {
+  await openQuick(app);
+  const s = sheet(page);
+  await expect(s.locator('#qwWhy')).toContainText('Why this run: Raises the pace you can hold for a long time');
+  await s.locator('[data-qk="type:hills"]').click();
+  await expect(s.locator('#qwWhy')).toContainText('Builds leg strength and power');
+});

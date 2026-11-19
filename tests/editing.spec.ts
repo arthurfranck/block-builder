@@ -101,3 +101,14 @@ test.describe('hand edits and settings', () => {
     expect((await app.plan())[0].sessions.some((s) => s.note)).toBe(false);
   });
 });
+
+test('the run editor says why the run is there and how it should feel (BB-43)', async ({ app, page }) => {
+  await app.session(0, 0).click();
+  const why = page.locator('#eWhy');
+  await expect(why).toBeVisible();
+  await expect(why).toContainText(/^Why this run: .+ out of 10/);
+  await page.locator('#eType').selectOption('intervals');
+  await expect(why).toHaveText('Why this run: Raises your top aerobic engine (VO2max) and your speed. Hard: about 8-9 out of 10, no talking during the reps.');
+  await page.locator('#eType').selectOption('race');
+  await expect(why).toBeHidden();
+});
