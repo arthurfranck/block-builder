@@ -270,3 +270,16 @@ test.describe('spacing (BB-44)', () => {
     await expect(weekWarnings(page)).toHaveCount(0);
   });
 });
+
+test.describe('week 1 against the volume run now (BB-41)', () => {
+  test('week 1 starts at or below the weekly volume entered', async ({ app }) => {
+    await app.configure({ dist: 'hm', runs: 3, weeks: 12, curVol: 15, curLong: 6 });
+    expect((await app.plan())[0].km).toBeLessThanOrEqual(15);
+    await expect(app.warnings().filter({ hasText: 'Week 1 comes to' })).toHaveCount(0);
+  });
+
+  test('when the shortest runs already add up to more, a warning says so', async ({ app }) => {
+    await app.configure({ dist: '10k', runs: 6, curVol: 15, curLong: 6 });
+    await expect(app.warnings().filter({ hasText: /^Week 1 comes to [\d.]+ km, more than the 15 km a week you run now: 6 runs/ })).toHaveCount(1);
+  });
+});

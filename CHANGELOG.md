@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.5.1] - 2026-11-19
+
+### Fixed
+- Week 1 no longer starts above the weekly volume you entered (BB-41). The plan trims it the same way it trims later weeks to +10%. When the shortest runs already add up to more (many runs at a low volume), a warning says how much week 1 comes to and suggests fewer runs or the New to running level.
+
 ## [1.5.0] - 2026-11-19
 
 ### Changed
