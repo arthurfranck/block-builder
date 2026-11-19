@@ -204,3 +204,43 @@ describe('watch workouts', () => {
     assert.equal(E.watchPlan('race', 21.1).blocks[0].steps[0].pace, 'race');
   });
 });
+
+describe('BB-42 · recovery weeks after the race', () => {
+  const C = { ...base, ...PROFILES['C · weekday half, Mon-Fri, long run Friday'].inp };
+  const M = { ...base, ...PROFILES['E · experienced marathon, 6 runs, 80 km/wk'].inp };
+
+  test('off by default: the plan ends on race day', () => {
+    const W = E.generate(C, types()).weeks;
+    assert.equal(W.length, C.weeks);
+    assert.ok(W[W.length - 1].sessions.some((s) => s.kind === 'race'));
+  });
+
+  for (const [n, inp] of [['half', C], ['marathon', M]]) for (const rw of [1, 2]) {
+    test(`${n}, ${rw} week(s): easy weeks appended after race day`, () => {
+      const plan = E.generate({ ...inp, recWeeks: rw }, types());
+      const W = plan.weeks, ri = W.findIndex((w) => w.sessions.some((s) => s.kind === 'race'));
+      assert.equal(ri, inp.weeks - 1, 'race week stays where it was');
+      assert.equal(W.length, inp.weeks + rw);
+      assert.equal(plan.meta.recN, rw);
+      const race = W[ri].sessions.find((s) => s.kind === 'race');
+      const peak = Math.max(...W.slice(0, ri).map(km));
+      const fr = n === 'marathon' ? [0.3, 0.5] : [0.4, 0.6];
+      W.slice(ri + 1).forEach((w, r) => {
+        assert.equal(w.phase, 'recovery');
+        assert.equal(w.start, E.iso(E.addDays(E.parseISO(W[ri].start), 7 * (r + 1))));
+        assert.ok(w.sessions.every((s) => s.kind === 'easy' || s.kind === 'recovery'), `week ${w.n}: easy runs only`);
+        assert.ok(w.sessions.length < inp.runs, `week ${w.n}: fewer runs`);
+        assert.ok(km(w) <= peak * fr[r] + 3, `week ${w.n}: ${km(w)} km after a ${peak} km peak`);
+        for (const s of w.sessions) assert.ok(7 * (r + 1) + s.day - race.day >= 3, `week ${w.n}: run ${s.day} too soon after the race`);
+      });
+      if (rw === 2) assert.ok(W[ri + 2].sessions.some((s) => s.typeId === 'strides') === types().find((t) => t.id === 'strides').on);
+    });
+  }
+
+  test('no recovery weeks for a personal plan, and the +10% and readiness checks ignore them', () => {
+    assert.equal(E.generate({ ...C, goal: 'fitness', recWeeks: 2 }, types()).weeks.length, C.weeks);
+    const inp = { ...M, recWeeks: 2 }, plan = E.generate(inp, types());
+    const w0 = E.warnings({ ...M }, types(), E.generate(M, types()), false).map((x) => x.split(' ')[0]);
+    assert.deepEqual(E.warnings(inp, types(), plan, false).map((x) => x.split(' ')[0]), w0);
+  });
+});

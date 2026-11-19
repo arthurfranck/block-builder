@@ -8,9 +8,9 @@
   --bg:#0B0F10; --surface:#131A1C; --surface-2:#1B2427; --ink:#ECF1EE; --muted:#97A5A8; --line:#283336;
   --accent:#D4FF3A; --accent-ink:#0B0F10; --accent-btn:#D4FF3A; --accent-line:#D4FF3A;
   --recovery:#7FA6C9; --easy:#4CB98F; --long:#DDBF4F; --tempo:#F0894A; --hard:#EC5A6E; --race:#D879D2;
-  --ph-base:#5E8C7C; --ph-build:#5579AE; --ph-peak:#EE7650; --ph-taper:#C9A447;
+  --ph-base:#5E8C7C; --ph-build:#5579AE; --ph-peak:#EE7650; --ph-taper:#C9A447; --ph-recovery:#8AA4AE;
   --recovery-t:#7FA6C9; --easy-t:#4CB98F; --long-t:#DDBF4F; --tempo-t:#F0894A; --hard-t:#EC5A6E; --race-t:#D879D2;
-  --ph-base-t:#6A9A89; --ph-build-t:#7392C2; --ph-peak-t:#EE7650; --ph-taper-t:#C9A447;
+  --ph-base-t:#6A9A89; --ph-build-t:#7392C2; --ph-peak-t:#EE7650; --ph-taper-t:#C9A447; --ph-recovery-t:#9DB5BE;
   --warn-bg:#33270F; --warn-ink:#F2CD86; color-scheme:dark;
   /* surfaces: page --bg, cards --surface, things inside cards --surface-2; only Today gets --lift */
   --lift:0 14px 36px rgba(0,0,0,.45);
@@ -23,18 +23,18 @@
   --bg:#E8EDEB; --surface:#FFFFFF; --surface-2:#F0F4F2; --ink:#142027; --muted:#5A6A6F; --line:#D5DDDB;
   --accent:#D4FF3A; --accent-ink:#142027; --accent-btn:#D4FF3A; --accent-line:#557000;
   --recovery:#4F7EAB; --easy:#2B8768; --long:#9E7C08; --tempo:#C65B1F; --hard:#C9405A; --race:#B04BA8;
-  --ph-base:#8FB2A5; --ph-build:#6C93C8; --ph-peak:#D4542C; --ph-taper:#C9A447;
+  --ph-base:#8FB2A5; --ph-build:#6C93C8; --ph-peak:#D4542C; --ph-taper:#C9A447; --ph-recovery:#8AA4AE;
   --warn-bg:#FFF4E5; --warn-ink:#7A4A00;
   --recovery-t:#3B6690; --easy-t:#21735A; --long-t:#75620A; --tempo-t:#A9501A; --hard-t:#B3324A; --race-t:#97368F;
-  --ph-base-t:#557C6D; --ph-build-t:#4575B7; --ph-peak-t:#C44D28; --ph-taper-t:#8B6F29; --lift:0 10px 28px rgba(20,32,39,.13); color-scheme:light}
+  --ph-base-t:#557C6D; --ph-build-t:#4575B7; --ph-peak-t:#C44D28; --ph-taper-t:#8B6F29; --ph-recovery-t:#4F6B75; --lift:0 10px 28px rgba(20,32,39,.13); color-scheme:light}
 @media (prefers-color-scheme: light){:root[data-theme="auto"]{
   --bg:#E8EDEB; --surface:#FFFFFF; --surface-2:#F0F4F2; --ink:#142027; --muted:#5A6A6F; --line:#D5DDDB;
   --accent:#D4FF3A; --accent-ink:#142027; --accent-btn:#D4FF3A; --accent-line:#557000;
   --recovery:#4F7EAB; --easy:#2B8768; --long:#9E7C08; --tempo:#C65B1F; --hard:#C9405A; --race:#B04BA8;
-  --ph-base:#8FB2A5; --ph-build:#6C93C8; --ph-peak:#D4542C; --ph-taper:#C9A447;
+  --ph-base:#8FB2A5; --ph-build:#6C93C8; --ph-peak:#D4542C; --ph-taper:#C9A447; --ph-recovery:#8AA4AE;
   --warn-bg:#FFF4E5; --warn-ink:#7A4A00;
   --recovery-t:#3B6690; --easy-t:#21735A; --long-t:#75620A; --tempo-t:#A9501A; --hard-t:#B3324A; --race-t:#97368F;
-  --ph-base-t:#557C6D; --ph-build-t:#4575B7; --ph-peak-t:#C44D28; --ph-taper-t:#8B6F29; --lift:0 10px 28px rgba(20,32,39,.13); color-scheme:light}}
+  --ph-base-t:#557C6D; --ph-build-t:#4575B7; --ph-peak-t:#C44D28; --ph-taper-t:#8B6F29; --ph-recovery-t:#4F6B75; --lift:0 10px 28px rgba(20,32,39,.13); color-scheme:light}}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;font-variant-numeric:tabular-nums}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -427,6 +427,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
         </div>
         <div class="hint" id="startHint"></div>
         <div class="hint" id="focusHint" hidden></div>
+        <div class="field" id="recWeeksF"><span class="lbl" id="recWeeksLbl" data-i18n="recWeeks">Recovery after the race</span><div class="seg" id="recSeg" role="group" aria-labelledby="recWeeksLbl"></div><div class="hint" id="recHint"></div></div>
         <div class="racebox" id="raceBox"></div>
       </section>
 
@@ -481,7 +482,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.3.0";
+const VERSION = "1.4.0";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -559,6 +560,7 @@ useRace:"Use this race",cancel:"Cancel",searchFin:"Search Finishers",needName:"G
 hello:"Hello",hPast:"Your {lbl} was on {d}. Set a new race date to plan the next block.",
 hToday:"Race day. Enjoy your <b>{lbl}</b>: settle early and race the second half.",
 hDays:"<b>{n} days</b> to your {lbl} on {d}.",hDay1:"<b>1 day</b> to your {lbl} on {d}.",hRaceComing:"<b>{name}</b> is coming up.",
+hRecIn:"Recovery after your {lbl}: week {k} of {r}.",recWeeks:"Recovery after the race",rec0:"None",rec1:"1 week",rec2:"2 weeks",recHint0:"The plan ends on race day.",recHint:"Easy weeks after race day: no hard runs, fewer and shorter runs, nothing in the two days after the race.",ph_recovery:"recovery",
 hStarts:"Week 1 starts Monday {d}.",hInWeek:"You're in week {n} of {t}, {phase} phase{cut}.",hCut:", a cutback week",
 hNext:" Next up {when}: <b>{name}, {km} km</b>.",today:"today",dayOne:"day",dayMany:"days",
 eTitle:"Week {n} · {day}",runType:"Run type",dayLbl:"Day",distKm:"Distance (km)",desc:"Description",watchWorkout:"Watch workout",
@@ -669,6 +671,7 @@ useRace:"Choisir cette course",cancel:"Annuler",searchFin:"Chercher sur Finisher
 hello:"Bonjour",hPast:"Votre {lbl} a eu lieu le {d}. Indiquez une nouvelle date pour préparer le prochain plan.",
 hToday:"Jour de course. Profitez de votre <b>{lbl}</b> : calez-vous vite et faites la course en seconde moitié.",
 hDays:"<b>J-{n}</b> avant votre {lbl} le {d}.",hDay1:"<b>J-1</b> avant votre {lbl} le {d}.",hRaceComing:"<b>{name}</b> approche.",
+hRecIn:"Récupération après votre {lbl} : semaine {k} sur {r}.",recWeeks:"Récupération après la course",rec0:"Aucune",rec1:"1 semaine",rec2:"2 semaines",recHint0:"Le plan s'arrête le jour de la course.",recHint:"Des semaines faciles après la course : pas de séance difficile, des sorties moins nombreuses et plus courtes, rien les deux jours qui suivent la course.",ph_recovery:"récupération",
 hStarts:"La semaine 1 commence le lundi {d}.",hInWeek:"Vous êtes en semaine {n} sur {t}, phase {phase}{cut}.",hCut:", semaine allégée",
 hNext:" Prochaine séance {when} : <b>{name}, {km} km</b>.",today:"aujourd'hui",dayOne:"jour",dayMany:"jours",
 eTitle:"Semaine {n} · {day}",runType:"Type de séance",dayLbl:"Jour",distKm:"Distance (km)",desc:"Description",watchWorkout:"Séance pour la montre",
@@ -732,14 +735,14 @@ const fmtDay = d => d.toLocaleDateString(LOC(),LANG==="fr"?{weekday:"long",day:"
 
 function defaultName(){const I=S.inputs;return I.goal==="fitness"?cap(t("fitBlock",{n:I.weeks})):cap(t("blockName",{lbl:distLabel(I)}));}
 const nextMonday=()=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+((8-d.getDay())%7||7));return iso(d);};
-const DEFAULT_INPUTS = () => ({goal:"race",startDate:nextMonday(),dist:"hm",customKm:15,raceDate:nextSundayWeeks(12),weeks:12,curVol:30,curLong:12,recDist:"10",recTime:"52:00",level:"regular",runs:5,days:DEFAULT_DAYS[5].slice(),longDay:6,race:null});
+const DEFAULT_INPUTS = () => ({goal:"race",startDate:nextMonday(),dist:"hm",customKm:15,raceDate:nextSundayWeeks(12),weeks:12,curVol:30,curLong:12,recDist:"10",recTime:"52:00",level:"regular",recWeeks:0,runs:5,days:DEFAULT_DAYS[5].slice(),longDay:6,race:null});
 
 /* New plan starts empty; the plan only builds once runs per week, weekly volume and longest run are filled in. */
 const BLANK_INPUTS = () => ({...DEFAULT_INPUTS(),curVol:"",curLong:"",recDist:"0",recTime:"",runs:0,days:[],longDay:-1,race:null});
 const BLANK_TYPES = () => DEFAULT_TYPES().map(x=>({...x,on:x.id==="easy"}));
 /* ---------- plan engine: engine.js (BB-7) ---------- */
 BBEngine.setLocale({t,days:()=>DAYS,fmtDate});
-const {LEVELS,levelOf,durSec,kmIn,DISTS,PHASES,DEFAULT_DAYS,TYPE_DEFS,uid,clamp,r05,iso,parseISO,addDays,dow,raceTimeSec,REC_LBL,REC_EX,badRaceTime,badTimeMsg,vdotOf,velAt,raceTimeMin,fmtPace,fmtDur,distKm,missingSetup,genInputs,distLabel,cat,paces,effectiveDays,cyc,pickHardDays,workFor,fill,watchPlan,generate,raceDesc,warnings,maxHardRuns,longBoxedIn,weekChecks,weekCheckSummary}=BBEngine;
+const {WEEK_PHASES,recWeeksOf,LEVELS,levelOf,durSec,kmIn,DISTS,PHASES,DEFAULT_DAYS,TYPE_DEFS,uid,clamp,r05,iso,parseISO,addDays,dow,raceTimeSec,REC_LBL,REC_EX,badRaceTime,badTimeMsg,vdotOf,velAt,raceTimeMin,fmtPace,fmtDur,distKm,missingSetup,genInputs,distLabel,cat,paces,effectiveDays,cyc,pickHardDays,workFor,fill,watchPlan,generate,raceDesc,warnings,maxHardRuns,longBoxedIn,weekChecks,weekCheckSummary}=BBEngine;
 
 /* ---------- state ---------- */
 const S={nameAuto:true,inputs:DEFAULT_INPUTS(),types:DEFAULT_TYPES(),plan:null,planId:uid(),name:cap(t("blockName",{lbl:t("lhm")})),edited:false,savedAt:null,isExample:true,saved:[],saving:false,dirty:false};
@@ -754,6 +757,9 @@ function renderSetup(){
   $("#raceDate").value=I.raceDate;$("#weeks").value=I.weeks;$("#startDate").value=I.startDate||nextMonday();
   const fit=I.goal==="fitness";
   document.querySelectorAll("#goalSeg button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.goal===(fit?"fitness":"race")));
+  $("#recWeeksF").hidden=fit;const rw=recWeeksOf({...I,goal:"race"});
+  $("#recSeg").innerHTML=[0,1,2].map(n=>`<button type="button" data-rec="${n}" aria-pressed="${rw===n}">${t("rec"+n)}</button>`).join("");
+  $("#recHint").textContent=t(rw?"recHint":"recHint0");
   $("#raceDateF").hidden=fit;$("#startDateF").hidden=!fit;$("#raceBox").hidden=fit;$("#focusHint").hidden=!fit;
   $("#distLbl").textContent=t(fit?"focusDist":"distance");$("#focusHint").textContent=t("focusHint");
   $("#curVol").value=I.curVol;$("#curLong").value=I.curLong;$("#recDist").value=I.recDist;$("#recTime").value=I.recTime;
@@ -821,6 +827,7 @@ $("#setup").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;const I=S.inputs;
   if(b.dataset.goal){const prevName=defaultName();I.goal=b.dataset.goal;if(S.nameAuto||S.name===prevName){S.nameAuto=true;S.name=defaultName();$("#planName").value=S.name;}renderSetup();inputsChanged();}
   else if(b.dataset.dist){I.dist=b.dataset.dist;if(!S.savedAt&&S.isExample)S.name=defaultName();renderSetup();$("#planName").value=S.name;inputsChanged();}
+  else if(b.dataset.rec!==undefined){I.recWeeks=+b.dataset.rec;renderSetup();inputsChanged();}
   else if(b.dataset.level){I.level=b.dataset.level;renderSetup();inputsChanged();}
   else if(b.dataset.runs){I.runs=+b.dataset.runs;I.days=DEFAULT_DAYS[I.runs].slice();if(!I.days.includes(+I.longDay))I.longDay=I.days[I.days.length-1];renderSetup();inputsChanged();}
   else if(b.dataset.day!==undefined){const d=+b.dataset.day;I.days=I.days.includes(d)?I.days.filter(x=>x!==d):[...I.days,d].sort((a,b)=>a-b);renderSetup();inputsChanged();}
@@ -880,7 +887,7 @@ function profileSVG(weeks,W){
     const lab=(i%every===0||i===weeks.length-1||race||now);
     const extra=[w.cutback?t("cutback"):"",now?t("svgNow"):"",race?t("svgRace"):""].filter(Boolean).join(", ");
     g+=`<g${race?' class="race"':""}${now?' class="now"':""}><title>${esc(t("svgTitle",{n:w.n,km:km.toFixed(1),phase:phaseLbl(w.phase)}))}${extra?" ("+esc(extra)+")":""}</title><rect x="${x}" y="${y(km)}" width="${bwi}" height="${Math.max(0,y(0)-y(km))}" rx="2" fill="${phaseColor(w.phase)}" opacity="${w.cutback?0.55:1}"/>
-    <rect x="${x}" y="${y(lk)}" width="${bwi}" height="2" fill="var(--ink)" opacity=".55"/>
+    ${lk?`<rect x="${x}" y="${y(lk)}" width="${bwi}" height="2" fill="var(--ink)" opacity=".55"/>`:""}
     ${lab?`<text x="${x+bwi/2}" y="${y(km)-5}" text-anchor="middle">${Math.round(km)}</text>`:""}
     ${race?`<path class="flag" d="M${x+bwi/2-4} ${y(km)-16}v-14l10 4l-10 4" fill="var(--race)" stroke="var(--race)" stroke-width="1.5" stroke-linejoin="round"/>`:""}
     ${lab?`<text x="${x+bwi/2}" y="${H-6}" text-anchor="middle"${now?' style="fill:var(--ink);font-weight:700"':""}>${w.n}</text>`:""}</g>`;});
@@ -1362,7 +1369,16 @@ function renderHello(){
       const when=next?(next.day===tdow&&w.sessions.includes(next)?t("today"):DAYS[next.day]):"";
       line=t("hFitIn",{n:w.n,t:P.weeks.length,phase:phaseLbl(w.phase),cut:w.cutback?t("hCut"):""})+(next?t("hNext",{when,name:esc(next.name.toLowerCase()),km:next.km}):"");}
   }
-  else if(days<0)line=t("hPast",{lbl:esc(lbl),d:fmtDate(race)});
+  else if(days<0){
+    /* BB-42: in a recovery week after the race, say so and name the next run */
+    const wi=P.weeks.findIndex(w=>{const st=parseISO(w.start);return today>=st&&today<addDays(st,7);});
+    const w=wi>=0?P.weeks[wi]:null;
+    if(w&&w.phase==="recovery"){const tdow=dow(today),rw=P.weeks.filter(x=>x.phase==="recovery");
+      const next=w.sessions.find(s=>s.day>=tdow)||(P.weeks[wi+1]&&P.weeks[wi+1].sessions[0]);
+      const when=next?(next.day===tdow&&w.sessions.includes(next)?t("today"):DAYS[next.day]):"";
+      line=t("hRecIn",{lbl:esc(lbl),k:rw.indexOf(w)+1,r:rw.length})+(next?t("hNext",{when,name:esc(next.name.toLowerCase()),km:next.km}):"");}
+    else line=t("hPast",{lbl:esc(lbl),d:fmtDate(race)});
+  }
   else if(days===0)line=t("hToday",{lbl:esc(lbl)});
   else{
     const wi=P.weeks.findIndex(w=>{const st=parseISO(w.start);return today>=st&&today<addDays(st,7);});
@@ -1372,7 +1388,7 @@ function renderHello(){
       const w=P.weeks[wi];const tdow=dow(today);
       const next=w.sessions.find(s=>s.day>=tdow)||(P.weeks[wi+1]&&P.weeks[wi+1].sessions[0]);
       const when=next?(next.day===tdow&&w.sessions.includes(next)?t("today"):DAYS[next.day]):"";
-      line=head+" "+t("hInWeek",{n:w.n,t:P.weeks.length,phase:phaseLbl(w.phase),cut:w.cutback?t("hCut"):""})+(next?t("hNext",{when,name:esc(next.name.toLowerCase()),km:next.km}):"");
+      line=head+" "+t("hInWeek",{n:w.n,t:P.weeks.filter(x=>x.phase!=="recovery").length,phase:phaseLbl(w.phase),cut:w.cutback?t("hCut"):""})+(next?t("hNext",{when,name:esc(next.name.toLowerCase()),km:next.km}):"");
     }
   }
   const R=I.race;let cd="";
@@ -1656,7 +1672,7 @@ function loadPDF(){
 /* built-in PDF fonts are Latin-1: map the typographic characters the plan uses, drop the rest */
 const pdfTxt=v=>String(v??"").replace(/[–—−]/g,"-").replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/…/g,"...").replace(/→/g,"->").replace(/≈/g,"~").replace(/≤/g,"<=").replace(/≥/g,">=").replace(/[   ]/g," ").replace(/[^\n\x20-\xFF]/g,"");
 const PDF_KIND={recovery:[79,126,171],easy:[43,135,104],long:[158,124,8],tempo:[198,91,31],hard:[201,64,90],race:[176,75,168]};
-const PDF_PHASE={base:[143,178,165],build:[108,147,200],peak:[212,84,44],taper:[201,164,71]};
+const PDF_PHASE={base:[143,178,165],build:[108,147,200],peak:[212,84,44],taper:[201,164,71],recovery:[138,164,174]};
 async function exportPDF(btn){
   if(btn)btn.disabled=true;
   let lib;
@@ -1747,7 +1763,7 @@ function normalizeSaved(p){
   const inputs={...d,goal:I.goal==="fitness"?"fitness":"race",startDate:nIso(I.startDate,d.startDate),dist:DISTS.some(x=>x.k===I.dist)?I.dist:d.dist,
     customKm:nNum(I.customKm,3,100,d.customKm),raceDate:nIso(I.raceDate,d.raceDate),weeks:Math.round(nNum(I.weeks,3,30,d.weeks)),
     curVol:opt(I.curVol,0,200),curLong:opt(I.curLong,0,45),recDist:["0","5","10","21.0975","42.195"].includes(String(I.recDist))?String(I.recDist):"0",
-    recTime:nStr(I.recTime,12),level:levelOf(I),runs:Math.round(nNum(I.runs,0,7,0)),
+    recTime:nStr(I.recTime,12),level:levelOf(I),recWeeks:recWeeksOf({goal:"race",recWeeks:I.recWeeks}),runs:Math.round(nNum(I.runs,0,7,0)),
     days:Array.isArray(I.days)?[...new Set(I.days.map(Number).filter(x=>Number.isInteger(x)&&x>=0&&x<7))].sort((a,b)=>a-b):[],
     longDay:Math.round(nNum(I.longDay,-1,6,-1)),race:null};
   if(I.race&&typeof I.race==="object"&&nStr(I.race.name,200).trim())inputs.race={name:nStr(I.race.name,200).trim(),city:nStr(I.race.city,200).trim(),url:safeUrl(I.race.url)};
@@ -1768,7 +1784,7 @@ function normalizeSaved(p){
       sessions.push({id,day,typeId,name:nStr(s.name,80)||t("ty_easy"),kind:KINDS.includes(s.kind)?s.kind:"easy",km:Math.round(nNum(s.km,0,500,0)*100)/100,desc:nStr(s.desc,4000),note:nStr(s.note,4000),...(watch?{watch}:{})});
     }
     sessions.sort((a,b)=>a.day-b.day);
-    weeks.push({n:weeks.length+1,phase:PHASES.includes(w.phase)?w.phase:"base",cutback:!!w.cutback,start,target:Math.round(nNum(w.target,0,2000,0)),note:nStr(w.note,4000),sessions});
+    weeks.push({n:weeks.length+1,phase:WEEK_PHASES.includes(w.phase)?w.phase:"base",cutback:!!w.cutback,start,target:Math.round(nNum(w.target,0,2000,0)),note:nStr(w.note,4000),sessions});
   }
   if(!weeks.length)return null;
   const M=p.plan.meta&&typeof p.plan.meta==="object"?p.plan.meta:{};const vdot=nNum(M.vdot,15,90,null),raceSec=nNum(M.raceSec,60,86400,null);

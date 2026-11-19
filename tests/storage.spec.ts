@@ -207,3 +207,17 @@ test('the experience level is saved with the plan, and older plans open as Regul
   await app.showSetup();
   await expect(page.locator('#levelSeg [data-level="regular"]')).toHaveAttribute('aria-pressed', 'true');
 });
+
+test('recovery weeks after the race are saved and reopen (BB-42)', async ({ app, page }) => {
+  await app.pick('#recSeg [data-rec="1"]');
+  await page.locator('#btnSave').click();
+  await expect(app.toast()).toHaveText('Plan saved.');
+  const p = (Object.values(await stored(page)) as any[])[0];
+  expect(p.inputs.recWeeks).toBe(1);
+  expect(p.plan.weeks.at(-1).phase).toBe('recovery');
+  await app.open();
+  await page.locator('#btnPlans').click();
+  await app.modal().getByRole('button', { name: 'Open' }).click();
+  await app.showPlan();
+  expect((await app.plan()).at(-1)!.phase).toBe('recovery');
+});
