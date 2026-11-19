@@ -430,6 +430,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 
       <section class="sec">
         <h3 data-i18n="secNow">Your running now</h3>
+        <div class="field"><span class="lbl" id="levelLbl" data-i18n="level">Experience</span><div class="seg" id="levelSeg" role="group" aria-labelledby="levelLbl"></div><div class="hint" id="levelHint"></div></div>
         <div class="row">
           <div class="field"><label for="curVol" data-i18n="curVol">Weekly volume (km)</label><input id="curVol" type="number" min="5" max="200"></div>
           <div class="field"><label for="curLong" data-i18n="curLong">Longest recent run (km)</label><input id="curLong" type="number" min="3" max="45"></div>
@@ -478,7 +479,7 @@ tr.cutback td.wk .ph::after{content:" · " attr(data-cut);color:var(--muted);fon
 <script>
 (() => {
 "use strict";
-const VERSION = "1.1.33";
+const VERSION = "1.2.0";
 const $ = s => document.querySelector(s);
 $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
@@ -488,6 +489,7 @@ planNameLabel:"Plan name",secGoal:"Goal",goalRace:"Train for a race",goalFit:"Pe
 secRace:"Race",distance:"Distance",customKm:"Custom distance (km)",raceDate:"Race date",weeks:"Weeks of training",
 secNow:"Your running now",curVol:"Weekly volume (km)",curLong:"Longest recent run (km)",recDist:"Recent race",none:"None",
 halfMarathon:"Half marathon",marathon:"Marathon",recTime:"Finish time",recTimePh:"h:mm:ss or mm:ss",
+level:"Experience",lv_new:"New to running",lv_regular:"Regular",lv_experienced:"Experienced",lvHint_new:"No hard runs in the first phase, then one a week at most. A lighter week every 3rd week, shorter easy runs.",lvHint_regular:"Up to 2 hard runs a week from 5 runs a week. A lighter week every 4th week.",lvHint_experienced:"Up to 2 hard runs a week from 4 runs a week. A lighter week every 4th week.",wk_tooHardNew:"{n} hard runs this week: new runners do best with {m}. Change one to an easy run.",wa_wkTooHardNew:"{w}: more hard runs than suit a new runner. Details on the week.",
 secWeek:"Week shape",runsPerWeek:"Runs per week",runningDays:"Running days",longDay:"Long run day",
 secTypes:"Run types",typesHint:"Description templates accept <code>{km}</code> <code>{easy}</code> <code>{tempo}</code> <code>{interval}</code> <code>{rep}</code> <code>{race}</code> <code>{mp}</code> and <code>{work}</code>, the main set that progresses through the block.",addType:"Add run type",typesCount:"Tap a session to switch it on or off. {a} of {b} on.",grpEasy:"Easy",grpQuality:"Quality",customise:"Customise workouts",customiseSub:"Phases, descriptions, add your own",alwaysOn:"Always on",
 d5k:"5K",d10k:"10K",dhm:"Half",dm:"Marathon",dcustom:"Custom",l5k:"5K",l10k:"10K",lhm:"half marathon",lm:"marathon",
@@ -586,6 +588,7 @@ planNameLabel:"Nom du plan",secGoal:"Objectif",goalRace:"Préparer une course",g
 secRace:"Course",distance:"Distance",customKm:"Distance personnalisée (km)",raceDate:"Date de la course",weeks:"Semaines d'entraînement",
 secNow:"Votre niveau actuel",curVol:"Volume hebdo (km)",curLong:"Plus longue sortie récente (km)",recDist:"Course récente",none:"Aucune",
 halfMarathon:"Semi-marathon",marathon:"Marathon",recTime:"Temps final",recTimePh:"h:mm:ss ou mm:ss",
+level:"Expérience",lv_new:"Débutant",lv_regular:"Régulier",lv_experienced:"Confirmé",lvHint_new:"Pas de séance difficile dans la première phase, puis une par semaine au plus. Une semaine allégée toutes les 3 semaines, des footings plus courts.",lvHint_regular:"Jusqu'à 2 séances difficiles par semaine à partir de 5 sorties. Une semaine allégée toutes les 4 semaines.",lvHint_experienced:"Jusqu'à 2 séances difficiles par semaine à partir de 4 sorties. Une semaine allégée toutes les 4 semaines.",wk_tooHardNew:"{n} séances difficiles cette semaine : pour un débutant, restez à {m}. Passez-en une en footing.",wa_wkTooHardNew:"{w} : plus de séances difficiles que n'en supporte un débutant. Détails sur la semaine.",
 secWeek:"Semaine type",runsPerWeek:"Sorties par semaine",runningDays:"Jours de course",longDay:"Jour de la sortie longue",
 secTypes:"Types de séances",typesHint:"Les modèles de description acceptent <code>{km}</code> <code>{easy}</code> <code>{tempo}</code> <code>{interval}</code> <code>{rep}</code> <code>{race}</code> <code>{mp}</code> et <code>{work}</code>, le corps de séance qui progresse au fil du plan.",addType:"Ajouter un type de séance",typesCount:"Touchez une séance pour l’activer ou la désactiver. {a} sur {b} activées.",grpEasy:"Faciles",grpQuality:"Qualité",customise:"Personnaliser les séances",customiseSub:"Phases, descriptions, vos propres séances",alwaysOn:"Toujours activée",
 d5k:"5 km",d10k:"10 km",dhm:"Semi",dm:"Marathon",dcustom:"Autre",l5k:"5 km",l10k:"10 km",lhm:"semi-marathon",lm:"marathon",
@@ -705,14 +708,14 @@ const fmtDay = d => d.toLocaleDateString(LOC(),LANG==="fr"?{weekday:"long",day:"
 
 function defaultName(){const I=S.inputs;return I.goal==="fitness"?cap(t("fitBlock",{n:I.weeks})):cap(t("blockName",{lbl:distLabel(I)}));}
 const nextMonday=()=>{const d=new Date();d.setHours(12,0,0,0);d.setDate(d.getDate()+((8-d.getDay())%7||7));return iso(d);};
-const DEFAULT_INPUTS = () => ({goal:"race",startDate:nextMonday(),dist:"hm",customKm:15,raceDate:nextSundayWeeks(12),weeks:12,curVol:30,curLong:12,recDist:"10",recTime:"52:00",runs:5,days:DEFAULT_DAYS[5].slice(),longDay:6,race:null});
+const DEFAULT_INPUTS = () => ({goal:"race",startDate:nextMonday(),dist:"hm",customKm:15,raceDate:nextSundayWeeks(12),weeks:12,curVol:30,curLong:12,recDist:"10",recTime:"52:00",level:"regular",runs:5,days:DEFAULT_DAYS[5].slice(),longDay:6,race:null});
 
 /* New plan starts empty; the plan only builds once runs per week, weekly volume and longest run are filled in. */
 const BLANK_INPUTS = () => ({...DEFAULT_INPUTS(),curVol:"",curLong:"",recDist:"0",recTime:"",runs:0,days:[],longDay:-1,race:null});
 const BLANK_TYPES = () => DEFAULT_TYPES().map(x=>({...x,on:x.id==="easy"}));
 /* ---------- plan engine: engine.js (BB-7) ---------- */
 BBEngine.setLocale({t,days:()=>DAYS,fmtDate});
-const {durSec,kmIn,DISTS,PHASES,DEFAULT_DAYS,TYPE_DEFS,uid,clamp,r05,iso,parseISO,addDays,dow,raceTimeSec,REC_LBL,REC_EX,badRaceTime,badTimeMsg,vdotOf,velAt,raceTimeMin,fmtPace,fmtDur,distKm,missingSetup,genInputs,distLabel,cat,paces,effectiveDays,cyc,pickHardDays,workFor,fill,watchPlan,generate,raceDesc,warnings,maxHardRuns,longBoxedIn,weekChecks,weekCheckSummary}=BBEngine;
+const {LEVELS,levelOf,durSec,kmIn,DISTS,PHASES,DEFAULT_DAYS,TYPE_DEFS,uid,clamp,r05,iso,parseISO,addDays,dow,raceTimeSec,REC_LBL,REC_EX,badRaceTime,badTimeMsg,vdotOf,velAt,raceTimeMin,fmtPace,fmtDur,distKm,missingSetup,genInputs,distLabel,cat,paces,effectiveDays,cyc,pickHardDays,workFor,fill,watchPlan,generate,raceDesc,warnings,maxHardRuns,longBoxedIn,weekChecks,weekCheckSummary}=BBEngine;
 
 /* ---------- state ---------- */
 const S={nameAuto:true,inputs:DEFAULT_INPUTS(),types:DEFAULT_TYPES(),plan:null,planId:uid(),name:cap(t("blockName",{lbl:t("lhm")})),edited:false,savedAt:null,isExample:true,saved:[],saving:false,dirty:false};
@@ -730,6 +733,9 @@ function renderSetup(){
   $("#raceDateF").hidden=fit;$("#startDateF").hidden=!fit;$("#raceBox").hidden=fit;$("#focusHint").hidden=!fit;
   $("#distLbl").textContent=t(fit?"focusDist":"distance");$("#focusHint").textContent=t("focusHint");
   $("#curVol").value=I.curVol;$("#curLong").value=I.curLong;$("#recDist").value=I.recDist;$("#recTime").value=I.recTime;
+  const lv=levelOf(I);
+  $("#levelSeg").innerHTML=LEVELS.map(l=>`<button type="button" data-level="${l}" aria-pressed="${lv===l}">${t("lv_"+l)}</button>`).join("");
+  $("#levelHint").textContent=t("lvHint_"+lv);
   $("#runsSeg").innerHTML=[1,2,3,4,5,6,7].map(n=>`<button type="button" data-runs="${n}" aria-pressed="${+I.runs===n}">${n}</button>`).join("");
   $("#daysSeg").innerHTML=DAYS1.map((d,i)=>`<button type="button" data-day="${i}" aria-label="${DAYS[i]}" aria-pressed="${I.days.includes(i)}" class="${+I.longDay===i?"long":""}">${d}</button>`).join("");
   $("#daysCount").textContent=t("daysCount",{a:I.days.length,b:I.runs||"-"});
@@ -791,6 +797,7 @@ $("#setup").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;const I=S.inputs;
   if(b.dataset.goal){const prevName=defaultName();I.goal=b.dataset.goal;if(S.nameAuto||S.name===prevName){S.nameAuto=true;S.name=defaultName();$("#planName").value=S.name;}renderSetup();inputsChanged();}
   else if(b.dataset.dist){I.dist=b.dataset.dist;if(!S.savedAt&&S.isExample)S.name=defaultName();renderSetup();$("#planName").value=S.name;inputsChanged();}
+  else if(b.dataset.level){I.level=b.dataset.level;renderSetup();inputsChanged();}
   else if(b.dataset.runs){I.runs=+b.dataset.runs;I.days=DEFAULT_DAYS[I.runs].slice();if(!I.days.includes(+I.longDay))I.longDay=I.days[I.days.length-1];renderSetup();inputsChanged();}
   else if(b.dataset.day!==undefined){const d=+b.dataset.day;I.days=I.days.includes(d)?I.days.filter(x=>x!==d):[...I.days,d].sort((a,b)=>a-b);renderSetup();inputsChanged();}
   else if(b.dataset.phase){const t=S.types[+b.closest(".type").dataset.i];const p=b.dataset.phase;t.phases=t.phases.includes(p)?t.phases.filter(x=>x!==p):PHASES.filter(x=>x===p||t.phases.includes(x));if(!t.phases.length)t.phases=[p];const open=b.closest("details").open;renderTypes();if(open)document.querySelector(`.type[data-i="${S.types.indexOf(t)}"] details`).open=true;inputsChanged();}
@@ -1703,7 +1710,7 @@ function normalizeSaved(p){
   const inputs={...d,goal:I.goal==="fitness"?"fitness":"race",startDate:nIso(I.startDate,d.startDate),dist:DISTS.some(x=>x.k===I.dist)?I.dist:d.dist,
     customKm:nNum(I.customKm,3,100,d.customKm),raceDate:nIso(I.raceDate,d.raceDate),weeks:Math.round(nNum(I.weeks,3,30,d.weeks)),
     curVol:opt(I.curVol,0,200),curLong:opt(I.curLong,0,45),recDist:["0","5","10","21.0975","42.195"].includes(String(I.recDist))?String(I.recDist):"0",
-    recTime:nStr(I.recTime,12),runs:Math.round(nNum(I.runs,0,7,0)),
+    recTime:nStr(I.recTime,12),level:levelOf(I),runs:Math.round(nNum(I.runs,0,7,0)),
     days:Array.isArray(I.days)?[...new Set(I.days.map(Number).filter(x=>Number.isInteger(x)&&x>=0&&x<7))].sort((a,b)=>a-b):[],
     longDay:Math.round(nNum(I.longDay,-1,6,-1)),race:null};
   if(I.race&&typeof I.race==="object"&&nStr(I.race.name,200).trim())inputs.race={name:nStr(I.race.name,200).trim(),city:nStr(I.race.city,200).trim(),url:safeUrl(I.race.url)};

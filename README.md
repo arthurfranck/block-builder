@@ -21,7 +21,7 @@ Just want one session? **Quick workout** builds a single run and sends it to you
 For runners. Every rule and number is in [Features in detail](docs/features.md).
 
 - **Goals:** race (5K, 10K, half, marathon, custom) or personal plan, with a warning when a half or marathon plan peaks too low.
-- **Sound plans:** base, build, peak and taper phases, cutback weeks, +10% a week at most, and a long run kept to a share of the week, a maximum duration and a steady growth.
+- **Sound plans:** base, build, peak and taper phases, cutback weeks and hard runs set by your experience level (new, regular, experienced), +10% a week at most, and a long run kept to a share of the week, a maximum duration and a steady growth.
 - **Paces:** easy, tempo, interval and race paces from a recent race result.
 - **Run types:** nine built in (easy to race pace), plus your own, with editable descriptions.
 - **Checks:** warnings for too many hard runs in a week, hard runs next to each other or the long run, and running days with no rest.

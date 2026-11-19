@@ -23,9 +23,10 @@ const PROFILES = {
 const TAPER = { '5k': 1, '10k': 1, hm: 2, m: 3 };
 const km = (w) => w.sessions.reduce((a, s) => a + s.km, 0);
 
+for (const level of ['regular', 'new', 'experienced'])
 for (const [name, { inp: p, on }] of Object.entries(PROFILES)) {
-  describe(`profile ${name}`, () => {
-    const inp = { ...base, ...p };
+  describe(`profile ${name} · ${level}`, () => {
+    const inp = { ...base, ...p, level };
     const ty = types(on);
     const plan = E.generate(inp, ty);
     const W = plan.weeks;
@@ -43,9 +44,9 @@ for (const [name, { inp: p, on }] of Object.entries(PROFILES)) {
       assert.equal(W.filter((w) => w.phase === 'taper').length, n);
     });
 
-    test('cuts back every 4th week before the taper', () => {
-      const nb = W.filter((w) => w.phase !== 'taper').length;
-      W.forEach((w, i) => assert.equal(w.cutback, i < nb - 1 && nb >= 5 && (i + 1) % 4 === 0, `week ${w.n}`));
+    test('cuts back every 4th week before the taper (every 3rd for new runners)', () => {
+      const nb = W.filter((w) => w.phase !== 'taper').length, every = level === 'new' ? 3 : 4;
+      W.forEach((w, i) => assert.equal(w.cutback, i < nb - 1 && nb >= 5 && (i + 1) % every === 0, `week ${w.n}`));
     });
 
     test('grows at most 10% a week (cutbacks and taper skipped)', () => {
@@ -57,8 +58,9 @@ for (const [name, { inp: p, on }] of Object.entries(PROFILES)) {
       assert.ok(!E.warnings(inp, ty, plan, false).some((x) => x.startsWith('wa_steep')));
     });
 
-    test('keeps 1 hard run a week at 4 runs or fewer, 2 above', () => {
-      const max = p.runs <= 4 ? 1 : 2;
+    test('keeps hard runs to the level: new 1, regular 2 from 5 runs, experienced 2 from 4 runs', () => {
+      const max = level === 'new' ? 1 : p.runs <= (level === 'experienced' ? 3 : 4) ? 1 : 2;
+      assert.equal(E.maxHardRuns(inp), max);
       for (const w of W) assert.ok(w.sessions.filter((s) => s.kind === 'hard').length <= max, `week ${w.n}`);
     });
 
@@ -104,7 +106,51 @@ for (const [name, { inp: p, on }] of Object.entries(PROFILES)) {
 }
 
 /* Known gaps, kept visible until their backlog items land. */
-test.todo('BB-41: week 1 stays within the stated weekly volume (profile A starts at 16 km for 15 km/wk)');
+test.todo('BB-41: week 1 stays within the stated weekly volume at Regular (profile A starts at 16 km for 15 km/wk; New starts at 15)');
+
+describe('BB-49 · experience level', () => {
+  const A = { ...base, ...PROFILES['A · beginner half, 3 runs, 15 km/wk'].inp }, onA = PROFILES['A · beginner half, 3 runs, 15 km/wk'].on;
+  const D = { ...base, ...PROFILES['D · slow marathon, 4 runs, half in 2:30'].inp };
+  const shape = (plan) => plan.weeks.map((w) => [w.phase, w.cutback, w.sessions.map((s) => [s.day, s.typeId, s.km])]);
+  const hard = (w) => w.sessions.filter((s) => s.kind === 'hard').length;
+
+  test('no level, or an unknown one, builds the same plan as Regular', () => {
+    const reg = shape(E.generate({ ...D, level: 'regular' }, types()));
+    assert.deepEqual(shape(E.generate(D, types())), reg);
+    assert.deepEqual(shape(E.generate({ ...D, level: 'pro' }, types())), reg);
+    assert.equal(E.levelOf({}), 'regular');
+  });
+
+  test('new: no hard runs in the base phase, at most 1 a week after', () => {
+    const W = E.generate({ ...A, level: 'new' }, types(onA)).weeks;
+    for (const w of W) assert.ok(hard(w) <= (w.phase === 'base' ? 0 : 1), `week ${w.n} (${w.phase})`);
+    assert.ok(W.some((w) => w.phase === 'build' && hard(w) === 1), 'hard runs start in build');
+  });
+
+  test('new: shorter minimum runs keep week 1 within the stated weekly volume (profile A)', () => {
+    const W = E.generate({ ...A, level: 'new' }, types(onA)).weeks;
+    assert.ok(km(W[0]) <= A.curVol + 0.01, `week 1: ${km(W[0])} km for ${A.curVol} km/wk`);
+    for (const w of W) for (const s of w.sessions) if (s.kind === 'easy') assert.ok(s.km >= 3, `week ${w.n}: ${s.km} km`);
+  });
+
+  test('experienced: 2 hard runs a week at 4 runs in build and peak (profile D), still spaced', () => {
+    const inp = { ...D, level: 'experienced' }, W = E.generate(inp, types()).weeks;
+    assert.ok(W.filter((w) => (w.phase === 'build' || w.phase === 'peak') && !w.cutback).every((w) => hard(w) === 2));
+    W.forEach((w, i) => assert.deepEqual(E.weekChecks(w, inp, W[i - 1]).map((c) => c.k), [], `week ${w.n}`));
+  });
+
+  test('experienced: keeps 1 hard run when the days leave no gap (Thu-Fri-Sat-Sun)', () => {
+    const inp = { ...D, level: 'experienced', days: [3, 4, 5, 6] }, W = E.generate(inp, types()).weeks;
+    for (const w of W) assert.ok(hard(w) <= 1, `week ${w.n}`);
+  });
+
+  test('week check names the new-runner limit', () => {
+    const inp = { ...base, ...PROFILES['C · weekday half, Mon-Fri, long run Friday'].inp };
+    const W = E.generate(inp, types()).weeks, w = W.find((x) => hard(x) === 2);
+    assert.deepEqual(E.weekChecks(w, { ...inp, level: 'new' }, null).map((c) => c.txt.split(' ')[0]), ['wk_tooHardNew']);
+    assert.deepEqual(E.weekChecks(w, inp, null).map((c) => c.k), []);
+  });
+});
 
 describe('pace and time', () => {
   test('durSec and kmIn convert both ways', () => {

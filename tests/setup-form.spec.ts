@@ -267,3 +267,32 @@ test.describe('New plan starts blank', () => {
     for (const w of weeks.slice(0, -1)) expect.soft(w.sessions, `week ${w.n}`).toHaveLength(2);
   });
 });
+
+test.describe('experience level (BB-49)', () => {
+  const hardRuns = (w: import('./helpers').Week) => w.sessions.filter((s) => ['hard', 'tempo'].includes(s.kind)).length;
+
+  test('Regular by default, and New builds a gentler plan', async ({ app, page }) => {
+    await app.showSetup();
+    await expect(page.locator('#levelSeg [data-level="regular"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#levelHint')).toHaveText('Up to 2 hard runs a week from 5 runs a week. A lighter week every 4th week.');
+    expect((await app.plan())[0].sessions.some((s) => ['hard', 'tempo'].includes(s.kind))).toBe(true);
+
+    await app.pick('#levelSeg [data-level="new"]');
+    await expect(page.locator('#levelSeg [data-level="new"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#levelHint')).toContainText('No hard runs in the first phase');
+    await app.showPlan();
+    const weeks = await app.plan();
+    for (const w of weeks) expect(hardRuns(w), `week ${w.n} (${w.phase})`).toBeLessThanOrEqual(/base/i.test(w.phase) ? 0 : 1);
+    expect(weeks.filter((w) => w.cutback).map((w) => w.n)).toEqual([3, 6, 9]);
+  });
+
+  test('the choice is in French too', async ({ app, page }) => {
+    await app.pick('#levelSeg [data-level="experienced"]');
+    await app.setLang('fr');
+    await page.locator('#langSel').press('Escape');
+    await expect(page.locator('#prefsPanel')).toBeHidden();
+    await app.showSetup();
+    await expect(page.locator('#levelSeg [data-level="experienced"]')).toHaveText('Confirmé');
+    await expect(page.locator('#levelHint')).toContainText('à partir de 4 sorties');
+  });
+});
