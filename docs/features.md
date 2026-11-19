@@ -70,6 +70,7 @@ Build one workout from the run types and send it to a watch without changing the
 - **Calendar:** `.ics`.
 - **Plan file:** a format dropdown for spreadsheet (`.csv`) or printable PDF (A4 landscape week-by-day grid with phases, weekly km, run descriptions and plan totals). The dropdown remembers the last format picked.
 - **All plans:** My plans → Export / Import, see [Privacy and storage](../README.md#privacy-and-storage).
+- **Importing a plan you already have** (same plan, for example exported from another device): a newer copy in the file replaces yours; the same version is skipped; if yours was changed more recently, yours is kept and the file's version is added beside it as "(imported)". The toast says which happened. If the plan you have open is replaced, it reloads.
 
 ## Settings and display
 

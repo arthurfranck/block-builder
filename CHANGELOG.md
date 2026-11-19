@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.4.1] - 2026-11-19
+
+### Fixed
+- Importing a plan you already have no longer overwrites it silently (BB-4). A newer copy in the file replaces yours, the same version is skipped, and if yours was changed more recently it is kept and the file's version is added as "(imported)". The open plan reloads when it is replaced, so autosave can't write over the import.
+
 ## [1.4.0] - 2026-11-19
 
 ### Added
