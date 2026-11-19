@@ -6,7 +6,7 @@ import type { Page } from '@playwright/test';
  *
  * Known issues: rule ids listed here are let through so that new problems still stand out.
  * Each scan must report exactly these: a new problem fails the test, and so does fixing
- * one of these (then remove it from the list and from the README's Tests section).
+ * one of these (then remove it from the list and from Known issues in tests/README.md).
  * None at the moment (the two found when the suite was written were fixed in BB-14).
  */
 const KNOWN: string[] = [];
@@ -74,7 +74,7 @@ test('the known issues are still there', async ({ app, page }) => {
   await app.showPlan();
   details.push(...(await scan(page)).details);
   const found = KNOWN.filter((id) => details.some((d) => d.startsWith(id + ' ')));
-  expect(found, 'a known issue is fixed: remove it from KNOWN and from the README').toEqual(KNOWN);
+  expect(found, 'a known issue is fixed: remove it from KNOWN and from tests/README.md').toEqual(KNOWN);
 });
 
 test('a rest day is announced with what it shows, plus the week and day', async ({ app, page }) => {
