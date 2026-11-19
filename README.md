@@ -31,7 +31,7 @@ For runners. Every rule and number is in [Features in detail](docs/features.md).
 - **Quick workout:** one run, built and sent in seconds, optionally added to the plan.
 - **Race countdown:** optional, with a link to the race page.
 - **Exports:** Apple Watch (`.workout`), Garmin and other devices (`.fit`), calendar (`.ics`), spreadsheet (`.csv`) and printable PDF.
-- **Your way:** English or French, dark, light or auto theme, phone layout, keyboard and screen reader support.
+- **Your way:** English or French, dark, light or auto theme, phone layout with a card per week, keyboard and screen reader support.
 
 ## Privacy and storage
 

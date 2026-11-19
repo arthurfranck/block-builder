@@ -76,5 +76,5 @@ Build one workout from the run types and send it to a watch without changing the
 
 - **Languages:** English and French (the browser language by default), changed from the gear menu at the end of the header.
 - **Themes:** dark "night track" by default, with a light theme or Auto (follows the device) in the gear menu; the choice is remembered on the device. The volt accent marks only today's run and the main button. Cards are told apart by their surface rather than outlines; only the Today card is framed and lifted.
-- **Phone layout:** Plan and Settings tabs.
+- **Phone layout:** Plan and Settings tabs. Under 760 px wide the plan is a list of week cards, one row per day (rest days included, tap to add a run), instead of the wide grid; drag and drop stays on the desktop grid. Weeks before the current one fold behind "Show N earlier weeks", so the current week (outlined) is the first card; shown again, they are dimmed. A finished plan shows every week.
 - **Keyboard and screen readers:** messages such as "Plan saved" are announced, dialogs are named by their title, Tab stays inside an open dialog, and closing it returns to the button or run that opened it.
