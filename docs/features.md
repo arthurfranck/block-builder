@@ -13,7 +13,9 @@ What the page does, rule by rule. The [README](../README.md) has the one-line ve
 ## Building the plan
 
 - **Goals:** train for a race (5K, 10K, half marathon, marathon, or a custom distance) or build a personal plan over a set number of weeks.
-- **New plan:** starts empty. Pick runs per week, enter your weekly volume and longest run, and the plan builds. Only Easy run is switched on until you add more types.
+- **Settings sections:** Goal, Race (Focus and dates for a personal plan), Your running now, Week shape and Run types, on every screen size.
+- **New plan:** starts empty, distance, race date and weeks included. The plan builds once distance, race date (race goal), weeks of training, weekly volume, longest run and runs per week are filled in; until then the plan side lists what is missing. Only Easy run is switched on until you add more types.
+- **New plan on a phone (under 900 px):** 4 steps, one at a time: Goal (three cards: Train for a race, Personal plan, Quick workout, which opens the quick workout and makes no plan), Race or Focus and dates, Your running now, Your week (week shape and run types). Next checks that step's required fields and says what is missing; from step 3 the load profile previews the plan once it can be built. Build my plan on step 4 opens the plan. Back goes a step back; Show all settings leaves the steps for the full form. Desktop shows the full form.
 - **Runs per week:** 1 to 7.
 - **Experience level:** New to running, Regular (the default, and what plans saved before 1.2.0 use) or Experienced, under "Your running now".
   - New to running: no hard runs in the base phase (strides only, if switched on), then at most 1 hard run a week; a cutback week every 3rd week; shorter minimum runs (easy 3 km, recovery 2.5 km, hard 4 km instead of 4, 3 and 5).

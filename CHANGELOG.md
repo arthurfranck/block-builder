@@ -2,6 +2,15 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.6.0] - 2026-11-19
+
+### Added
+- New plan on a phone walks you through 4 steps: Goal, Race (Focus and dates for a personal plan), Your running now and Your week (BB-34). Step 1 offers Train for a race, Personal plan or Quick workout. Each step checks its fields before Next, the load profile previews the plan on the last steps, and Build my plan opens it. Back goes a step back; Show all settings leaves the steps for the full form.
+
+### Changed
+- New plan also starts with distance, race date and weeks of training blank, and the plan waits until they are filled in (BB-30).
+- The settings are grouped as Goal, Race (or Focus and dates), Your running now, Week shape and Run types, on desktop too.
+
 ## [1.5.1] - 2026-11-19
 
 ### Fixed

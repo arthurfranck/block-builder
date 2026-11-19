@@ -221,8 +221,10 @@ test.describe('warnings', () => {
 });
 
 test.describe('New plan starts blank', () => {
-  test.beforeEach(async ({ app, page }) => {
+  test.beforeEach(async ({ app, page, mobile }) => {
     await page.locator('#btnNew').click();
+    // phones walk the setup steps (BB-34, tested below); these tests use the full form
+    if (mobile) await page.locator('#introNav [data-intro="skip"]').click();
   });
 
   test('the setup is empty and only Easy is ticked', async ({ app, page }) => {
@@ -232,22 +234,24 @@ test.describe('New plan starts blank', () => {
     await expect(page.locator('#runsSeg [data-runs="2"]')).toBeVisible();
     await expect(page.locator('#daysSeg button[aria-pressed="true"]')).toHaveCount(0);
     await expect(page.locator('#longDay')).toHaveValue('-1');
-    for (const id of ['curVol', 'curLong', 'recTime']) await expect(page.locator('#' + id)).toHaveValue('');
+    await expect(page.locator('#distSeg button[aria-pressed="true"]')).toHaveCount(0);
+    for (const id of ['raceDate', 'weeks', 'curVol', 'curLong', 'recTime']) await expect(page.locator('#' + id)).toHaveValue('');
     await expect(page.locator('#recDist')).toHaveValue('0');
     const ticked = await page.locator('#typeChips input[type=checkbox]:checked').evaluateAll((els) => els.map((e) => e.id));
     expect(ticked).toEqual(['t-on-easy']);
   });
 
-  test('no plan until runs per week, weekly volume and longest run are set', async ({ app, page }) => {
+  test('no plan until distance, race date, weeks, runs per week, weekly volume and longest run are set', async ({ app, page }) => {
     await app.showPlan();
     await expect(page.locator('table.grid')).toHaveCount(0);
     await expect(page.locator('#plan .banner.info')).toContainText('Fill in the setup');
-    await expect(page.locator('#plan .banner.info li')).toHaveCount(3);
-    await app.configure({ runs: 3, curVol: 25 });
+    await expect(page.locator('#plan .banner.info li')).toHaveText(['Choose a distance.', 'Pick the race date.', 'Enter the weeks of training (3 to 30).',
+      'Enter your current weekly volume.', 'Enter your longest recent run.', 'Choose how many runs per week.']);
+    await app.configure({ runs: 3, curVol: 25, curLong: 10 });
     await app.showPlan();
     await expect(page.locator('table.grid')).toHaveCount(0);
-    await expect(page.locator('#plan .banner.info li')).toHaveCount(1);
-    await app.configure({ curLong: 10 });
+    await expect(page.locator('#plan .banner.info li')).toHaveCount(3);
+    await app.configure({ dist: 'hm', raceDate: '2027-02-28', weeks: 12 });
     await app.showPlan();
     await expect(page.locator('table.grid')).toBeVisible();
     expect(await app.plan()).toHaveLength(12);
@@ -260,7 +264,7 @@ test.describe('New plan starts blank', () => {
   });
 
   test('a plan built from the blank setup has only easy runs', async ({ app }) => {
-    await app.configure({ runs: 2, curVol: 20, curLong: 8 });
+    await app.configure({ dist: 'hm', raceDate: '2027-02-28', weeks: 12, runs: 2, curVol: 20, curLong: 8 });
     await app.showPlan();
     const weeks = await app.plan();
     expect(weeks.flatMap((w) => w.sessions).filter((s) => s.kind !== 'race').every((s) => s.kind === 'easy' || s.kind === 'long')).toBe(true);
@@ -295,4 +299,76 @@ test.describe('experience level (BB-49)', () => {
     await expect(page.locator('#levelSeg [data-level="experienced"]')).toHaveText('Confirmé');
     await expect(page.locator('#levelHint')).toContainText('à partir de 4 sorties');
   });
+});
+
+test.describe('setup steps on phones (BB-34)', () => {
+  test.beforeEach(async ({ app, page, mobile }) => {
+    test.skip(!mobile, 'phone-only behaviour');
+    await page.locator('#btnNew').click();
+  });
+  const nav = (page: import('@playwright/test').Page) => page.locator('#introNav');
+  const next = (page: import('@playwright/test').Page) => nav(page).locator('[data-intro="next"]');
+
+  test('a new plan opens on step 1 with three choices, and a goal card moves on to step 2', async ({ app, page }) => {
+    await expect(page.locator('#setup')).toBeVisible();
+    await expect(nav(page).locator('.intro-step')).toHaveText('Step 1 of 4 · Goal');
+    await expect(page.locator('#introCards .icard')).toHaveText([/^Train for a race/, /^Personal plan/, /^Quick workout/]);
+    await expect(page.locator('#setup .sec[data-step="2"]')).toBeHidden();
+    await page.locator('#introCards [data-goal="race"]').tap();
+    await expect(nav(page).locator('.intro-step')).toHaveText('Step 2 of 4 · Race');
+    await expect(page.locator('#setup .sec[data-step="2"]')).toBeVisible();
+    await expect(page.locator('#setup .sec[data-step="1"]')).toBeHidden();
+  });
+
+  test('each step checks its own fields before Next, then the plan is built', async ({ app, page }) => {
+    await page.locator('#introCards [data-goal="race"]').tap();
+    await next(page).tap();
+    await expect(page.locator('#introErr')).toHaveText('Before going on: Choose a distance. Pick the race date. Enter the weeks of training (3 to 30).');
+    await page.locator('#distSeg [data-dist="10k"]').tap();
+    await app.setField('raceDate', '2027-02-28');
+    await app.setField('weeks', 10);
+    await next(page).tap();
+    await expect(nav(page).locator('.intro-step')).toHaveText('Step 3 of 4 · Your running now');
+    await expect(page.locator('#introErr')).toBeHidden();
+    await next(page).tap();
+    await expect(page.locator('#introErr')).toContainText('Enter your current weekly volume.');
+    await app.setField('curVol', 25);
+    await app.setField('curLong', 9);
+    await next(page).tap();
+    await expect(nav(page).locator('.intro-step')).toHaveText('Step 4 of 4 · Your week');
+    await expect(nav(page).locator('[data-intro="next"]')).toHaveText('Build my plan');
+    await next(page).tap();
+    await expect(page.locator('#introErr')).toHaveText('Before going on: Choose how many runs per week.');
+    await page.locator('#runsSeg [data-runs="4"]').tap();
+    await expect(nav(page).locator('.intro-prev svg')).toBeVisible();
+    await next(page).tap();
+    await expect(page.locator('#plan')).toBeVisible();
+    await expect(page.locator('#introNav')).toBeHidden();
+    expect(await app.plan()).toHaveLength(10);
+    await expect(page.locator('#planName')).toHaveValue('10K block');
+  });
+
+  test('Back returns to the previous step, and Show all settings leaves the steps', async ({ app, page }) => {
+    await page.locator('#introCards [data-goal="fitness"]').tap();
+    await expect(nav(page).locator('.intro-step')).toHaveText('Step 2 of 4 · Focus and dates');
+    await nav(page).locator('[data-intro="back"]').tap();
+    await expect(nav(page).locator('.intro-step')).toHaveText('Step 1 of 4 · Goal');
+    await nav(page).locator('[data-intro="skip"]').tap();
+    await expect(nav(page)).toBeHidden();
+    for (const n of ['1', '2', '3', '4']) await expect(page.locator(`#setup .sec[data-step="${n}"]`).first()).toBeVisible();
+  });
+
+  test('the Quick workout card opens the quick workout', async ({ app, page }) => {
+    await page.locator('#introCards [data-intro="quick"]').tap();
+    await expect(page.locator('#modalRoot .modal').getByRole('heading')).toHaveText('Quick workout');
+  });
+});
+
+test('on desktop a new plan shows the whole form, grouped in four sections (BB-34)', async ({ app, page, mobile }) => {
+  test.skip(mobile, 'desktop-only behaviour');
+  await page.locator('#btnNew').click();
+  await expect(page.locator('#introNav')).toBeHidden();
+  await expect(page.locator('#setup .sec h3')).toHaveText(['Goal', 'Race', 'Your running now', 'Week shape', 'Run types']);
+  await page.locator('#goalSeg [data-goal="fitness"]').click();
+  await expect(page.locator('#secRaceH')).toHaveText('Focus and dates');
 });
