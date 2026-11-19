@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.4.0] - 2026-11-19
+
+### Added
+- Recovery after the race: None (the default), 1 week or 2 weeks, under the race date (BB-42). The plan then carries on after race day with easy weeks: no hard runs, fewer and shorter runs (about 40% then 60% of your biggest week, 30% then 50% after a marathon), nothing in the two days after the race, strides back in the second week. Weeks to go, the race flag and the training weeks don't change; the header, load profile, calendar, spreadsheet and PDF show the recovery weeks.
+
 ## [1.3.0] - 2026-11-19
 
 ### Added

@@ -16,6 +16,7 @@ const cap = (x) => String(x).charAt(0).toUpperCase() + String(x).slice(1);
 
 const DISTS = [{k:"5k",km:5},{k:"10k",km:10},{k:"hm",km:21.0975},{k:"m",km:42.195},{k:"custom",km:null}];
 const PHASES = ["base","build","peak","taper"];
+const WEEK_PHASES = [...PHASES,"recovery"]; /* BB-42: recovery weeks after race day; not a phase run types can be set to */
 const DEFAULT_DAYS = {1:[6],2:[3,6],3:[1,3,6],4:[1,2,4,6],5:[0,1,3,4,6],6:[0,1,2,4,5,6],7:[0,1,2,3,4,5,6]};
 const uid = () => Math.random().toString(36).slice(2,10);
 const clamp = (v,a,b) => Math.min(b,Math.max(a,v));
@@ -60,6 +61,8 @@ const LONG_STEP_KM=2, LONG_STEP_MIN=15;
 const LEVELS=["new","regular","experienced"];
 function levelOf(inp){return LEVELS.includes(inp&&inp.level)?inp.level:"regular";}
 const CUT_EVERY=lv=>lv==="new"?3:4; /* cutback week rhythm */
+/* post-race recovery weeks (BB-42): 0 (default), 1 or 2, race goal only */
+const recWeeksOf=inp=>inp&&inp.goal!=="fitness"?clamp(Math.round(+inp.recWeeks||0),0,2):0;
 function distKm(inp){const d=DISTS.find(x=>x.k===inp.dist);return d&&d.km?d.km:clamp(+inp.customKm||10,3,100);}
 function missingSetup(I){const m=[];if(!(+I.runs>=1))m.push("needRuns");if(!(+I.curVol>0))m.push("needVol");if(!(+I.curLong>0))m.push("needLong");return m;}
 function genInputs(I){return {...I,runs:+I.runs>=1?+I.runs:5,days:+I.runs>=1?I.days:[],curVol:+I.curVol>0?I.curVol:30,curLong:+I.curLong>0?I.curLong:12};}
@@ -284,7 +287,30 @@ function generate(inp,types){
     sessions.sort((a,b)=>a.day-b.day);
     weeks.push({n:i+1,phase,cutback:isCut,start:iso(addDays(start,7*i)),target:Math.round(target),note:"",sessions});
   }
-  return {weeks,meta:{noRace,D,c,taperN,peakV:Math.round(peakV),start:iso(start),vdot:P.vdot,raceSec:P.raceSec||null,racePace:P.vdot?P.txt.race:null}};
+  /* BB-42: easy weeks after race day. Fewer, shorter runs (about 40% then 60% of the peak week, 30% then 50% after a marathon),
+     nothing in the two days after the race, no hard runs, strides back in the second week */
+  const RW=recWeeksOf(inp);
+  if(RW){
+    const all=effectiveDays({...inp,runs}),fr=c==="m"?[0.3,0.5]:[0.4,0.6];
+    for(let r=0;r<RW;r++){
+      const i=W+r,target=peakV*fr[r];
+      const n=Math.max(Math.min(runs,2),runs-(r===0?2:1));
+      const free=all.filter(d=>7*(r+1)+d-raceDow>=3);
+      const pool=free.length>=n?free:[0,1,2,3,4,5,6].filter(d=>7*(r+1)+d-raceDow>=3);
+      let best=pool.slice(0,n),bg=-1;
+      for(const cmb of combos(pool,Math.min(n,pool.length))){let g=7;for(let a=0;a<cmb.length;a++)for(let b=a+1;b<cmb.length;b++)g=Math.min(g,cyc(cmb[a],cmb[b]));if(g>bg){bg=g;best=cmb;}}
+      const lD=best.includes(+inp.longDay)?+inp.longDay:best[best.length-1];
+      const roles=best.map(d=>({d,t:easyT,w:r>0&&d===lD&&best.length>1?1.5:1}));
+      if(r===0&&recT&&roles.length)roles[0].t=recT;
+      if(r>0&&stridesT){const s=roles.find(x=>x.d!==lD)||roles[0];if(s)s.t=stridesT;}
+      const sumW=roles.reduce((a,x)=>a+x.w,0)||1;
+      const sessions=roles.map(x=>{const km=r05(clamp(target*x.w/sumW,3,r===0?10:14));const w=workFor(x.t,{p:0.3,D,c,taper:false,P,phase:"recovery"});
+        return {id:uid(),day:x.d,typeId:x.t.id,name:x.t.name,kind:x.t.kind,km,desc:fill(x.t.tpl,{...P.txt,km,work:fill(w.text||"",P.txt)}),note:"",watch:watchPlan(x.t.kind,km,w)};});
+      sessions.sort((a,b)=>a.day-b.day);
+      weeks.push({n:i+1,phase:"recovery",cutback:false,start:iso(addDays(start,7*i)),target:Math.round(target),note:"",sessions});
+    }
+  }
+  return {weeks,meta:{noRace,D,c,taperN,recN:RW,peakV:Math.round(peakV),start:iso(start),vdot:P.vdot,raceSec:P.raceSec||null,racePace:P.vdot?P.txt.race:null}};
 }
 function raceDesc(inp,P){
   const lbl=distLabel(inp);
@@ -303,7 +329,8 @@ function warnings(inp,types,plan,edited){
   if(inp.goal!=="fitness"&&c==="m"&&+inp.curLong<14)w.push(t("wa_mLong"));
   /* goal readiness (BB-40): longest run before race day and biggest week, against what a half or marathon usually needs */
   if(inp.goal!=="fitness"&&(c==="hm"||c==="m")&&plan.weeks.length){
-    const pre=plan.weeks.filter(x=>!x.sessions.some(s=>s.kind==="race"));
+    const ri=plan.weeks.findIndex(x=>x.sessions.some(s=>s.kind==="race"));
+    const pre=(ri>=0?plan.weeks.slice(0,ri):plan.weeks).filter(x=>x.phase!=="recovery");
     const lr=Math.max(0,...pre.flatMap(x=>x.sessions.map(s=>+s.km||0)));
     const pk=Math.max(0,...pre.map(x=>x.sessions.reduce((a,s)=>a+(+s.km||0),0)));
     const tl=D*(c==="m"?.75:.6),tp=c==="m"?45:30;
@@ -325,7 +352,7 @@ function warnings(inp,types,plan,edited){
   if(hard.length&&longBoxedIn(inp)){const ds=[...new Set(inp.days)],dd=ds.length===+inp.runs?ds:DEFAULT_DAYS[+inp.runs];w.push(t("wa_noGap",{long:dayName(dd.includes(+inp.longDay)?+inp.longDay:dd[dd.length-1])}));}
   /* +10% a week on the last full week (cutbacks and taper skipped), checked on the weeks as shown */
   const wk=plan.weeks.map(x=>x.sessions.reduce((a,s)=>a+(+s.km||0),0));const steep=[];
-  plan.weeks.forEach((x,i)=>{if(i===0||x.cutback||x.phase==="taper")return;const r=plan.weeks[i-1].cutback?wk[i-2]:wk[i-1];if(r>0&&wk[i]>r*1.1+0.05)steep.push(x.n);});
+  plan.weeks.forEach((x,i)=>{if(i===0||x.cutback||x.phase==="taper"||x.phase==="recovery")return;const r=plan.weeks[i-1].cutback?wk[i-2]:wk[i-1];if(r>0&&wk[i]>r*1.1+0.05)steep.push(x.n);});
   if(steep.length)w.push(t(edited?"wa_steepEdit":"wa_steep",{w:t(steep.length>1?"wkMany":"wkOne",{n:steep.join(", ")})}));
   w.push(...weekCheckSummary(plan,inp));
   if(badRaceTime(inp))w.push(badTimeMsg(inp));
@@ -375,7 +402,7 @@ function weekCheckSummary(plan,inp){
 
 const BBEngine = {
   setLocale(o) { Object.assign(LOCALE, o); },
-  DISTS, PHASES, DEFAULT_DAYS, TYPE_DEFS, uid, clamp, r05, iso, parseISO, addDays, dow, raceTimeSec, REC_LBL, REC_EX, badRaceTime, badTimeMsg, vdotOf, velAt, raceTimeMin, fmtPace, fmtDur, durSec, kmIn, LONG_SHARE, LONG_MAX_MIN, LEVELS, levelOf, CUT_EVERY, distKm, missingSetup, genInputs, distLabel, cat, paces, effectiveDays, cyc, pickHardDays, workFor, fill, watchPlan, generate, raceDesc, warnings, maxHardRuns, longBoxedIn, weekChecks, weekCheckSummary
+  DISTS, PHASES, WEEK_PHASES, recWeeksOf, DEFAULT_DAYS, TYPE_DEFS, uid, clamp, r05, iso, parseISO, addDays, dow, raceTimeSec, REC_LBL, REC_EX, badRaceTime, badTimeMsg, vdotOf, velAt, raceTimeMin, fmtPace, fmtDur, durSec, kmIn, LONG_SHARE, LONG_MAX_MIN, LEVELS, levelOf, CUT_EVERY, distKm, missingSetup, genInputs, distLabel, cat, paces, effectiveDays, cyc, pickHardDays, workFor, fill, watchPlan, generate, raceDesc, warnings, maxHardRuns, longBoxedIn, weekChecks, weekCheckSummary
 };
 root.BBEngine = BBEngine;
 if (typeof module === "object" && module.exports) module.exports = BBEngine;

@@ -34,15 +34,15 @@ Every iOS browser, Chrome included, runs on WebKit, so the iPhone Chrome setup c
 
 | File | Covers |
 |---|---|
-| `engine/engine.unit.mjs` | paces, watch workouts, the five athlete profiles against the plan rules at each experience level, what each level changes (BB-49) |
-| `plan-generation.spec.ts` | distances, weeks, dates, runs per week, fitness goal, load profile (phase bands, race flag, current week and today), summary numbers (weeks to go, units, French labels) |
+| `engine/engine.unit.mjs` | paces, watch workouts, the five athlete profiles against the plan rules at each experience level, what each level changes (BB-49), recovery weeks after the race (BB-42) |
+| `plan-generation.spec.ts` | distances, weeks, dates, runs per week, fitness goal, load profile (phase bands, race flag, current week and today), summary numbers (weeks to go, units, French labels), recovery weeks after the race |
 | `plan-rules.spec.ts` | phase order, taper length, cutback and taper volume, one race on race day, long-run day, weekly increase, goal readiness, hard runs per week, hard runs back to back or next to the long run and no rest day (on the week and in the banner, also after edits), days in a row and 7 runs a week (setup warnings) |
 | `setup-form.spec.ts` | paces, finish time read to fit the race distance, running days, run type chips and Customise workouts, warnings, New plan starting blank, experience level choice |
 | `editing.spec.ts` | edit, add, delete and move runs (drag and drop on desktop), hand edits vs settings, "why this run" line in the editor |
 | `today.spec.ts` | Today card before the plan, on a run day and on a rest day, Edit from the card, workout bar, paces, heat note, Send button naming the last device, one-line weather that opens and is remembered, forecast and driest slot (Open-Meteo mocked), unknown city, failed request |
 | `quick.spec.ts` | quick workout sheet: default tempo and preview, size and target race, distance or time (remembered), easy stepper, warm-up off, Send file name and the plan left alone, rest-day link, French, fine-tune, own paces kept out of the plan, Recent chips, empty plan entry, add to plan, reps down to 1, recoveries in time, typed target pace, the sheet fits the screen, Goal row entry, "why this run" line |
 | `race.spec.ts` | race name, Finishers link, countdown, race passed or today |
-| `storage.spec.ts` | save, autosave (also just before New plan or Open), warning on leaving unsaved, rename, delete, JSON export, import of a version 1 file (`fixtures/plans-v1.json`), imported files with markup or broken parts |
+| `storage.spec.ts` | save, autosave (also just before New plan or Open), warning on leaving unsaved, rename, delete, JSON export, import of a version 1 file (`fixtures/plans-v1.json`), imported files with markup or broken parts, recovery weeks saved |
 | `exports.spec.ts` | CSV, PDF, calendar, Garmin and Apple Watch zips, two same-name runs on one day kept apart, PDF run types table |
 | `i18n.spec.ts` | every string in English and French with matching placeholders, language switch |
 | `mobile.spec.ts` | Plan/Settings tabs, gear on the brand row and plan name on its own line, 16px fields, tap targets, sideways grid scroll; side-by-side layout on desktop |

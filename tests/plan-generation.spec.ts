@@ -176,3 +176,32 @@ test.describe('fitness goal', () => {
     await expect(page.locator('#startDateF')).toBeVisible();
   });
 });
+
+test.describe('recovery after the race (BB-42)', () => {
+  test('off by default; 2 weeks adds easy weeks after race day without moving the race', async ({ app, page }) => {
+    await app.showSetup();
+    await expect(page.locator('#recSeg [data-rec="0"]')).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#recHint')).toHaveText('The plan ends on race day.');
+    await app.showPlan();
+    const before = await app.plan();
+    const toGo = await page.locator('.summary .stat[data-stat="togo"] b').textContent();
+
+    await app.pick('#recSeg [data-rec="2"]');
+    await expect(page.locator('#recHint')).toContainText('Easy weeks after race day');
+    await app.showPlan();
+    const weeks = await app.plan();
+    expect(weeks).toHaveLength(before.length + 2);
+    expect(weeks[before.length - 1].sessions.some((s) => s.kind === 'race')).toBe(true);
+    for (const w of weeks.slice(-2)) {
+      expect(w.phase).toBe('recovery');
+      expect(w.sessions.every((s) => ['easy', 'recovery'].includes(s.kind))).toBe(true);
+    }
+    await expect(page.locator('.summary .stat[data-stat="togo"] b')).toHaveText(toGo!);
+    await expect(page.locator('.band[data-phase="recovery"]')).toHaveCount(1);
+  });
+
+  test('not offered for a personal plan', async ({ app, page }) => {
+    await app.goal('fitness');
+    await expect(page.locator('#recWeeksF')).toBeHidden();
+  });
+});
