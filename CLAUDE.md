@@ -43,3 +43,4 @@ Before every commit that changes `index.html` or `engine.js`, run `npm test` and
 - `settings.json` has a PreToolUse hook (`hooks/test-before-commit.sh`): before any `git commit`, if `index.html` or `engine.js` differs from HEAD, it runs `npm run test:engine` and `npm run test:chrome` and blocks the commit when it fails. It does not replace the full `npm test` run above.
 - `launch.json` serves the repo with `node tests/serve.mjs 8765` (the same server the tests and CI use) for the preview pane.
 - `/release <id> [patch|minor|major]` (`commands/release.md`) walks through branch, version bump, CHANGELOG, README, tests, commit and pull request for one backlog item.
+- `health.md` is the profile for the `codebase-health` skill (a weekly health check, run outside the repo): quick tests, tracked metrics, rules and known risks. Update it when a file it measures is renamed, or when a known risk is fixed or added.
