@@ -238,6 +238,8 @@ test('a typed target pace works without any race time', async ({ app, page }) =>
 
 test('the sheet fits inside the visible screen', async ({ app, page }) => {
   await openQuick(app);
+  // measure the sheet at rest, once it has finished sliding up on phones (BB-33)
+  await sheet(page).evaluate((e) => Promise.all(e.getAnimations().map((a) => a.finished)));
   const box = await sheet(page).boundingBox();
   const h = await page.evaluate(() => window.innerHeight);
   expect(box!.y).toBeGreaterThanOrEqual(0);
