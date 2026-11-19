@@ -2,6 +2,14 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.7.0] - 2026-11-19
+
+### Changed
+- On phones, once a plan is complete, the page is the plan, with Today first: the Plan / Settings tabs give way to an Edit plan button that stays at the top (BB-29). It opens the settings as a sheet over the plan, the same sections as one scrolling form, and the plan behind it follows each change. Done, Escape or a tap outside closes it. A new plan's steps and an incomplete setup keep the full-page settings and the tabs.
+
+### Fixed
+- On iPhone, closing a dialog opened from the settings puts focus back on the button that opened it.
+
 ## [1.6.1] - 2026-11-19
 
 ### Changed

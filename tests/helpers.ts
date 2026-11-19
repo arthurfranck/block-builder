@@ -36,13 +36,25 @@ export class App {
   }
 
   /* ---------- navigation (phones show one panel at a time) ---------- */
+  /* On phones a complete plan shows an Edit plan button that opens the settings as a sheet (BB-29);
+     a new plan's steps and an incomplete setup keep the Plan / Settings tabs. */
   async showSetup() {
-    if (this.mobile) await this.page.locator('#mtabs [data-tab="setup"]').click();
+    if (this.mobile) {
+      const edit = this.page.locator('#btnEditPlan');
+      if (await this.page.locator('#setup[role="dialog"]').count()) { /* the sheet is already open */ }
+      else if (await edit.isVisible()) await edit.click();
+      else if (await this.page.locator('#mtabs').isVisible()) await this.page.locator('#mtabs [data-tab="setup"]').click();
+    }
     await expect(this.page.locator('#setup')).toBeVisible();
   }
   async showPlan() {
-    if (this.mobile) await this.page.locator('#mtabs [data-tab="plan"]').click();
+    if (this.mobile) {
+      const done = this.page.locator('#btnSheetDone');
+      if (await done.isVisible()) await done.click();
+      else if (await this.page.locator('#mtabs').isVisible()) await this.page.locator('#mtabs [data-tab="plan"]').click();
+    }
     await expect(this.page.locator('#plan')).toBeVisible();
+    await expect(this.page.locator('#setup[role="dialog"]')).toHaveCount(0);
   }
 
   /* ---------- display and language panel (gear at the end of the header) ---------- */
@@ -50,6 +62,10 @@ export class App {
     const panel = this.page.locator('#prefsPanel');
     if (await panel.isHidden()) await this.page.locator('#btnPrefs').click();
     await expect(panel).toBeVisible();
+  }
+  async closePrefs() {
+    if (await this.page.locator('#prefsPanel').isVisible()) await this.page.locator('#btnPrefs').click();
+    await expect(this.page.locator('#prefsPanel')).toBeHidden();
   }
   async setLang(l: 'en' | 'fr') {
     await this.openPrefs();

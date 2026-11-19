@@ -194,6 +194,7 @@ test('leaving the page with an unsaved plan asks first', async ({ app, page }) =
 
 test('the experience level is saved with the plan, and older plans open as Regular (BB-49)', async ({ app, page }) => {
   await app.pick('#levelSeg [data-level="new"]');
+  await app.showPlan();
   await page.locator('#btnSave').click();
   await expect(app.toast()).toHaveText('Plan saved.');
   expect((Object.values(await stored(page)) as any[])[0].inputs.level).toBe('new');
@@ -210,6 +211,7 @@ test('the experience level is saved with the plan, and older plans open as Regul
 
 test('recovery weeks after the race are saved and reopen (BB-42)', async ({ app, page }) => {
   await app.pick('#recSeg [data-rec="1"]');
+  await app.showPlan();
   await page.locator('#btnSave').click();
   await expect(app.toast()).toHaveText('Plan saved.');
   const p = (Object.values(await stored(page)) as any[])[0];
