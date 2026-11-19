@@ -1,13 +1,15 @@
 # Instructions for Claude working in this repo
 
-## Keep README.md current (required)
+## Keep the docs current (required)
 
-Every commit that changes `index.html` or `engine.js` must update `README.md` in the same commit:
+The docs are split by reader. Every commit that changes `index.html` or `engine.js` must update them in the same commit:
 
-- **Features:** add, change or remove bullets so they match what the page actually does.
-- **Where plans are stored / Tech / Run locally:** update if storage, hosting, dependencies or external resources change.
+- **`docs/features.md`** (every rule, number and edge case): add, change or remove bullets so they match what the page actually does.
+- **`README.md`** (short, for runners first): keep **one line per feature** under Features and the How to use it steps true. Update **Privacy and storage** if a `localStorage` key or an outside request is added or removed, and **Repository map / Tech / Run locally** if files, hosting or dependencies change. Detail goes in `docs/features.md`, not the README.
+- **`tests/README.md`**: update the "What each file covers" table when tests are added or changed, and the setups if `playwright.config.ts` changes.
+- **`docs/screenshot.png`**: retake it when the main screen looks noticeably different (1440×900, frozen date 6 Nov 2026, default example plan, no personal data).
 
-Before committing, reread the whole README against the current `index.html` and fix anything that is no longer true. Do not commit a page change with a stale README.
+Before committing, reread all three files against the current `index.html` and fix anything that is no longer true. Do not commit a page change with stale docs. Don't add version or date badges to the README: they go stale; the Tests badge updates itself.
 
 ## Changelog and version (required)
 
@@ -24,7 +26,7 @@ Before every commit that changes `index.html` or `engine.js`, run `npm test` and
 
 - A change to what the page does needs a test change in the same commit: add or update tests in `tests/` for the new or changed behaviour.
 - Never delete or loosen a failing test to make the suite pass; fix the page, or ask.
-- If you fix a known issue (a `test.fail` line, or an id in `KNOWN` in `tests/a11y.spec.ts`), remove it and the matching bullet under Known issues in the README.
+- If you fix a known issue (a `test.fail` line, or an id in `KNOWN` in `tests/a11y.spec.ts`), remove it and the matching bullet under Known issues in `tests/README.md`.
 - If you change the saved-plan format, keep `tests/fixtures/plans-v1.json` importing, and add a new fixture for the new version.
 
 ## Project facts
