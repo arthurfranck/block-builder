@@ -121,6 +121,10 @@ export class App {
 
   /* ---------- reading the plan ---------- */
   warnings(): Locator { return this.page.locator('#plan .banner:not(.info) li'); }
+  /** BB-27: a setup warning under its field (weeks, date, curVol, curLong, runs, days, longDay, types). */
+  fieldWarning(f: string): Locator { return this.page.locator('#fw-' + f); }
+  /** BB-27: the banner line naming the settings that need a look. */
+  setupWarning(): Locator { return this.page.locator('#plan #setupWarn'); }
 
   async plan(): Promise<Week[]> {
     return this.page.evaluate(() => {

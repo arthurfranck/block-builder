@@ -248,25 +248,28 @@ test.describe('spacing (BB-44)', () => {
 
   test('3 running days in a row is one setup warning, not a week warning', async ({ app, page }) => {
     await setDays(app, page, 3, [4, 5, 6]);
-    await expect(app.warnings().filter({ hasText: 'in a row' })).toContainText(['Fri, Sat, Sun are 3 days in a row. Keep the middle one easy, or spread your running days.']);
+    await expect(app.fieldWarning('days')).toContainText('Fri, Sat, Sun are 3 days in a row. Keep the middle one easy, or spread your running days.');
+    await expect(app.setupWarning()).toContainText('Running days');
     await expect(weekWarnings(page)).toHaveCount(0);
   });
 
   test('days that box in the long run: one setup warning, weeks not flagged for it', async ({ app, page }) => {
     await setDays(app, page, 2, [5, 6]);
-    await expect(app.warnings().filter({ hasText: 'next to the long run' })).toContainText(['Every other running day is next to the long run (Sun), so the hard run lands next to it. Add a running day further from it, or move the long run.']);
+    await expect(app.fieldWarning('longDay')).toContainText('Every other running day is next to the long run (Sun), so the hard run lands next to it. Add a running day further from it, or move the long run.');
     await expect(weekWarnings(page)).toHaveCount(0);
   });
 
   test('7 runs a week: one setup warning about the rest day', async ({ app, page }) => {
     await app.runs(7);
     await app.showPlan();
-    await expect(app.warnings().filter({ hasText: 'leaves no rest day' })).toHaveCount(1);
+    await expect(app.fieldWarning('runs')).toContainText('leaves no rest day');
+    await expect(app.warnings().filter({ hasText: 'leaves no rest day' })).toHaveCount(0);
     await expect(weekWarnings(page)).toHaveCount(0);
   });
 
   test('spread-out days get none of these warnings', async ({ app, page }) => {
     await expect(app.warnings().filter({ hasText: /in a row|next to the long run|rest day/ })).toHaveCount(0);
+    for (const f of ['days', 'longDay', 'runs']) await expect(app.fieldWarning(f)).toBeHidden();
     await expect(weekWarnings(page)).toHaveCount(0);
   });
 });

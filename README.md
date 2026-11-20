@@ -24,7 +24,7 @@ For runners. Every rule and number is in [Features in detail](docs/features.md).
 - **Sound plans:** base, build, peak and taper phases, cutback weeks and hard runs set by your experience level (new, regular, experienced), +10% a week at most, and a long run kept to a share of the week, a maximum duration and a steady growth.
 - **Paces:** easy, tempo, interval and race paces from a recent race result.
 - **Run types:** nine built in (easy to race pace), each saying why it is there and how it should feel, plus your own, with editable descriptions.
-- **Checks:** warnings for too many hard runs in a week, hard runs next to each other or the long run, and running days with no rest.
+- **Checks:** warnings for too many hard runs in a week, hard runs next to each other or the long run, and running days with no rest; a warning about a setting shows under that setting.
 - **Plan view:** summary numbers, a load profile chart by phase, and a week-by-day grid coloured by effort.
 - **Editing:** edit, drag, add or delete any run, with a note per run.
 - **Today card:** today's run with its workout bar and paces, one-tap Send to watch, the weather with the driest slot, and slower paces on hot days.

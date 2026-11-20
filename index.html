@@ -201,6 +201,9 @@ code{font-family:var(--f-mono);font-size:12px;background:var(--surface-2);paddin
 main.plan{min-width:0;display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
 .banner{border-radius:8px;padding:9px 12px;font-size:14px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;background:var(--warn-bg);color:var(--warn-ink)}
 .banner.info{background:var(--surface-2);color:var(--ink)}
+/* BB-27: a setup warning under the field that causes it */
+.fwarn{font-size:12.5px;line-height:1.4;border-radius:6px;padding:6px 9px;background:var(--warn-bg);color:var(--warn-ink)}
+.fwarn p{margin:0}.fwarn p+p{margin-top:4px}
 .banner ul{margin:0;padding-left:18px;display:grid;gap:2px}
 .summary{display:flex;flex-wrap:wrap;gap:8px 28px;align-items:baseline}
 .stat{display:grid}
@@ -513,11 +516,12 @@ aside.setup[data-step="1"] #goalSeg,aside.setup[data-step="1"] .goalquick{displa
         <div class="row" id="customRow" hidden>
           <div class="field"><label for="customKm" data-i18n="customKm">Custom distance (km)</label><input id="customKm" type="number" min="3" max="100" step="0.1"></div>
         </div>
-        <div class="row">
-          <div class="field" id="raceDateF"><label for="raceDate" data-i18n="raceDate">Race date</label><input id="raceDate" type="date"></div>
-          <div class="field" id="startDateF" hidden><label for="startDate" data-i18n="startDate">Start date</label><input id="startDate" type="date"></div>
-          <div class="field"><label for="weeks" data-i18n="weeks">Weeks of training</label><input id="weeks" type="number" min="3" max="30"></div>
+        <div class="row top">
+          <div class="field" id="raceDateF"><label for="raceDate" data-i18n="raceDate">Race date</label><input id="raceDate" type="date" aria-describedby="fw-date"></div>
+          <div class="field" id="startDateF" hidden><label for="startDate" data-i18n="startDate">Start date</label><input id="startDate" type="date" aria-describedby="fw-date"></div>
+          <div class="field"><label for="weeks" data-i18n="weeks">Weeks of training</label><input id="weeks" type="number" min="3" max="30" aria-describedby="fw-weeks"><div class="fwarn" id="fw-weeks" hidden></div></div>
         </div>
+        <div class="fwarn" id="fw-date" hidden></div>
         <div class="hint" id="startHint"></div>
         <div class="hint" id="focusHint" hidden></div>
         <div class="field" id="recWeeksF"><span class="lbl" id="recWeeksLbl" data-i18n="recWeeks">Recovery after the race</span><div class="seg" id="recSeg" role="group" aria-labelledby="recWeeksLbl"></div><div class="hint" id="recHint"></div></div>
@@ -528,8 +532,8 @@ aside.setup[data-step="1"] #goalSeg,aside.setup[data-step="1"] .goalquick{displa
         <h3 data-i18n="secNow">Your running now</h3>
         <div class="field"><span class="lbl" id="levelLbl" data-i18n="level">Experience</span><div class="seg" id="levelSeg" role="group" aria-labelledby="levelLbl"></div><div class="hint" id="levelHint"></div></div>
         <div class="row top">
-          <div class="field"><label for="curVol" data-i18n="curVol">Weekly volume (km)</label><input id="curVol" type="number" min="5" max="200" aria-describedby="volHint"><div class="hint" id="volHint" data-i18n="volHint" hidden></div></div>
-          <div class="field"><label for="curLong" data-i18n="curLong">Longest recent run (km, optional)</label><input id="curLong" type="number" min="3" max="45"></div>
+          <div class="field"><label for="curVol" data-i18n="curVol">Weekly volume (km)</label><input id="curVol" type="number" min="5" max="200" aria-describedby="volHint fw-curVol"><div class="hint" id="volHint" data-i18n="volHint" hidden></div><div class="fwarn" id="fw-curVol" hidden></div></div>
+          <div class="field"><label for="curLong" data-i18n="curLong">Longest recent run (km, optional)</label><input id="curLong" type="number" min="3" max="45" aria-describedby="fw-curLong"><div class="fwarn" id="fw-curLong" hidden></div></div>
         </div>
         <div class="row">
           <div class="field"><label for="recDist" data-i18n="recDist">Recent race</label>
@@ -542,16 +546,17 @@ aside.setup[data-step="1"] #goalSeg,aside.setup[data-step="1"] .goalquick{displa
 
       <section class="sec" data-step="4">
         <h3 data-i18n="secWeek">Week shape</h3>
-        <div class="field"><span class="lbl" data-i18n="runsPerWeek">Runs per week</span><div class="seg" id="runsSeg"></div></div>
-        <div class="field"><span class="lbl"><span data-i18n="runningDays">Running days</span> <span id="daysCount"></span></span><div class="seg days" id="daysSeg"></div></div>
+        <div class="field"><span class="lbl" id="runsLbl" data-i18n="runsPerWeek">Runs per week</span><div class="seg" id="runsSeg" role="group" aria-labelledby="runsLbl" aria-describedby="fw-runs"></div><div class="fwarn" id="fw-runs" hidden></div></div>
+        <div class="field"><span class="lbl" id="daysLbl"><span data-i18n="runningDays">Running days</span> <span id="daysCount"></span></span><div class="seg days" id="daysSeg" role="group" aria-labelledby="daysLbl" aria-describedby="fw-days"></div><div class="fwarn" id="fw-days" hidden></div></div>
         <div class="field"><label for="longDay" data-i18n="longDay">Long run day</label>
-          <select id="longDay"></select></div>
+          <select id="longDay" aria-describedby="fw-longDay"></select><div class="fwarn" id="fw-longDay" hidden></div></div>
       </section>
 
       <section class="sec" data-step="4">
         <h3 data-i18n="secTypes">Run types</h3>
         <div class="hint" id="typesCount"></div>
-        <div class="tgroups" id="typeChips"></div>
+        <div class="fwarn" id="fw-types" hidden></div>
+        <div class="tgroups" id="typeChips" aria-describedby="fw-types"></div>
         <details class="customise" id="typesMore">
           <summary><span class="cust-t" data-i18n="customise">Customise workouts</span><span class="cust-s" data-i18n="customiseSub">Phases, descriptions, add your own</span></summary>
           <div class="cust-body">

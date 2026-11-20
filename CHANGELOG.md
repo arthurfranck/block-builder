@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.10.0] - 2026-11-20
+
+### Changed
+- A warning about one of your settings now shows right under that setting, for example "8 weeks is short for a marathon" under Weeks of training, instead of in the list above the plan (BB-27). The plan side keeps one line naming the settings to look at, with Edit settings on a phone. Warnings about the plan itself stay above the plan and on the week.
+
 ## [1.9.0] - 2026-11-20
 
 ### Changed
