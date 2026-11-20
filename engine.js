@@ -64,6 +64,9 @@ const CUT_EVERY=lv=>lv==="new"?3:4; /* cutback week rhythm */
 /* post-race recovery weeks (BB-42): 0 (default), 1 or 2, race goal only */
 const recWeeksOf=inp=>inp&&inp.goal!=="fitness"?clamp(Math.round(+inp.recWeeks||0),0,2):0;
 function distKm(inp){const d=DISTS.find(x=>x.k===inp.dist);return d&&d.km?d.km:clamp(+inp.customKm||10,3,100);}
+/* longest recent run (BB-72): optional; when empty, estimated as 35% of the weekly volume (0.5 km steps, 3 to 45 km) */
+const longTyped=inp=>+inp.curLong>0;
+function longOf(inp){return longTyped(inp)?+inp.curLong:clamp(r05(0.35*(+inp.curVol||25)),3,45);}
 /* suggested weekly volume (BB-71), km/week by level for 5K / 10K / half / marathon (Arthur, 2026-11-20: new runners
    10-15 km for a 5K and 40 for a marathon, experienced 100 for a marathon, wide gaps between levels). All at or above
    the low-volume warning thresholds. Custom distances interpolate on km, rounded to whole km. null until a distance is chosen. */
@@ -77,13 +80,13 @@ function suggestVol(inp){
 }
 /* what the plan still needs, in setup order (BB-30 / BB-34: a new plan starts with distance, race date and weeks blank too).
    SETUP_STEP says which setup step each one belongs to. */
-const SETUP_STEP={needDist:2,needDate:2,needWeeks:2,needVol:3,needLong:3,needRuns:4};
+const SETUP_STEP={needDist:2,needDate:2,needWeeks:2,needVol:3,needRuns:4};
 function missingSetup(I){const m=[];if(!DISTS.some(d=>d.k===I.dist))m.push("needDist");if(I.goal!=="fitness"&&!I.raceDate)m.push("needDate");if(!(+I.weeks>=3))m.push("needWeeks");
-  if(!(+I.curVol>0))m.push("needVol");if(!(+I.curLong>0))m.push("needLong");if(!(+I.runs>=1))m.push("needRuns");return m;}
+  if(!(+I.curVol>0))m.push("needVol");if(!(+I.runs>=1))m.push("needRuns");return m;}
 /* stand-ins for what is still blank, so a plan can be built behind the "fill in the setup" message */
 function nextSundayIn(weeks){const d=new Date();d.setHours(12,0,0,0);return iso(addDays(d,(7-d.getDay())%7+7*weeks));}
 function genInputs(I){return {...I,dist:DISTS.some(d=>d.k===I.dist)?I.dist:"hm",raceDate:I.raceDate||nextSundayIn(12),weeks:+I.weeks>=3?+I.weeks:12,
-  runs:+I.runs>=1?+I.runs:5,days:+I.runs>=1?I.days:[],curVol:+I.curVol>0?I.curVol:30,curLong:+I.curLong>0?I.curLong:12};}
+  runs:+I.runs>=1?+I.runs:5,days:+I.runs>=1?I.days:[],curVol:+I.curVol>0?I.curVol:30,curLong:+I.curLong>0?I.curLong:""};}
 function distLabel(inp){if(!inp.dist)return "";return inp.dist==="custom"?(+inp.customKm||10)+" km":t("l"+inp.dist);}
 function cat(D){return D<=6?"5k":D<=12?"10k":D<=25?"hm":"m";}
 
@@ -185,7 +188,7 @@ function generate(inp,types){
   for(let i=0;i<nb;i++){if(cut(i)){vols.push(last*0.8);}else{last=Math.min(peakV,V0*Math.pow(1+g,k));k++;vols.push(last);}}
   const tm={0:[],1:[0.6],2:[0.75,0.55],3:[0.8,0.65,0.5]}[taperN];
   for(let j=0;j<taperN;j++)vols.push(peakV*tm[j]);
-  const L0=clamp(+inp.curLong||10,3,45);
+  const L0=clamp(longOf(inp),3,45);
   const Lpk=Math.max(L0,{"5k":12,"10k":16,"hm":19,"m":32}[c]);
   const lfrac=Math.max({"5k":0.33,"10k":0.33,"hm":0.38,"m":0.48}[c],1.25/runs);
   const on=types.filter(t=>t.on);
@@ -345,7 +348,7 @@ function warnings(inp,types,plan,edited){
   if(inp.weeks>24)w.push(t("wa_long",{n:Math.min(20,inp.weeks)}));
   const lowVol={"5k":12,"10k":18,"hm":22,"m":32}[c];
   if(inp.goal!=="fitness"&&+inp.curVol<lowVol)w.push(t("wa_lowVol",{v:inp.curVol,lbl}));
-  if(inp.goal!=="fitness"&&c==="m"&&+inp.curLong<14)w.push(t("wa_mLong"));
+  if(inp.goal!=="fitness"&&c==="m"&&longTyped(inp)&&+inp.curLong<14)w.push(t("wa_mLong")); /* BB-72: only on a typed value */
   /* goal readiness (BB-40): longest run before race day and biggest week, against what a half or marathon usually needs */
   if(inp.goal!=="fitness"&&(c==="hm"||c==="m")&&plan.weeks.length){
     const ri=plan.weeks.findIndex(x=>x.sessions.some(s=>s.kind==="race"));
@@ -423,7 +426,7 @@ function weekCheckSummary(plan,inp){
 
 const BBEngine = {
   setLocale(o) { Object.assign(LOCALE, o); },
-  DISTS, PHASES, WEEK_PHASES, recWeeksOf, DEFAULT_DAYS, TYPE_DEFS, uid, clamp, r05, iso, parseISO, addDays, dow, raceTimeSec, REC_LBL, REC_EX, badRaceTime, badTimeMsg, vdotOf, velAt, raceTimeMin, fmtPace, fmtDur, durSec, kmIn, LONG_SHARE, LONG_MAX_MIN, LEVELS, levelOf, CUT_EVERY, distKm, VOL_SUGGEST, suggestVol, SETUP_STEP, missingSetup, genInputs, distLabel, cat, paces, effectiveDays, cyc, pickHardDays, workFor, fill, watchPlan, generate, raceDesc, warnings, maxHardRuns, longBoxedIn, weekChecks, weekCheckSummary
+  DISTS, PHASES, WEEK_PHASES, recWeeksOf, DEFAULT_DAYS, TYPE_DEFS, uid, clamp, r05, iso, parseISO, addDays, dow, raceTimeSec, REC_LBL, REC_EX, badRaceTime, badTimeMsg, vdotOf, velAt, raceTimeMin, fmtPace, fmtDur, durSec, kmIn, LONG_SHARE, LONG_MAX_MIN, LEVELS, levelOf, CUT_EVERY, distKm, VOL_SUGGEST, suggestVol, longTyped, longOf, SETUP_STEP, missingSetup, genInputs, distLabel, cat, paces, effectiveDays, cyc, pickHardDays, workFor, fill, watchPlan, generate, raceDesc, warnings, maxHardRuns, longBoxedIn, weekChecks, weekCheckSummary
 };
 root.BBEngine = BBEngine;
 if (typeof module === "object" && module.exports) module.exports = BBEngine;

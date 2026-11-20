@@ -241,13 +241,13 @@ test.describe('New plan starts blank', () => {
     expect(ticked).toEqual(['t-on-easy']);
   });
 
-  test('no plan until distance, race date, weeks, runs per week, weekly volume and longest run are set', async ({ app, page }) => {
+  test('no plan until distance, race date, weeks, runs per week and weekly volume are set; longest run optional (BB-72)', async ({ app, page }) => {
     await app.showPlan();
     await expect(page.locator('table.grid')).toHaveCount(0);
     await expect(page.locator('#plan .banner.info')).toContainText('Fill in the setup');
     await expect(page.locator('#plan .banner.info li')).toHaveText(['Choose a distance.', 'Pick the race date.', 'Enter the weeks of training (3 to 30).',
-      'Enter your current weekly volume.', 'Enter your longest recent run.', 'Choose how many runs per week.']);
-    await app.configure({ runs: 3, curVol: 25, curLong: 10 });
+      'Enter your current weekly volume.', 'Choose how many runs per week.']);
+    await app.configure({ runs: 3, curVol: 25 });
     await app.showPlan();
     await expect(page.locator('table.grid')).toHaveCount(0);
     await expect(page.locator('#plan .banner.info li')).toHaveCount(3);
@@ -342,6 +342,40 @@ test('the example plan and a loaded plan keep their weekly volume when the dista
   await expect(page.locator('#volHint')).toBeHidden();
 });
 
+test.describe('optional longest recent run (BB-72)', () => {
+  test.beforeEach(async ({ app, page, mobile }) => {
+    await page.locator('#btnNew').click();
+    if (mobile) await page.locator('#introNav [data-intro="skip"]').click();
+  });
+
+  test('the field says it is optional and shows the estimate from the weekly volume', async ({ app, page }) => {
+    await app.showSetup();
+    await expect(page.locator('label[for="curLong"]')).toHaveText('Longest recent run (km, optional)');
+    await expect(page.locator('#curLong')).toHaveAttribute('placeholder', '');
+    await app.setField('curVol', 30);
+    await expect(page.locator('#curLong')).toHaveAttribute('placeholder', '≈ 10.5');
+    await app.setField('curVol', 60);
+    await expect(page.locator('#curLong')).toHaveAttribute('placeholder', '≈ 21');
+  });
+
+  test('a marathon plan builds without it and does not warn about a longest run never entered', async ({ app, page }) => {
+    await app.configure({ dist: 'm', raceDate: '2027-03-14', weeks: 16, runs: 4, curVol: 30 });
+    await app.showPlan();
+    await expect(page.locator('table.grid')).toBeVisible();
+    await expect(page.locator('#plan')).not.toContainText('longest recent run under 14 km');
+    await app.setField('curLong', 12);
+    await app.showPlan();
+    await expect(page.locator('#plan')).toContainText('A longest recent run under 14 km');
+  });
+
+  test('the label is in French too', async ({ app, page }) => {
+    await app.setLang('fr');
+    await app.closePrefs();
+    await app.showSetup();
+    await expect(page.locator('label[for="curLong"]')).toHaveText('Plus longue sortie récente (km, facultatif)');
+  });
+});
+
 test.describe('experience level (BB-49)', () => {
   const hardRuns = (w: import('./helpers').Week) => w.sessions.filter((s) => ['hard', 'tempo'].includes(s.kind)).length;
 
@@ -400,11 +434,11 @@ test.describe('setup steps on phones (BB-34)', () => {
     await next(page).tap();
     await expect(nav(page).locator('.intro-step')).toHaveText('Step 3 of 4 · Your running now');
     await expect(page.locator('#introErr')).toBeHidden();
-    // BB-71: the weekly volume is already suggested for a regular 10K runner, so only the longest run is missing
+    // BB-71: the weekly volume is already suggested for a regular 10K runner; BB-72: the longest run is optional,
+    // so step 3 needs no typing and shows the estimate it will use
     await expect(page.locator('#curVol')).toHaveValue('40');
-    await next(page).tap();
-    await expect(page.locator('#introErr')).toHaveText('Before going on: Enter your longest recent run.');
-    await app.setField('curLong', 9);
+    await expect(page.locator('#curLong')).toHaveValue('');
+    await expect(page.locator('#curLong')).toHaveAttribute('placeholder', '≈ 14');
     await next(page).tap();
     await expect(nav(page).locator('.intro-step')).toHaveText('Step 4 of 4 · Your week');
     await expect(nav(page).locator('[data-intro="next"]')).toHaveText('Build my plan');

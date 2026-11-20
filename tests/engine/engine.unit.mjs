@@ -262,11 +262,11 @@ describe('BB-42 · recovery weeks after the race', () => {
 });
 
 describe('BB-34 · what a new plan still needs', () => {
-  test('blank distance, race date and weeks are missing, in setup order, each tied to its step', () => {
+  test('blank distance, race date and weeks are missing, in setup order, each tied to its step (longest run optional, BB-72)', () => {
     const blank = { goal: 'race', dist: '', raceDate: '', weeks: '', curVol: '', curLong: '', runs: 0 };
     const m = E.missingSetup(blank);
-    assert.deepEqual(m, ['needDist', 'needDate', 'needWeeks', 'needVol', 'needLong', 'needRuns']);
-    assert.deepEqual(m.map((k) => E.SETUP_STEP[k]), [2, 2, 2, 3, 3, 4]);
+    assert.deepEqual(m, ['needDist', 'needDate', 'needWeeks', 'needVol', 'needRuns']);
+    assert.deepEqual(m.map((k) => E.SETUP_STEP[k]), [2, 2, 2, 3, 4]);
     assert.deepEqual(E.missingSetup({ ...blank, goal: 'fitness' }).includes('needDate'), false);
     const g = E.genInputs(blank);
     assert.ok(E.DISTS.some((d) => d.k === g.dist) && /^\d{4}-\d\d-\d\d$/.test(g.raceDate) && g.weeks === 12);
@@ -300,5 +300,28 @@ describe('suggested weekly volume (BB-71)', () => {
       inp.curVol = E.suggestVol(inp);
       assert.ok(!E.warnings(inp, types(), E.generate(inp, types()), false).some((w) => w.startsWith('wa_lowVol')), `${level} ${dist}`);
     }
+  });
+});
+
+describe('optional longest recent run (BB-72)', () => {
+  const C = PROFILES['C · weekday half, Mon-Fri, long run Friday'].inp;
+  test('empty: estimated as 35% of the weekly volume, 0.5 km steps, 3 to 45 km; typed: used as is', () => {
+    assert.equal(E.longOf({ curVol: 30, curLong: '' }), 10.5);
+    assert.equal(E.longOf({ curVol: 15 }), 5.5);
+    assert.equal(E.longOf({ curVol: 5, curLong: '' }), 3);
+    assert.equal(E.longOf({ curVol: 200, curLong: '' }), 45);
+    assert.equal(E.longOf({ curVol: 30, curLong: 16 }), 16);
+  });
+  test('a plan builds without it, and its first long run starts from the estimate', () => {
+    const inp = { ...base, ...C, curLong: '' };
+    assert.deepEqual(E.missingSetup(inp), []);
+    const empty = E.generate(inp, types()), typed = E.generate({ ...inp, curLong: E.longOf(inp) }, types());
+    assert.deepEqual(empty.weeks.map(km), typed.weeks.map(km));
+  });
+  test('the marathon "longest run under 14 km" warning needs a typed value', () => {
+    const D = { ...base, ...PROFILES['D · slow marathon, 4 runs, half in 2:30'].inp };
+    const has = (inp) => E.warnings(inp, types(), E.generate(inp, types()), false).some((w) => w.startsWith('wa_mLong'));
+    assert.equal(has({ ...D, curLong: 12 }), true);
+    assert.equal(has({ ...D, curLong: '' }), false);
   });
 });
