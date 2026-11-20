@@ -272,3 +272,35 @@ test.describe('import of a plan that is already here (BB-4)', () => {
     await expect(page.locator('#planName')).toHaveValue('Spring 10K');
   });
 });
+
+test.describe('autosave and header (BB-32)', () => {
+  const stored2 = (page: import('@playwright/test').Page) => page.evaluate(() => Object.keys(JSON.parse(localStorage.getItem('bb-plans') || '{}')).length);
+
+  test('the example plan is never saved on its own, even once edited', async ({ app, page }) => {
+    await expect(page.locator('#btnSave')).toHaveText('Keep this plan');
+    await app.configure({ weeks: 10 });
+    await page.waitForTimeout(2000);
+    expect(await stored2(page)).toBe(0);
+    await expect(page.locator('#saveStatus')).toHaveText('Not saved');
+  });
+
+  test('Keep this plan saves the example, hides the button, then changes save themselves', async ({ app, page }) => {
+    await page.locator('#btnSave').click();
+    await expect(app.toast()).toHaveText('Plan saved.');
+    await expect(page.locator('#btnSave')).toBeHidden();
+    await app.configure({ weeks: 9 });
+    await expect(page.locator('#saveStatus')).toContainText('Saved in this browser', { timeout: 5000 });
+    const saved = Object.values(JSON.parse(await page.evaluate(() => localStorage.getItem('bb-plans') || '{}'))) as any[];
+    expect(saved).toHaveLength(1);
+    expect(saved[0].inputs.weeks).toBe(9);
+  });
+
+  test('the switcher after the plan name opens My plans; Quick workout is in the header', async ({ app, page }) => {
+    await expect(page.locator('#btnPlans')).toHaveAttribute('aria-label', 'My plans');
+    await page.locator('#btnPlans').click();
+    await expect(page.getByRole('dialog', { name: 'My plans' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await page.locator('#btnQuick').click();
+    await expect(page.getByRole('dialog', { name: 'Quick workout' })).toBeVisible();
+  });
+});

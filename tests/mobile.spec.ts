@@ -9,7 +9,12 @@ test.describe('phone layout', () => {
     expect(Math.abs((gear.y + gear.height / 2) - (brand.y + brand.height / 2))).toBeLessThan(12);
     expect(name.y).toBeGreaterThan(brand.y + brand.height - 1);
     expect(save.y).toBeGreaterThan(name.y + name.height - 1);
-    expect(name.width).toBeGreaterThan(200);
+    // BB-32: the name field fits its text (was: wider than 200 px, a stand-in for "not cut off")
+    const cut = await page.locator('#planName').evaluate((e: HTMLInputElement) => e.scrollWidth - e.clientWidth);
+    expect(cut, 'the whole plan name shows').toBeLessThanOrEqual(1);
+    const sw = await box('#btnPlans');
+    expect(sw.x - (name.x + name.width), 'the switcher sits right after the name').toBeLessThan(8);
+    expect(Math.abs((sw.y + sw.height / 2) - (name.y + name.height / 2))).toBeLessThan(8);
   });
 
   test('with a plan, the page shows the plan with an Edit plan button instead of tabs (BB-29)', async ({ app, page }) => {

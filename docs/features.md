@@ -79,6 +79,12 @@ Build one workout from the run types and send it to a watch without changing the
 - **All plans:** My plans → Export / Import, see [Privacy and storage](../README.md#privacy-and-storage).
 - **Importing a plan you already have** (same plan, for example exported from another device): a newer copy in the file replaces yours; the same version is skipped; if yours was changed more recently, yours is kept and the file's version is added beside it as "(imported)". The toast says which happened. If the plan you have open is replaced, it reloads.
 
+## Saving
+
+- **Autosave:** a plan saves itself in this browser 1.5 seconds after each change, as soon as its setup is complete (it can be built); a new plan needs no Save button. The status next to the name says "Unsaved changes", then "Saved in this browser · 14:05". Changes are also written just before New plan, opening another plan or leaving the page.
+- **Example plan:** the plan shown on a first visit is never saved on its own, even once you change it. Keep this plan (shown only on the example) saves it as yours; from then on it autosaves.
+- **Header:** plan name (tap to rename), ▾ to open My plans (switch, rename, delete, export, import), save status, New plan, Quick workout and the settings gear.
+
 ## Settings and display
 
 - **Languages:** English and French (the browser language by default), changed from the gear menu at the end of the header.

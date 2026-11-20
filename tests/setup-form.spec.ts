@@ -273,10 +273,18 @@ test.describe('New plan starts blank', () => {
     expect(await app.plan()).toHaveLength(12);
   });
 
-  test('Save plan is refused while the setup is incomplete', async ({ app, page }) => {
-    await page.locator('#btnSave').click();
-    await expect(app.toast()).toContainText('Fill in the setup');
+  test('a new plan is not saved while incomplete, then saves itself once it can be built (BB-32)', async ({ app, page }) => {
+    await expect(page.locator('#btnSave'), 'no Save or Keep button on a new plan').toBeHidden();
+    // weekly volume is suggested (BB-71); runs per week is still missing
+    await app.configure({ dist: 'hm', raceDate: '2027-02-28', weeks: 12 });
+    await page.waitForTimeout(1800);
     await expect(page.locator('#saveStatus')).toHaveText('Not saved');
+    expect(await page.evaluate(() => localStorage.getItem('bb-plans'))).toBeNull();
+    await app.configure({ runs: 4 });
+    await expect(page.locator('#saveStatus')).toContainText('Saved in this browser', { timeout: 5000 });
+    const saved = Object.values(await page.evaluate(() => JSON.parse(localStorage.getItem('bb-plans') || '{}'))) as any[];
+    expect(saved).toHaveLength(1);
+    expect(saved[0]).toMatchObject({ inputs: { dist: 'hm', weeks: 12, curVol: 55, runs: 4 } });
   });
 
   test('a plan built from the blank setup has only easy runs', async ({ app }) => {

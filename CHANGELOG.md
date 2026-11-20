@@ -2,6 +2,12 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.11.0] - 2026-11-20
+
+### Changed
+- Plans save themselves: a new plan is kept in this browser as soon as it can be built, then after every change, with no Save button (BB-32). The example plan you see on a first visit is only kept if you press Keep this plan.
+- A lighter header: the ▾ next to the plan name opens My plans, and Quick workout sits next to New plan, so it is there from every screen.
+
 ## [1.10.1] - 2026-11-20
 
 ### Fixed

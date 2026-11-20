@@ -4,7 +4,7 @@
    Runs after engine.js (BBEngine) at the end of <body>. */
 (() => {
 "use strict";
-const VERSION = "1.10.1";
+const VERSION = "1.11.0";
 const $ = s => document.querySelector(s);
 /** @type {(s: string) => NodeListOf<HTMLElement>} */
 const $$ = s => document.querySelectorAll(s);
@@ -14,7 +14,7 @@ $("#appVersion").textContent = "Block Builder v" + VERSION;
 /* ---------- language ---------- */
 const I18N={
 en:{
-planNameLabel:"Plan name",editPlan:"Edit plan",done:"Done",secGoal:"Goal",secRace:"Race",secFocus:"Focus and dates",secYourWeek:"Your week",icRace:"A plan that builds to race day and tapers into it.",icFit:"Get fitter week by week, no race date.",icQuick:"One workout for your watch, no plan needed.",introStep:"Step {n} of 4 · {name}",introNext:"Next",introBack:"Back",introDone:"Build my plan",introSkip:"Show all settings",introNeed:"Before going on:",introWait:"Your plan's shape shows here once the steps are filled in.",needDist:"Choose a distance.",needDate:"Pick the race date.",needWeeks:"Enter the weeks of training (3 to 30).",goalRace:"Train for a race",goalFit:"Personal plan",focusDist:"Focus distance",startDate:"Start date",focusHint:"Sets the paces and how long the long runs get. No race, no taper: the plan just builds week by week.",fitHint:"Starts Monday {s}, ends Sunday {e}.",fitBlock:"{n}-week personal plan",hFitStarts:"Your {n}-week plan starts Monday {d}.",hFitIn:"Week {n} of {t}, {phase} phase{cut}.",hFitDone:"Your {n}-week plan finished on {d}. Set a new start date to plan the next block.",wa_pastFit:"Week 1 started on {d}. Move the start date if you want the plan to begin now.",planMetaFit:"{lbl} focus · {w} weeks · starts {d}",myPlans:"My plans",newPlan:"New plan",savePlan:"Save plan",language:"Language",theme:"Theme",thDark:"Dark",thLight:"Light",thAuto:"Auto",thHint:"Auto follows your device.",prefs:"Display and language",
+planNameLabel:"Plan name",editPlan:"Edit plan",done:"Done",secGoal:"Goal",secRace:"Race",secFocus:"Focus and dates",secYourWeek:"Your week",icRace:"A plan that builds to race day and tapers into it.",icFit:"Get fitter week by week, no race date.",icQuick:"One workout for your watch, no plan needed.",introStep:"Step {n} of 4 · {name}",introNext:"Next",introBack:"Back",introDone:"Build my plan",introSkip:"Show all settings",introNeed:"Before going on:",introWait:"Your plan's shape shows here once the steps are filled in.",needDist:"Choose a distance.",needDate:"Pick the race date.",needWeeks:"Enter the weeks of training (3 to 30).",goalRace:"Train for a race",goalFit:"Personal plan",focusDist:"Focus distance",startDate:"Start date",focusHint:"Sets the paces and how long the long runs get. No race, no taper: the plan just builds week by week.",fitHint:"Starts Monday {s}, ends Sunday {e}.",fitBlock:"{n}-week personal plan",hFitStarts:"Your {n}-week plan starts Monday {d}.",hFitIn:"Week {n} of {t}, {phase} phase{cut}.",hFitDone:"Your {n}-week plan finished on {d}. Set a new start date to plan the next block.",wa_pastFit:"Week 1 started on {d}. Move the start date if you want the plan to begin now.",planMetaFit:"{lbl} focus · {w} weeks · starts {d}",myPlans:"My plans",newPlan:"New plan",savePlan:"Save plan",keepPlan:"Keep this plan",language:"Language",theme:"Theme",thDark:"Dark",thLight:"Light",thAuto:"Auto",thHint:"Auto follows your device.",prefs:"Display and language",
 distance:"Distance",customKm:"Custom distance (km)",raceDate:"Race date",weeks:"Weeks of training",
 secNow:"Your running now",curVol:"Weekly volume (km)",volHint:"Suggested for your experience and distance. Change it to what you run now.",curLong:"Longest recent run (km, optional)",recDist:"Recent race",none:"None",
 halfMarathon:"Half marathon",marathon:"Marathon",recTime:"Finish time",recTimePh:"h:mm:ss or mm:ss",
@@ -125,7 +125,7 @@ wxSun:"sunset {t}",wxBest:"Driest slot left today: <b>{h}</b>, {p}% rain, {tp}°
 wmo0:"Clear",wmo1:"Mostly clear",wmo2:"Partly cloudy",wmo3:"Overcast",wmo45:"Fog",wmo51:"Drizzle",wmo56:"Freezing drizzle",wmo61:"Rain",wmo65:"Heavy rain",wmo66:"Freezing rain",wmo71:"Snow",wmo80:"Showers",wmo85:"Snow showers",wmo95:"Thunderstorm"
 },
 fr:{
-planNameLabel:"Nom du plan",editPlan:"Modifier le plan",done:"OK",secGoal:"Objectif",secRace:"Course",secFocus:"Distance et dates",secYourWeek:"Votre semaine",icRace:"Un plan qui monte jusqu'à la course puis s'allège avant.",icFit:"Progresser semaine après semaine, sans date de course.",icQuick:"Une séance pour votre montre, sans plan.",introStep:"Étape {n} sur 4 · {name}",introNext:"Suivant",introBack:"Retour",introDone:"Créer mon plan",introSkip:"Voir tous les réglages",introNeed:"Avant de continuer :",introWait:"La forme de votre plan s'affiche ici une fois les étapes remplies.",needDist:"Choisissez une distance.",needDate:"Choisissez la date de la course.",needWeeks:"Indiquez les semaines d'entraînement (3 à 30).",goalRace:"Préparer une course",goalFit:"Plan perso",focusDist:"Distance de référence",startDate:"Date de début",focusHint:"Elle fixe les allures et la longueur des sorties longues. Pas de course, pas d'affûtage : le plan progresse simplement semaine après semaine.",fitHint:"Du lundi {s} au dimanche {e}.",fitBlock:"Plan perso {n} semaines",hFitStarts:"Votre plan de {n} semaines commence le lundi {d}.",hFitIn:"Semaine {n} sur {t}, phase {phase}{cut}.",hFitDone:"Votre plan de {n} semaines s'est terminé le {d}. Indiquez une nouvelle date de début pour préparer la suite.",wa_pastFit:"La semaine 1 a commencé le {d}. Déplacez la date de début pour que le plan démarre maintenant.",planMetaFit:"Base {lbl} · {w} semaines · début le {d}",myPlans:"Mes plans",newPlan:"Nouveau plan",savePlan:"Enregistrer",language:"Langue",theme:"Thème",thDark:"Sombre",thLight:"Clair",thAuto:"Auto",thHint:"Auto suit le réglage de l'appareil.",prefs:"Affichage et langue",
+planNameLabel:"Nom du plan",editPlan:"Modifier le plan",done:"OK",secGoal:"Objectif",secRace:"Course",secFocus:"Distance et dates",secYourWeek:"Votre semaine",icRace:"Un plan qui monte jusqu'à la course puis s'allège avant.",icFit:"Progresser semaine après semaine, sans date de course.",icQuick:"Une séance pour votre montre, sans plan.",introStep:"Étape {n} sur 4 · {name}",introNext:"Suivant",introBack:"Retour",introDone:"Créer mon plan",introSkip:"Voir tous les réglages",introNeed:"Avant de continuer :",introWait:"La forme de votre plan s'affiche ici une fois les étapes remplies.",needDist:"Choisissez une distance.",needDate:"Choisissez la date de la course.",needWeeks:"Indiquez les semaines d'entraînement (3 à 30).",goalRace:"Préparer une course",goalFit:"Plan perso",focusDist:"Distance de référence",startDate:"Date de début",focusHint:"Elle fixe les allures et la longueur des sorties longues. Pas de course, pas d'affûtage : le plan progresse simplement semaine après semaine.",fitHint:"Du lundi {s} au dimanche {e}.",fitBlock:"Plan perso {n} semaines",hFitStarts:"Votre plan de {n} semaines commence le lundi {d}.",hFitIn:"Semaine {n} sur {t}, phase {phase}{cut}.",hFitDone:"Votre plan de {n} semaines s'est terminé le {d}. Indiquez une nouvelle date de début pour préparer la suite.",wa_pastFit:"La semaine 1 a commencé le {d}. Déplacez la date de début pour que le plan démarre maintenant.",planMetaFit:"Base {lbl} · {w} semaines · début le {d}",myPlans:"Mes plans",newPlan:"Nouveau plan",savePlan:"Enregistrer",keepPlan:"Garder ce plan",language:"Langue",theme:"Thème",thDark:"Sombre",thLight:"Clair",thAuto:"Auto",thHint:"Auto suit le réglage de l'appareil.",prefs:"Affichage et langue",
 distance:"Distance",customKm:"Distance personnalisée (km)",raceDate:"Date de la course",weeks:"Semaines d'entraînement",
 secNow:"Votre niveau actuel",curVol:"Volume hebdo (km)",volHint:"Suggestion selon votre expérience et votre distance. Remplacez-la par ce que vous courez aujourd'hui.",curLong:"Plus longue sortie récente (km, facultatif)",recDist:"Course récente",none:"Aucune",
 halfMarathon:"Semi-marathon",marathon:"Marathon",recTime:"Temps final",recTimePh:"h:mm:ss ou mm:ss",
@@ -271,7 +271,7 @@ BBEngine.setLocale({t,days:()=>DAYS,fmtDate});
 const {SETUP_FIELDS,warningItems,SETUP_STEP,WEEK_PHASES,recWeeksOf,LEVELS,levelOf,suggestVol,longOf,durSec,kmIn,DISTS,PHASES,DEFAULT_DAYS,TYPE_DEFS,uid,clamp,r05,iso,parseISO,addDays,dow,raceTimeSec,REC_LBL,REC_EX,badRaceTime,badTimeMsg,vdotOf,velAt,raceTimeMin,fmtPace,fmtDur,distKm,missingSetup,genInputs,distLabel,cat,paces,effectiveDays,cyc,pickHardDays,workFor,fill,watchPlan,generate,raceDesc,warnings,maxHardRuns,longBoxedIn,weekChecks,weekCheckSummary}=BBEngine;
 
 /* ---------- state ---------- */
-const S={nameAuto:true,inputs:/** @type {Record<string, any>} */ (DEFAULT_INPUTS()),types:DEFAULT_TYPES(),plan:null,planId:uid(),name:cap(t("blockName",{lbl:t("lhm")})),edited:false,savedAt:null,isExample:true,saved:[],saving:false,dirty:false,volSug:null};
+const S={nameAuto:true,inputs:/** @type {Record<string, any>} */ (DEFAULT_INPUTS()),types:DEFAULT_TYPES(),plan:null,planId:uid(),name:cap(t("blockName",{lbl:t("lhm")})),edited:false,savedAt:null,isExample:true,saved:[],saving:false,dirty:false,volSug:null,fromExample:true};
 /* BB-71: Weekly volume follows the suggestion for the level and distance while it is empty or still holds the last
    suggestion (S.volSug). A typed value, a loaded plan's and the example's are never replaced. */
 const volIsSuggested=()=>S.volSug!=null&&S.inputs.curVol!==""&&+S.inputs.curVol===S.volSug;
@@ -440,7 +440,10 @@ try{new ResizeObserver(()=>{const el=$("#profileChart");if(el&&Math.abs(el.clien
 /* BB-27: the setting a warning is about, by its label ("Weekly volume (km)" → "Weekly volume") */
 function fieldLabel(f){const k={date:S.inputs.goal==="fitness"?"startDate":"raceDate",weeks:"weeks",curVol:"curVol",curLong:"curLong",runs:"runsPerWeek",days:"runningDays",longDay:"longDay",types:"secTypes",pace:"recTime"}[f];return t(k).replace(/\s*\(.*\)$/,"");}
 function renderFieldWarns(items){for(const f of SETUP_FIELDS){const el=$("#fw-"+f);if(!el)continue;const ms=items.filter(x=>x.f===f).map(x=>x.m);el.hidden=!ms.length;el.innerHTML=ms.map(m=>`<p>${esc(m)}</p>`).join("");}}
-function renderPlan(){
+/* BB-32: the plan name field fits its text, so the ▾ switcher sits right after the name */
+let nameCtx=null;
+function fitName(){const el=/** @type {HTMLInputElement} */ ($("#planName"));if(!el)return;try{nameCtx=nameCtx||document.createElement("canvas").getContext("2d");const cs=getComputedStyle(el);nameCtx.font=`${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;el.style.width=Math.min(320,Math.ceil(nameCtx.measureText(el.value||"").width)+18)+"px";}catch(_){}}
+function renderPlan(){fitName();
   const P=S.plan, I=S.inputs; if(!P)return;syncMode();
   const miss=missingSetup(I);
   if(miss.length){renderFieldWarns([]);const h0=$("#hello");if(h0)h0.innerHTML="";$("#plan").innerHTML=`<div class="banner info"><span>${esc(t("needTitle"))}</span><ul>${miss.map(k=>`<li>${esc(t(k))}</li>`).join("")}</ul><button class="btn sm m-only" type="button" data-tabgo="setup">${t("editSettings")}</button></div><p class="qempty">${t("qwEmpty")} <button type="button" class="linkbtn" data-act="quick">${t("qwEmptyGo")}</button></p>`;return;}
@@ -1347,9 +1350,12 @@ function normalizeSaved(p){
   return {name:nStr(p.name,120).trim()||t("trainingBlock"),inputs,types,plan:{weeks,meta},edited:!!p.edited,updatedAt:nNum(p.updatedAt,0,8.64e15,0)};
 }
 function snapshot(){return {name:S.name,inputs:S.inputs,types:S.types,plan:S.plan,edited:S.edited,updatedAt:Date.now()};}
-function setStatus(t){$("#saveStatus").textContent=t;}
+function setStatus(t){$("#saveStatus").textContent=t;syncSaveUi();}
 let saveTimer=null;
-function markDirty(){S.dirty=true;if(S.savedAt){setStatus(t("unsaved"));clearTimeout(saveTimer);saveTimer=setTimeout(()=>{saveTimer=null;savePlan(true);},1500);}}
+/* BB-32: every plan but the example saves itself once its setup is complete; the example only through Keep this plan */
+const canAutosave=()=>!S.fromExample&&!missingSetup(S.inputs).length;
+function syncSaveUi(){$("#btnSave").hidden=!S.fromExample;}
+function markDirty(){S.dirty=true;if(S.savedAt||canAutosave()){setStatus(t("unsaved"));clearTimeout(saveTimer);saveTimer=setTimeout(()=>{saveTimer=null;savePlan(true);},1500);}}
 async function savePlan(auto){
   if(missingSetup(S.inputs).length){if(!auto)toast(t("needTitle"));return;}
   cancelSave();
@@ -1357,7 +1363,7 @@ async function savePlan(auto){
   try{
     setStatus(t("saving"));
     {const all=lsAll();all[S.planId]=data;localStorage.setItem("bb-plans",JSON.stringify(all));refreshLocalList();}
-    S.savedAt=Date.now();S.dirty=false;S.isExample=false;
+    S.savedAt=Date.now();S.dirty=false;S.isExample=false;S.fromExample=false;syncSaveUi();
     S.savedLbl=null;setStatus(t("savedLocal")+" · "+new Date().toLocaleTimeString(LOC(),{hour:"2-digit",minute:"2-digit"}));
     if(!auto){toast(t("planSaved"));renderPlan();}
   }catch(e){setStatus(t("notSaved"));toast(t("saveFail"));}
@@ -1365,14 +1371,14 @@ async function savePlan(auto){
 function lsAll(){try{return JSON.parse(localStorage.getItem("bb-plans")||"{}")||{};}catch(_){return {};}}
 function refreshLocalList(){const all=lsAll();S.saved=Object.entries(all).filter(([id])=>nId(id)).map(([id,d])=>{const n=normalizeSaved(d);return n&&{id,...n};}).filter(Boolean).sort((a,b)=>b.updatedAt-a.updatedAt);}
 /* autosave waits 1.5 s after the last change: write it now before anything replaces the current plan */
-function flushSave(){if(!saveTimer)return;clearTimeout(saveTimer);saveTimer=null;if(S.savedAt&&S.dirty)savePlan(true);}
+function flushSave(){if(!saveTimer)return;clearTimeout(saveTimer);saveTimer=null;if(S.dirty&&(S.savedAt||canAutosave()))savePlan(true);}
 function cancelSave(){clearTimeout(saveTimer);saveTimer=null;}
 addEventListener("pagehide",flushSave);
 document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="hidden")flushSave();});
 addEventListener("beforeunload",e=>{flushSave();if(S.dirty&&!S.savedAt&&!S.isExample&&!missingSetup(S.inputs).length){e.preventDefault();e.returnValue="";}});
 function loadPlan(p){
   S.intake=0;
-  S.planId=p.id;S.name=p.name;S.nameAuto=false;S.volSug=null;S.inputs={...DEFAULT_INPUTS(),...JSON.parse(JSON.stringify(p.inputs))};S.types=JSON.parse(JSON.stringify(p.types));S.plan=JSON.parse(JSON.stringify(p.plan));S.edited=!!p.edited;S.savedAt=p.updatedAt;S.isExample=false;S.pendingRegen=false;S.dirty=false;
+  S.planId=p.id;S.name=p.name;S.nameAuto=false;S.volSug=null;S.fromExample=false;S.inputs={...DEFAULT_INPUTS(),...JSON.parse(JSON.stringify(p.inputs))};S.types=JSON.parse(JSON.stringify(p.types));S.plan=JSON.parse(JSON.stringify(p.plan));S.edited=!!p.edited;S.savedAt=p.updatedAt;S.isExample=false;S.pendingRegen=false;S.dirty=false;
   $("#planName").value=S.name;renderSetup();renderPlan();setStatus(t("savedLocal")+" · "+new Date(p.updatedAt).toLocaleDateString(LOC(),{day:"numeric",month:"short"}));
 }
 function openPlans(){
@@ -1442,12 +1448,14 @@ $("#setup").addEventListener("click",e=>{
 });
 function newPlan(){
   flushSave();
-  const go=()=>{S.nameAuto=true;S.volSug=null;S.inputs=BLANK_INPUTS();S.types=BLANK_TYPES();S.planId=uid();S.savedAt=null;S.isExample=false;S.dirty=false;S.pendingRegen=false;S.name=cap(t("blockName",{lbl:t("lhm")}));$("#planName").value=S.name;S.intake=phoneLayout()?1:0;S.introErr="";regen();renderSetup();renderPlan();setStatus(t("notSaved"));if(S.intake)setTab("setup");};
+  const go=()=>{S.nameAuto=true;S.volSug=null;S.fromExample=false;S.inputs=BLANK_INPUTS();S.types=BLANK_TYPES();S.planId=uid();S.savedAt=null;S.isExample=false;S.dirty=false;S.pendingRegen=false;S.name=cap(t("blockName",{lbl:t("lhm")}));$("#planName").value=S.name;S.intake=phoneLayout()?1:0;S.introErr="";regen();renderSetup();renderPlan();setStatus(t("notSaved"));if(S.intake)setTab("setup");};
   if(S.dirty&&S.savedAt===null&&!S.isExample)confirmBox(t("newQ"),t("newT"),t("startNew"),go);else go();
 }
 
 
 /* ---------- header ---------- */
+$("#planName").addEventListener("input",fitName);
+try{document.fonts.ready.then(fitName);}catch(_){}
 $("#planName").addEventListener("change",e=>{S.nameAuto=!e.target.value.trim();S.name=e.target.value.trim()||t("trainingBlock");e.target.value=S.name;markDirty();});
 $("#btnSave").onclick=()=>savePlan(false);
 /* ---------- phones: plan mode and the Edit plan sheet (BB-29) ---------- */
@@ -1476,6 +1484,7 @@ function setTab(tab){if(document.body.classList.contains("planmode")&&phoneLayou
 document.addEventListener("click",e=>{const b=/** @type {HTMLElement|null} */ ((/** @type {HTMLElement} */ (e.target)).closest("[data-tab],[data-tabgo]"));if(b&&(b.closest("#mtabs")||b.dataset.tabgo))setTab(b.dataset.tab||b.dataset.tabgo);});
 $("#btnPlans").onclick=openPlans;
 $("#btnNew").onclick=newPlan;
+$("#btnQuick").onclick=()=>openQuick();
 
 function applyStatic(){
   document.documentElement.lang=LANG;

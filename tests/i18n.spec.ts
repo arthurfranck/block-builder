@@ -48,7 +48,8 @@ test.describe('language switch', () => {
   test('French translates the page and the plan', async ({ app, page }) => {
     await app.setLang('fr');
     await expect(page.locator('html')).toHaveAttribute('lang', 'fr');
-    await expect(page.locator('#btnSave')).toHaveText('Enregistrer');
+    await expect(page.locator('#btnSave')).toHaveText('Garder ce plan');
+    await expect(page.locator('#btnQuick')).toHaveText('Séance rapide');
     await expect(page.locator('table.grid thead th').nth(1)).toHaveText('Lun');
     await expect(page.locator('#planName')).toHaveValue('Plan semi-marathon');
     expect((await app.plan()).at(-1)!.sessions.some((s) => s.name === 'Jour de course')).toBe(true);
@@ -59,7 +60,7 @@ test.describe('language switch', () => {
     await app.setLang('fr');
     await app.open();
     await expect(page.locator('#langSel')).toHaveValue('fr');
-    await expect(page.locator('#btnPlans')).toHaveText('Mes plans');
+    await expect(page.locator('#btnPlans')).toHaveAttribute('aria-label', 'Mes plans');
   });
 
   test('the language dropdown shows the current language and switches back', async ({ app, page }) => {
@@ -70,7 +71,7 @@ test.describe('language switch', () => {
     await expect(page.locator('label[for="langSel"]')).toHaveText('Langue');
     await app.setLang('en');
     await expect(page.locator('html')).toHaveAttribute('lang', 'en');
-    await expect(page.locator('#btnSave')).toHaveText('Save plan');
+    await expect(page.locator('#btnSave')).toHaveText('Keep this plan');
   });
 
   test('a French browser opens in French', async ({ browser }) => {
