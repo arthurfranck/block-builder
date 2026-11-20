@@ -9,7 +9,7 @@
             "if": "Bash(git commit*)",
             "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/test-before-commit.sh",
             "timeout": 300,
-            "statusMessage": "index.html changed: running Chrome tests before commit"
+            "statusMessage": "app files changed: running Chrome tests before commit"
           }
         ]
       }

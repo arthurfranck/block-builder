@@ -8,8 +8,8 @@
 - Backlog: `../backlog-block-builder.md`, ids `BB-<n>`, edited with the `tool-backlog` skill. Rank by dependencies, not score alone: never put an item above the one that would kill, absorb or rework it ("I don't want to implement a feature if it is going to be killed 3 versions later").
 - Report briefly: PR link, version, tests run, what was not checked.
 
-## Every change to `index.html` or `engine.js`, in the same commit
-1. **Version:** bump `const VERSION` in `index.html` (semver) and add `## [x.y.z] - YYYY-MM-DD` at the top of `CHANGELOG.md` (Keep a Changelog headings, written for the runner, ending `(BB-n)`). Tests check footer and changelog match; no test edit needed.
+## Every change to `index.html`, `app.js`, `theme.js` or `engine.js`, in the same commit
+1. **Version:** bump `const VERSION` in `app.js` (semver) and add `## [x.y.z] - YYYY-MM-DD` at the top of `CHANGELOG.md` (Keep a Changelog headings, written for the runner, ending `(BB-n)`). Tests check footer and changelog match; no test edit needed.
 2. **Docs:** reread and fix what's no longer true:
    - `docs/features.md`: every rule, number and edge case.
    - `README.md`: one line per feature, How to use it, Privacy and storage (any `localStorage` key or outside request), Repository map / Tech / Run locally. No version or date badges, no changelog.
@@ -23,14 +23,15 @@
    - Saved-plan format change → `tests/fixtures/plans-v1.json` must still import; add a fixture for the new version.
 
 ## Project facts
-- App = `index.html` + `engine.js` (`BBEngine`, classic script, no DOM or storage, so the page opens from `file://`). No build step.
-- Every user-facing string exists in `I18N.en` and `I18N.fr`.
+- App = `index.html` (markup, CSS) + `app.js` (interface, storage, exports) + `engine.js` (`BBEngine`, no DOM or storage) + `theme.js` (theme before first paint). All classic scripts, not ES modules, so the page opens from `file://`. No build step.
+- No inline `<script>` or `on…=` attributes: the CSP has no script `'unsafe-inline'` (a security test checks). `app.js` has `// @ts-check`; `npm run typecheck` runs it (non-strict, `tsconfig.app.json`) and the strict test check (`tsconfig.json`).
+- Every user-facing string exists in `I18N.en` and `I18N.fr` (in `app.js`).
 - Plans live in `localStorage` key `bb-plans`; export is `{app:"block-builder", version:1, plans:{…}}`. Keep import backward compatible.
 - GitHub Pages serves `main` (https://arthurfranck.github.io/block-builder/). `main` is protected by the six Tests jobs: never push to it, always a PR.
 - Node: `~/.local/node/bin`; `gh`: `~/.local/bin/gh` if not on PATH.
 
 ## `.claude/`
-- `settings.json`: pre-commit hook runs `test:engine` + `test:chrome` when `index.html`/`engine.js` changed, blocking on failure.
+- `settings.json`: pre-commit hook runs `test:engine` + `test:chrome` when `index.html`/`app.js`/`theme.js`/`engine.js` changed, blocking on failure.
 - `launch.json`: preview via `node tests/serve.mjs 8765` (same server as tests and CI).
 - `commands/release.md`: `/release <id> [patch|minor|major]`.
 - `health.md`: profile for the weekly `codebase-health` check. Update it when a measured file is renamed or a known risk is fixed or added.

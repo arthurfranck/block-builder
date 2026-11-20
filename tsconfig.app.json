@@ -1,0 +1,14 @@
+{
+  // Checks the page scripts (BB-66): app.js carries // @ts-check. Not strict yet: the app has no JSDoc types,
+  // so this catches wrong DOM members, duplicate keys and type mix-ups, not implicit any.
+  "compilerOptions": {
+    "target": "es2022",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "types": [],
+    "allowJs": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": false
+  },
+  "files": ["types/globals.d.ts", "theme.js", "app.js"]
+}

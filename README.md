@@ -58,7 +58,9 @@ The page only reaches outside for:
 ### Repository map
 
 ```text
-index.html            the app: HTML, CSS and the interface
+index.html            the page: HTML and CSS
+app.js                the interface: rendering, storage, exports
+theme.js              sets the theme before the page paints
 engine.js             the plan engine: paces, plan building, warnings, week checks (no DOM, no storage)
 vendor/               third-party code served from this repo (see vendor/README.md)
 docs/                 features in detail, README screenshot
@@ -71,11 +73,11 @@ CLAUDE.md             rules for working on this repo with Claude Code
 
 ### Tech
 
-- No build step. `engine.js` is a classic script rather than an ES module so the page still works opened from disk.
+- No build step. `app.js`, `engine.js` and `theme.js` are classic scripts rather than ES modules so the page still works opened from disk.
 - Google Fonts: Archivo (expanded and heavy) for the brand and big numbers, Inter for everything else.
 - [jsPDF](https://github.com/parallax/jsPDF) 4.2.1 and [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable) 5.0.9 from cdnjs, loaded only when exporting a PDF, with integrity hashes: if the CDN serves a different file, the browser refuses it.
 - Vendored [`@bibixx/workoutkit`](https://www.npmjs.com/package/@bibixx/workoutkit) 0.2.0 (MIT) in `vendor/workoutkit-0.2.0/`, loaded only when exporting to Apple Watch.
-- Content Security Policy (in a `<meta>` tag): scripts only from the page itself and cdnjs, styles from the page and Google Fonts, network requests only to Open-Meteo, no plugins, forms or `<base>` changes. Inline script is still allowed because the app lives in `index.html`; moving it to its own file would let the policy drop `'unsafe-inline'`.
+- Content Security Policy (in a `<meta>` tag): scripts only from the page itself and cdnjs, styles from the page and Google Fonts, network requests only to Open-Meteo, no plugins, forms or `<base>` changes. No inline script is allowed: the app's code is in its own files, so a script injected into the page would not run.
 - Hosted on GitHub Pages from the `main` branch, root folder.
 
 ### Run locally
