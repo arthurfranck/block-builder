@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.11.1] - 2026-11-20
+
+### Fixed
+- Right after a new version goes live, a page opened in the previous 10 minutes could load the new page with the old code, so new buttons did nothing until the browser's copy expired (BB-74). The page now asks for the scripts of its own version.
+
 ## [1.11.0] - 2026-11-20
 
 ### Changed
