@@ -56,7 +56,7 @@ Above the load profile, a card leads with today's run: its name, the distance in
 
 - **Send to watch** is the main button and names the device you last used; Edit sits next to it.
 - On a rest day it shows the next run and its date; before the plan starts, the start date and first run.
-- **Weather:** one line (temperature, sky, rain chance, driest slot, city) that opens the full forecast: current conditions and feels-like temperature, high and low, rain chance, wind, sunset, and an hourly strip to 22:00 that marks the driest slot left in the day. Type a city or use your location; the city and whether the forecast is open are remembered in your browser.
+- **Weather:** one line (temperature, sky, rain chance, driest slot, city) that opens the full forecast: current conditions and feels-like temperature, high and low, rain chance, wind, sunset, and an hourly strip to 22:00 that marks the driest slot left in the day. Type a city or use your location; the city and whether the forecast is open are remembered in your browser. If the forecast fails to load, it is not asked for again on every change: the page waits 30 seconds, then twice as long after each new failure, up to 30 minutes; choosing a city or your location tries at once.
 - **Heat note:** on hot days (feels-like 22° or more at the driest slot) a note slows easy and tempo paces by 10 s/km (20 s/km from 28°) and says to run hard parts by effort. The watch file keeps the plan paces.
 
 ## Quick workout
