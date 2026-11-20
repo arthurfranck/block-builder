@@ -325,3 +325,18 @@ describe('optional longest recent run (BB-72)', () => {
     assert.equal(has({ ...D, curLong: '' }), false);
   });
 });
+
+describe('warnings by field (BB-27)', () => {
+  const D = { ...base, ...PROFILES['D · slow marathon, 4 runs, half in 2:30'].inp };
+  test('setup problems name their field, plan problems none; warnings() is the same list of messages', () => {
+    const inp = { ...D, weeks: 8, curVol: 20, curLong: 10, days: [4, 5, 6, 0], runs: 4 };
+    const plan = E.generate(inp, types()), items = E.warningItems(inp, types(), plan, false);
+    assert.deepEqual(items.map((x) => x.m), E.warnings(inp, types(), plan, false));
+    const by = Object.fromEntries(items.map((x) => [x.m.split(' ')[0], x.f]));
+    assert.equal(by.wa_short, 'weeks');
+    assert.equal(by.wa_lowVol, 'curVol');
+    assert.equal(by.wa_mLong, 'curLong');
+    for (const x of items) assert.ok(x.f === null || E.SETUP_FIELDS.includes(x.f), x.m);
+    assert.ok(items.some((x) => x.f === null), 'a plan problem (e.g. goal readiness) has no field');
+  });
+});

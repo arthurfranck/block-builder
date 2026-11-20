@@ -4,7 +4,7 @@
    Runs after engine.js (BBEngine) at the end of <body>. */
 (() => {
 "use strict";
-const VERSION = "1.9.0";
+const VERSION = "1.10.0";
 const $ = s => document.querySelector(s);
 /** @type {(s: string) => NodeListOf<HTMLElement>} */
 const $$ = s => document.querySelectorAll(s);
@@ -235,8 +235,8 @@ wxGeoFail:"La position n'est pas disponible ici. Saisissez une ville.",wxFeels:"
 wxSun:"coucher {t}",wxBest:"Créneau le plus sec aujourd'hui : <b>{h}</b>, {p} % de pluie, {tp}°",wxUpd:"Mis à jour à {t}",
 wmo0:"Ciel clair",wmo1:"Plutôt dégagé",wmo2:"Partiellement nuageux",wmo3:"Couvert",wmo45:"Brouillard",wmo51:"Bruine",wmo56:"Bruine verglaçante",wmo61:"Pluie",wmo65:"Forte pluie",wmo66:"Pluie verglaçante",wmo71:"Neige",wmo80:"Averses",wmo85:"Averses de neige",wmo95:"Orage"
 }};
-Object.assign(I18N.en,{needTitle:"Fill in the setup to build your plan:",needRuns:"Choose how many runs per week.",needVol:"Enter your current weekly volume."});
-Object.assign(I18N.fr,{needTitle:"Complétez les réglages pour créer votre plan :",needRuns:"Choisissez le nombre de sorties par semaine.",needVol:"Indiquez votre volume hebdo actuel."});
+Object.assign(I18N.en,{setupWarn:"Some settings need a look: {f}.",needTitle:"Fill in the setup to build your plan:",needRuns:"Choose how many runs per week.",needVol:"Enter your current weekly volume."});
+Object.assign(I18N.fr,{setupWarn:"Des réglages sont à revoir : {f}.",needTitle:"Complétez les réglages pour créer votre plan :",needRuns:"Choisissez le nombre de sorties par semaine.",needVol:"Indiquez votre volume hebdo actuel."});
 let LANG=(()=>{try{const s=localStorage.getItem("bb-lang");if(s==="fr"||s==="en")return s;}catch(_){}return /^fr/i.test(navigator.language||"")?"fr":"en";})();
 function t(k,v){let s=(I18N[LANG]&&I18N[LANG][k]);if(s==null)s=I18N.en[k]!=null?I18N.en[k]:k;return v?s.replace(/\{(\w+)\}/g,(m,x)=>v[x]!==undefined?v[x]:m):s;}
 const cap=x=>String(x).charAt(0).toUpperCase()+String(x).slice(1);
@@ -268,7 +268,7 @@ const BLANK_INPUTS = () => ({...DEFAULT_INPUTS(),dist:"",raceDate:"",weeks:"",cu
 const BLANK_TYPES = () => DEFAULT_TYPES().map(x=>({...x,on:x.id==="easy"}));
 /* ---------- plan engine: engine.js (BB-7) ---------- */
 BBEngine.setLocale({t,days:()=>DAYS,fmtDate});
-const {SETUP_STEP,WEEK_PHASES,recWeeksOf,LEVELS,levelOf,suggestVol,longOf,durSec,kmIn,DISTS,PHASES,DEFAULT_DAYS,TYPE_DEFS,uid,clamp,r05,iso,parseISO,addDays,dow,raceTimeSec,REC_LBL,REC_EX,badRaceTime,badTimeMsg,vdotOf,velAt,raceTimeMin,fmtPace,fmtDur,distKm,missingSetup,genInputs,distLabel,cat,paces,effectiveDays,cyc,pickHardDays,workFor,fill,watchPlan,generate,raceDesc,warnings,maxHardRuns,longBoxedIn,weekChecks,weekCheckSummary}=BBEngine;
+const {SETUP_FIELDS,warningItems,SETUP_STEP,WEEK_PHASES,recWeeksOf,LEVELS,levelOf,suggestVol,longOf,durSec,kmIn,DISTS,PHASES,DEFAULT_DAYS,TYPE_DEFS,uid,clamp,r05,iso,parseISO,addDays,dow,raceTimeSec,REC_LBL,REC_EX,badRaceTime,badTimeMsg,vdotOf,velAt,raceTimeMin,fmtPace,fmtDur,distKm,missingSetup,genInputs,distLabel,cat,paces,effectiveDays,cyc,pickHardDays,workFor,fill,watchPlan,generate,raceDesc,warnings,maxHardRuns,longBoxedIn,weekChecks,weekCheckSummary}=BBEngine;
 
 /* ---------- state ---------- */
 const S={nameAuto:true,inputs:/** @type {Record<string, any>} */ (DEFAULT_INPUTS()),types:DEFAULT_TYPES(),plan:null,planId:uid(),name:cap(t("blockName",{lbl:t("lhm")})),edited:false,savedAt:null,isExample:true,saved:[],saving:false,dirty:false,volSug:null};
@@ -437,18 +437,25 @@ function profileSVG(weeks,W){
 let chartW=0;
 function drawProfile(){const el=$("#profileChart");if(!el||!S.plan)return;chartW=el.clientWidth;el.innerHTML=profileSVG(S.plan.weeks,chartW);}
 try{new ResizeObserver(()=>{const el=$("#profileChart");if(el&&Math.abs(el.clientWidth-chartW)>4)drawProfile();}).observe($("#plan"));}catch(_){}
+/* BB-27: the setting a warning is about, by its label ("Weekly volume (km)" → "Weekly volume") */
+function fieldLabel(f){const k={date:S.inputs.goal==="fitness"?"startDate":"raceDate",weeks:"weeks",curVol:"curVol",curLong:"curLong",runs:"runsPerWeek",days:"runningDays",longDay:"longDay",types:"secTypes",pace:"recTime"}[f];return t(k).replace(/\s*\(.*\)$/,"");}
+function renderFieldWarns(items){for(const f of SETUP_FIELDS){const el=$("#fw-"+f);if(!el)continue;const ms=items.filter(x=>x.f===f).map(x=>x.m);el.hidden=!ms.length;el.innerHTML=ms.map(m=>`<p>${esc(m)}</p>`).join("");}}
 function renderPlan(){
   const P=S.plan, I=S.inputs; if(!P)return;syncMode();
   const miss=missingSetup(I);
-  if(miss.length){const h0=$("#hello");if(h0)h0.innerHTML="";$("#plan").innerHTML=`<div class="banner info"><span>${esc(t("needTitle"))}</span><ul>${miss.map(k=>`<li>${esc(t(k))}</li>`).join("")}</ul><button class="btn sm m-only" type="button" data-tabgo="setup">${t("editSettings")}</button></div><p class="qempty">${t("qwEmpty")} <button type="button" class="linkbtn" data-act="quick">${t("qwEmptyGo")}</button></p>`;return;}
+  if(miss.length){renderFieldWarns([]);const h0=$("#hello");if(h0)h0.innerHTML="";$("#plan").innerHTML=`<div class="banner info"><span>${esc(t("needTitle"))}</span><ul>${miss.map(k=>`<li>${esc(t(k))}</li>`).join("")}</ul><button class="btn sm m-only" type="button" data-tabgo="setup">${t("editSettings")}</button></div><p class="qempty">${t("qwEmpty")} <button type="button" class="linkbtn" data-act="quick">${t("qwEmptyGo")}</button></p>`;return;}
   renderHello();
   const weeks=P.weeks;
   const totals=weeks.map(w=>w.sessions.reduce((a,s)=>a+s.km,0));
   const longest=Math.max(...weeks.flatMap(w=>w.sessions.filter(s=>s.kind==="long").map(s=>s.km)),0);
-  const warns=warnings(I,S.types,P,S.edited);
+  /* BB-27: setup problems at their field (pace: the pace hint already says it), plan problems in the banner */
+  const items=warningItems(I,S.types,P,S.edited);renderFieldWarns(items);
+  const warns=items.filter(x=>!x.f).map(x=>x.m);
+  const setupF=[...new Set(items.filter(x=>x.f&&(x.f!=="pace"||badRaceTime(I))).map(x=>x.f))];
   let h="";
   if(S.isExample)h+=`<div class="banner info"><span>${t("exampleBanner")}</span><button class="btn sm m-only" type="button" data-tabgo="setup">${t("editSettings")}</button></div>`;
   if(S.pendingRegen)h+=`<div class="banner"><span>${t("pendingBanner")}</span><button class="btn sm primary" data-act="regen">${t("rebuildPlan")}</button><button class="btn sm ghost" data-act="keep">${t("keepEdits")}</button></div>`;
+  if(setupF.length)h+=`<div class="banner" id="setupWarn"><span>${esc(t("setupWarn",{f:setupF.map(fieldLabel).join(", ")}))}</span><button class="btn sm m-only" type="button" data-tabgo="setup">${t("editSettings")}</button></div>`;
   if(warns.length)h+=`<div class="banner"><ul>${warns.map(w=>`<li>${esc(w)}</li>`).join("")}</ul></div>`;
   /* summary (BB-26): what is left and what the plan builds to, with units; total km dropped (still in the PDF) */
   const today=new Date();today.setHours(0,0,0,0);

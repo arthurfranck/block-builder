@@ -341,14 +341,18 @@ function raceDesc(inp,P){
 }
 
 /* ---------- warnings ---------- */
-function warnings(inp,types,plan,edited){
-  const w=[];const D=distKm(inp),c=cat(D),lbl=distLabel(inp);
+/* BB-27: each warning says which setup field causes it (f), or null for a plan problem. Setup problems are shown at
+   their field, plan problems in the banner and on the week. warnings() keeps the plain list of messages. */
+const SETUP_FIELDS=["date","weeks","curVol","curLong","runs","days","longDay","types","pace"];
+function warnings(inp,types,plan,edited){return warningItems(inp,types,plan,edited).map(x=>x.m);}
+function warningItems(inp,types,plan,edited){
+  const w=[];const at=(f,m)=>({f,m});const D=distKm(inp),c=cat(D),lbl=distLabel(inp);
   const minW={"5k":6,"10k":8,"hm":10,"m":14}[c];
-  if(inp.goal!=="fitness"&&inp.weeks<minW)w.push(t("wa_short",{w:inp.weeks,lbl,min:minW}));
-  if(inp.weeks>24)w.push(t("wa_long",{n:Math.min(20,inp.weeks)}));
+  if(inp.goal!=="fitness"&&inp.weeks<minW)w.push(at("weeks",t("wa_short",{w:inp.weeks,lbl,min:minW})));
+  if(inp.weeks>24)w.push(at("weeks",t("wa_long",{n:Math.min(20,inp.weeks)})));
   const lowVol={"5k":12,"10k":18,"hm":22,"m":32}[c];
-  if(inp.goal!=="fitness"&&+inp.curVol<lowVol)w.push(t("wa_lowVol",{v:inp.curVol,lbl}));
-  if(inp.goal!=="fitness"&&c==="m"&&longTyped(inp)&&+inp.curLong<14)w.push(t("wa_mLong")); /* BB-72: only on a typed value */
+  if(inp.goal!=="fitness"&&+inp.curVol<lowVol)w.push(at("curVol",t("wa_lowVol",{v:inp.curVol,lbl})));
+  if(inp.goal!=="fitness"&&c==="m"&&longTyped(inp)&&+inp.curLong<14)w.push(at("curLong",t("wa_mLong"))); /* BB-72: only on a typed value */
   /* goal readiness (BB-40): longest run before race day and biggest week, against what a half or marathon usually needs */
   if(inp.goal!=="fitness"&&(c==="hm"||c==="m")&&plan.weeks.length){
     const ri=plan.weeks.findIndex(x=>x.sessions.some(s=>s.kind==="race"));
@@ -356,33 +360,33 @@ function warnings(inp,types,plan,edited){
     const lr=Math.max(0,...pre.flatMap(x=>x.sessions.map(s=>+s.km||0)));
     const pk=Math.max(0,...pre.map(x=>x.sessions.reduce((a,s)=>a+(+s.km||0),0)));
     const tl=D*(c==="m"?.75:.6),tp=c==="m"?45:30;
-    if(lr<tl-.05||pk<tp-.05)w.push(t("wa_ready",{long:+lr.toFixed(1),peak:Math.round(pk),lbl,tl:Math.round(tl),tp}));
+    if(lr<tl-.05||pk<tp-.05)w.push(at(null,t("wa_ready",{long:+lr.toFixed(1),peak:Math.round(pk),lbl,tl:Math.round(tl),tp})));
   }
   const days=[...new Set(inp.days)];
-  if(days.length!==+inp.runs)w.push(t("wa_days",{d:days.length,r:inp.runs}));
+  if(days.length!==+inp.runs)w.push(at("days",t("wa_days",{d:days.length,r:inp.runs})));
   /* BB-44: running days the runner picked that sit 3 or more in a row (Sun runs into Mon); only at 4 runs or fewer, where a gap is possible */
   else if(+inp.runs>=3&&+inp.runs<=4){
     const on=new Set(days);let best=[];
     for(const d0 of days){if(on.has((d0+6)%7))continue;const run=[];for(let d=d0;on.has(d%7)&&run.length<7;d++)run.push(d%7);if(run.length>best.length)best=run;}
-    if(best.length>=3)w.push(t("wa_row",{days:best.map(d=>dayName(d)).join(", "),n:best.length}));
+    if(best.length>=3)w.push(at("days",t("wa_row",{days:best.map(d=>dayName(d)).join(", "),n:best.length})));
   }
-  if(+inp.runs===7)w.push(t("wa_noRest7"));
+  if(+inp.runs===7)w.push(at("runs",t("wa_noRest7")));
   const hard=types.filter(x=>x.on&&x.kind==="hard");
   const maxHard=maxHardRuns(inp);
-  if(hard.length>maxHard*2)w.push(t("wa_tooMany",{h:hard.length,r:inp.runs,m:maxHard,sess:t(maxHard>1?"sessMany":"sessOne")}));
-  if(!hard.length)w.push(t("wa_noHard"));
-  if(hard.length&&longBoxedIn(inp)){const ds=[...new Set(inp.days)],dd=ds.length===+inp.runs?ds:DEFAULT_DAYS[+inp.runs];w.push(t("wa_noGap",{long:dayName(dd.includes(+inp.longDay)?+inp.longDay:dd[dd.length-1])}));}
+  if(hard.length>maxHard*2)w.push(at("types",t("wa_tooMany",{h:hard.length,r:inp.runs,m:maxHard,sess:t(maxHard>1?"sessMany":"sessOne")})));
+  if(!hard.length)w.push(at("types",t("wa_noHard")));
+  if(hard.length&&longBoxedIn(inp)){const ds=[...new Set(inp.days)],dd=ds.length===+inp.runs?ds:DEFAULT_DAYS[+inp.runs];w.push(at("longDay",t("wa_noGap",{long:dayName(dd.includes(+inp.longDay)?+inp.longDay:dd[dd.length-1])})));}
   /* +10% a week on the last full week (cutbacks and taper skipped), checked on the weeks as shown */
   const wk=plan.weeks.map(x=>x.sessions.reduce((a,s)=>a+(+s.km||0),0));const steep=[];
   plan.weeks.forEach((x,i)=>{if(i===0||x.cutback||x.phase==="taper"||x.phase==="recovery")return;const r=plan.weeks[i-1].cutback?wk[i-2]:wk[i-1];if(r>0&&wk[i]>r*1.1+0.05)steep.push(x.n);});
-  if(steep.length)w.push(t(edited?"wa_steepEdit":"wa_steep",{w:t(steep.length>1?"wkMany":"wkOne",{n:steep.join(", ")})}));
+  if(steep.length)w.push(at(null,t(edited?"wa_steepEdit":"wa_steep",{w:t(steep.length>1?"wkMany":"wkOne",{n:steep.join(", ")})})));
   /* BB-41: week 1 above the volume run now, when even the shortest runs add up to more (the generator trims it otherwise) */
-  if(wk.length&&+inp.curVol>0&&wk[0]>+inp.curVol+0.05)w.push(t(edited?"wa_w1Edit":levelOf(inp)==="new"?"wa_w1New":"wa_w1",{km:+wk[0].toFixed(1),v:+inp.curVol,r:inp.runs}));
-  w.push(...weekCheckSummary(plan,inp));
-  if(badRaceTime(inp))w.push(badTimeMsg(inp));
-  else if(!(+inp.recDist>0&&raceTimeSec(inp.recTime,+inp.recDist)))w.push(t("wa_noPace"));
+  if(wk.length&&+inp.curVol>0&&wk[0]>+inp.curVol+0.05)w.push(at(null,t(edited?"wa_w1Edit":levelOf(inp)==="new"?"wa_w1New":"wa_w1",{km:+wk[0].toFixed(1),v:+inp.curVol,r:inp.runs})));
+  w.push(...weekCheckSummary(plan,inp).map(m=>at(null,m)));
+  if(badRaceTime(inp))w.push(at("pace",badTimeMsg(inp)));
+  else if(!(+inp.recDist>0&&raceTimeSec(inp.recTime,+inp.recDist)))w.push(at("pace",t("wa_noPace")));
   const startD=parseISO(plan.meta.start);const today=new Date();today.setHours(0,0,0,0);
-  if(startD<addDays(today,-6))w.push(t(inp.goal==="fitness"?"wa_pastFit":"wa_past",{d:fmtDate(startD)}));
+  if(startD<addDays(today,-6))w.push(at("date",t(inp.goal==="fitness"?"wa_pastFit":"wa_past",{d:fmtDate(startD)})));
   return w;
 }
 
@@ -426,7 +430,7 @@ function weekCheckSummary(plan,inp){
 
 const BBEngine = {
   setLocale(o) { Object.assign(LOCALE, o); },
-  DISTS, PHASES, WEEK_PHASES, recWeeksOf, DEFAULT_DAYS, TYPE_DEFS, uid, clamp, r05, iso, parseISO, addDays, dow, raceTimeSec, REC_LBL, REC_EX, badRaceTime, badTimeMsg, vdotOf, velAt, raceTimeMin, fmtPace, fmtDur, durSec, kmIn, LONG_SHARE, LONG_MAX_MIN, LEVELS, levelOf, CUT_EVERY, distKm, VOL_SUGGEST, suggestVol, longTyped, longOf, SETUP_STEP, missingSetup, genInputs, distLabel, cat, paces, effectiveDays, cyc, pickHardDays, workFor, fill, watchPlan, generate, raceDesc, warnings, maxHardRuns, longBoxedIn, weekChecks, weekCheckSummary
+  DISTS, PHASES, WEEK_PHASES, recWeeksOf, DEFAULT_DAYS, TYPE_DEFS, uid, clamp, r05, iso, parseISO, addDays, dow, raceTimeSec, REC_LBL, REC_EX, badRaceTime, badTimeMsg, vdotOf, velAt, raceTimeMin, fmtPace, fmtDur, durSec, kmIn, LONG_SHARE, LONG_MAX_MIN, LEVELS, levelOf, CUT_EVERY, distKm, VOL_SUGGEST, suggestVol, SETUP_FIELDS, warningItems, longTyped, longOf, SETUP_STEP, missingSetup, genInputs, distLabel, cat, paces, effectiveDays, cyc, pickHardDays, workFor, fill, watchPlan, generate, raceDesc, warnings, maxHardRuns, longBoxedIn, weekChecks, weekCheckSummary
 };
 root.BBEngine = BBEngine;
 if (typeof module === "object" && module.exports) module.exports = BBEngine;

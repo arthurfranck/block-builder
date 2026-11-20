@@ -18,9 +18,10 @@ test.describe('paces', () => {
     expect(easy(fast)).toBeLessThan(easy(slow));
   });
 
-  test('no recent race: effort descriptions and a warning', async ({ app, page }) => {
+  test('no recent race: effort descriptions and a hint at the field (BB-27: not in the banner)', async ({ app, page }) => {
     await app.configure({ recDist: '0' });
-    await expect(app.warnings()).toContainText(['Without a recent race time']);
+    await expect(app.warnings().filter({ hasText: 'Without a recent race time' })).toHaveCount(0);
+    await expect(app.setupWarning()).toHaveCount(0);
     await app.showSetup();
     await expect(page.locator('#paceHint')).toHaveText('Add a recent race and time to get paces.');
     await app.showPlan();
@@ -29,8 +30,9 @@ test.describe('paces', () => {
 
   test('an unreadable time says so instead of quietly dropping the paces', async ({ app, page }) => {
     await app.configure({ recTime: 'fast' });
-    await expect(app.warnings()).toContainText(["Couldn't read fast as a 10K finish time"]);
-    await expect(app.warnings()).not.toContainText(['Without a recent race time']);
+    await expect(page.locator('#paceHint')).toContainText("Couldn't read fast as a 10K finish time");
+    await expect(app.setupWarning()).toContainText('Some settings need a look: Finish time.');
+    await expect(app.warnings()).toHaveCount(0);
     await app.showSetup();
     await expect(page.locator('#paceHint')).toContainText('for example 52:00');
   });
@@ -52,7 +54,7 @@ test.describe('paces', () => {
       await app.configure({ recTime: c.short });
       expect(await paceHint(app, page)).toBe(expected);
       await expect(page.locator('#recTime')).toHaveValue(c.full);
-      await expect(app.warnings()).not.toContainText(['Without a recent race time']);
+      await expect(app.setupWarning()).toHaveCount(0);
     });
   }
 
@@ -71,9 +73,10 @@ test.describe('paces', () => {
     await expect(page.locator('#paceHint')).toContainText(/Paces: easy/);
   });
 
-  test('a time that fits no reading for the distance is flagged', async ({ app }) => {
+  test('a time that fits no reading for the distance is flagged', async ({ app, page }) => {
     await app.configure({ recDist: '5', recTime: '1:30' });
-    await expect(app.warnings()).toContainText(["Couldn't read 1:30 as a 5K finish time"]);
+    await expect(page.locator('#paceHint')).toContainText("Couldn't read 1:30 as a 5K finish time");
+    await expect(app.setupWarning()).toContainText('Finish time');
   });
 });
 
@@ -88,8 +91,11 @@ test.describe('week shape', () => {
     await app.showSetup();
     await page.locator('#daysSeg [data-day="3"]').click();
     await expect(page.locator('#daysCount')).toHaveText('(4 of 5)');
+    await expect(app.fieldWarning('days')).toContainText('You picked 4 running days for 5 runs a week');
+    await expect(app.fieldWarning('days')).toBeVisible();
     await app.showPlan();
-    await expect(app.warnings()).toContainText(['You picked 4 running days for 5 runs a week']);
+    await expect(app.setupWarning()).toContainText('Some settings need a look: Running days.');
+    await expect(app.warnings().filter({ hasText: 'running days for' })).toHaveCount(0);
   });
 
   test('picking the right days places runs on those days', async ({ app, page }) => {
@@ -106,7 +112,8 @@ test.describe('run types', () => {
   test('turning off every quality type leaves only easy running', async ({ app }) => {
     for (const id of ['tempo', 'intervals', 'hills', 'racepace']) await app.typeToggle(id);
     await app.showPlan();
-    await expect(app.warnings()).toContainText(['No quality run types are ticked']);
+    await expect(app.fieldWarning('types')).toContainText('No quality run types are ticked');
+    await expect(app.setupWarning()).toContainText('Run types');
     expect((await app.plan()).flatMap((w) => w.sessions).some((s) => s.kind === 'hard')).toBe(false);
   });
 
@@ -188,29 +195,38 @@ test.describe('run types', () => {
     await app.typeToggle('progression');
     await app.runs(4);
     await app.showPlan();
-    await expect(app.warnings()).toContainText([/quality run types with 4 runs a week/]);
+    await expect(app.fieldWarning('types')).toContainText(/quality run types with 4 runs a week/);
   });
 });
 
 test.describe('warnings', () => {
-  test('a short marathon block', async ({ app }) => {
+  test('a short marathon block: at Weeks of training, named in the banner (BB-27)', async ({ app, page }) => {
     await app.configure({ dist: 'm', weeks: 8 });
-    await expect(app.warnings()).toContainText([/8 weeks is short for a marathon\. 14 or more/]);
+    await app.showSetup();
+    await expect(app.fieldWarning('weeks')).toBeVisible();
+    await expect(app.fieldWarning('weeks')).toContainText(/8 weeks is short for a marathon\. 14 or more/);
+    await expect(page.locator('#weeks')).toHaveAttribute('aria-describedby', 'fw-weeks');
+    await app.showPlan();
+    // the example's 30 km and 12 km are also low for a marathon: every setting is named once, in form order
+    await expect(app.setupWarning()).toContainText('Some settings need a look: Weeks of training, Weekly volume, Longest recent run.');
+    await expect(app.warnings().filter({ hasText: 'is short for a' })).toHaveCount(0);
   });
 
   test('a block over 24 weeks', async ({ app }) => {
     await app.configure({ weeks: 26 });
-    await expect(app.warnings()).toContainText([/Blocks over 24 weeks tend to go stale/]);
+    await expect(app.fieldWarning('weeks')).toContainText(/Blocks over 24 weeks tend to go stale/);
   });
 
   test('a low starting volume', async ({ app }) => {
     await app.configure({ curVol: 10 });
-    await expect(app.warnings()).toContainText([/10 km\/week is a low starting point/]);
+    await expect(app.fieldWarning('curVol')).toContainText(/10 km\/week is a low starting point/);
+    await expect(app.setupWarning()).toContainText('Weekly volume');
   });
 
   test('a race date too close for the block length', async ({ app }) => {
     await app.configure({ raceDate: '2026-11-22' });
-    await expect(app.warnings()).toContainText([/week 1 started on/]);
+    await expect(app.fieldWarning('date')).toContainText(/week 1 started on/);
+    await expect(app.setupWarning()).toContainText('Race date');
   });
 
   test('the example banner goes away after the first change', async ({ app, page }) => {
@@ -362,10 +378,10 @@ test.describe('optional longest recent run (BB-72)', () => {
     await app.configure({ dist: 'm', raceDate: '2027-03-14', weeks: 16, runs: 4, curVol: 30 });
     await app.showPlan();
     await expect(page.locator('table.grid')).toBeVisible();
-    await expect(page.locator('#plan')).not.toContainText('longest recent run under 14 km');
+    await expect(app.fieldWarning('curLong')).toBeHidden();
     await app.setField('curLong', 12);
     await app.showPlan();
-    await expect(page.locator('#plan')).toContainText('A longest recent run under 14 km');
+    await expect(app.fieldWarning('curLong')).toContainText('A longest recent run under 14 km');
   });
 
   test('the label is in French too', async ({ app, page }) => {
