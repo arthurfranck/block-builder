@@ -9,7 +9,7 @@
 - Report briefly: PR link, version, tests run, what was not checked.
 
 ## Every change to `index.html`, `app.js`, `theme.js` or `engine.js`, in the same commit
-1. **Version:** bump `const VERSION` in `app.js` (semver) and add `## [x.y.z] - YYYY-MM-DD` at the top of `CHANGELOG.md` (Keep a Changelog headings, written for the runner, ending `(BB-n)`). Tests check footer and changelog match; no test edit needed.
+1. **Version:** bump `const VERSION` in `app.js` (semver) and the matching `?v=` on the three script tags in `index.html` (a test checks) and add `## [x.y.z] - YYYY-MM-DD` at the top of `CHANGELOG.md` (Keep a Changelog headings, written for the runner, ending `(BB-n)`). Tests check footer and changelog match; no test edit needed.
 2. **Docs:** reread and fix what's no longer true:
    - `docs/features.md`: every rule, number and edge case.
    - `README.md`: one line per feature, How to use it, Privacy and storage (any `localStorage` key or outside request), Repository map / Tech / Run locally. No version or date badges, no changelog.

@@ -4,7 +4,7 @@
    Runs after engine.js (BBEngine) at the end of <body>. */
 (() => {
 "use strict";
-const VERSION = "1.11.0";
+const VERSION = "1.11.1";
 const $ = s => document.querySelector(s);
 /** @type {(s: string) => NodeListOf<HTMLElement>} */
 const $$ = s => document.querySelectorAll(s);
