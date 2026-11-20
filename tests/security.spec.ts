@@ -18,6 +18,16 @@ test('the page declares a strict Content Security Policy', async ({ app, page })
   expect(csp).toContain("base-uri 'none'");
   expect(csp).toContain('connect-src https://api.open-meteo.com https://geocoding-api.open-meteo.com;');
   expect(csp).not.toContain('jsdelivr');
+  expect(csp, 'BB-66: no inline scripts').toMatch(/script-src 'self' https:\/\/cdnjs\.cloudflare\.com;/);
+});
+
+test('the page has no inline script or inline event handler', async ({ app, page }) => {
+  // With script-src free of 'unsafe-inline', any of these would be blocked and break the page (BB-66).
+  const inline = await page.evaluate(() => ({
+    scripts: [...document.querySelectorAll('script:not([src])')].length,
+    handlers: [...document.querySelectorAll('*')].flatMap((el) => [...el.attributes].filter((a) => /^on/i.test(a.name)).map((a) => el.tagName + ' ' + a.name)),
+  }));
+  expect(inline).toEqual({ scripts: 0, handlers: [] });
 });
 
 test('loading the page and both downloaded libraries breaks no policy rule', async ({ app, page }) => {

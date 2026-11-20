@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.7.1] - 2026-11-20
+
+### Security
+- The page's code now lives in its own files (`app.js`, `theme.js`) instead of inside the page, so the browser runs only scripts from Block Builder itself and the PDF library, and refuses any script injected into the page (BB-66). Nothing changes in how the page works, and it still opens from disk.
+
 ## [1.7.0] - 2026-11-19
 
 ### Changed

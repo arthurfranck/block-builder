@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 const read = (f: string) => readFileSync(path.join(__dirname, '..', f), 'utf8');
-const VERSION = read('index.html').match(/const VERSION = "([^"]+)"/)![1];
+const VERSION = read('app.js').match(/const VERSION = "([^"]+)"/)![1];
 
 test.describe('default example plan', () => {
   test('opens on a 12-week half marathon plan ending on race day', async ({ app, page }) => {

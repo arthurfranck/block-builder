@@ -9,7 +9,7 @@
     "test:mobile": "playwright test --project=iphone-*",
     "test:chrome": "playwright test --project=desktop-chrome",
     "test:report": "playwright show-report",
-    "typecheck": "tsc -p ."
+    "typecheck": "tsc -p . && tsc -p tsconfig.app.json"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.0",

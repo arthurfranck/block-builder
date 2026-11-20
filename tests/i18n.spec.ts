@@ -2,11 +2,11 @@ import { test, expect } from './helpers';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
-/* The I18N object is read straight from index.html, so these checks need no browser. */
+/* The I18N object is read straight from app.js, so these checks need no browser. */
 function loadI18N(): Record<'en' | 'fr', Record<string, string>> {
-  const html = readFileSync(path.join(__dirname, '..', 'index.html'), 'utf8');
+  const html = readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
   const m = /const I18N=(\{[\s\S]*?\n\}\});/.exec(html);
-  if (!m) throw new Error('I18N object not found in index.html');
+  if (!m) throw new Error('I18N object not found in app.js');
   return new Function(`return (${m[1].replace(/;$/, '')})`)();
 }
 const tokens = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((x) => x[1]).sort();

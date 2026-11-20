@@ -13,7 +13,7 @@ npm test               # engine unit tests, then all six browser setups
 npm run test:engine    # engine unit tests only (Node, no browser)
 npm run test:desktop   # or test:mobile, test:chrome
 npm run test:report    # open the last HTML report
-npm run typecheck      # type-check the Playwright tests (tsc, strict, no emit)
+npm run typecheck      # type-check the Playwright tests (strict) and app.js (non-strict)
 ```
 
 Every test starts on a frozen date (Friday 6 November 2026, Paris time) with empty storage, so generated plans are the same on every run. Tests that load jsPDF from cdnjs are skipped when `OFFLINE=1` is set. The page is served by a small Node server, `serve.mjs` (`node tests/serve.mjs 8765`).
@@ -48,7 +48,7 @@ Every iOS browser, Chrome included, runs on WebKit, so the iPhone Chrome setup c
 | `i18n.spec.ts` | every string in English and French with matching placeholders, language switch |
 | `mobile.spec.ts` | Edit plan sheet once a plan is complete, Plan/Settings tabs while it is not, gear on the brand row and plan name on its own line, 16px fields, tap targets, week cards with no sideways scroll and folded earlier weeks; side-by-side layout and the week grid kept on desktop; bottom sheets on phones, centred dialogs on desktop |
 | `layout.spec.ts` | nothing sticks out of the page, run colours follow effort (setup chips match the plan grid), gear menu (theme and language hidden until opened, Escape and outside tap close it), theme picker (dark default, light kept after reload, Auto follows the device), volt accent only on today and the main button, no script errors, type (Archivo for the brand and big numbers, Inter elsewhere, capitals only on small labels), cards separated by surface instead of borders with only Today lifted |
-| `security.spec.ts` | Content Security Policy present and not broken by the page or either export, WorkoutKit not fetched from a CDN, a tampered jsPDF file refused |
+| `security.spec.ts` | Content Security Policy present and allowing no inline script, no inline script or inline handler in the page, policy not broken by the page or either export, WorkoutKit not fetched from a CDN, a tampered jsPDF file refused |
 | `file.spec.ts` | the page opened from disk (file://) loads the engine and builds a plan |
 | `a11y.spec.ts` | WCAG 2.1 A/AA checks on each view and dialog, dark and light |
 
@@ -56,7 +56,7 @@ Every iOS browser, Chrome included, runs on WebKit, so the iPhone Chrome setup c
 
 GitHub Actions runs every setup on each push and pull request (`.github/workflows/tests.yml`) and keeps each setup's HTML report for 14 days. Jobs run inside Playwright's own Docker image, which already has the browsers and their system libraries, so nothing is installed through apt. `main` is protected: all six setups must pass before a pull request can merge or a push can land, admins included, and force-pushes are blocked. GitHub Pages publishes `main` as soon as it changes, so only tested code goes live.
 
-A separate `static checks` job type-checks `tests/*.ts` and `playwright.config.ts` with `tsc` (strict, `tsconfig.json`, no emit) and runs `npm audit --audit-level=high`, so a high or critical advisory in a test dependency fails the run. The engine unit tests (`.mjs`) and the page are not type-checked yet; the page waits for BB-66.
+A separate `static checks` job type-checks `tests/*.ts` and `playwright.config.ts` with `tsc` (strict, `tsconfig.json`, no emit) and runs `npm audit --audit-level=high`, so a high or critical advisory in a test dependency fails the run. It also checks `app.js` and `theme.js` (`tsconfig.app.json`, non-strict: wrong DOM members, duplicate keys, type mix-ups; `app.js` has `// @ts-check` for editors). `engine.js` and the engine unit tests (`.mjs`) are not type-checked yet.
 
 ## Test tool versions
 
