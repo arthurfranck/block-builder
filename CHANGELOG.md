@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.9.0] - 2026-11-20
+
+### Changed
+- Longest recent run is optional: leave it empty and the plan starts its long runs from an estimate based on your weekly volume, shown in the field (for example ≈ 10.5 km at 30 km a week) (BB-72). On a phone, the Your running now step no longer needs any typing. If you do enter it, plans are built exactly as before, and the marathon note about a longest run under 14 km only appears when you entered one.
+
 ## [1.8.0] - 2026-11-20
 
 ### Added
