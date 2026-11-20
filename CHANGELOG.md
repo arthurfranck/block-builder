@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.8.0] - 2026-11-20
+
+### Added
+- In a new plan, Weekly volume is filled in for you once you pick a distance: a suggestion for your experience level and distance (for example 30 km a week for a regular runner training for a half), with a note saying so (BB-71). Change the level or distance and it follows; type your own number and it stays.
+
 ## [1.7.1] - 2026-11-20
 
 ### Security

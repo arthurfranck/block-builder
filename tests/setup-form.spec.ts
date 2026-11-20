@@ -272,6 +272,76 @@ test.describe('New plan starts blank', () => {
   });
 });
 
+test.describe('suggested weekly volume (BB-71)', () => {
+  test.beforeEach(async ({ app, page, mobile }) => {
+    await page.locator('#btnNew').click();
+    if (mobile) await page.locator('#introNav [data-intro="skip"]').click();
+  });
+  const vol = (page: import('@playwright/test').Page) => page.locator('#curVol');
+  const hint = (page: import('@playwright/test').Page) => page.locator('#volHint');
+
+  test('the distance and the level fill the weekly volume, with a hint, until a number is typed', async ({ app, page }) => {
+    await app.showSetup();
+    await expect(vol(page)).toHaveValue('');
+    await expect(hint(page)).toBeHidden();
+    await app.pick('#distSeg [data-dist="hm"]');
+    await expect(vol(page)).toHaveValue('30');
+    await expect(hint(page)).toHaveText('Suggested for your experience and distance. Change it to what you run now.');
+    await expect(hint(page)).toBeVisible();
+    const h = (id: string) => page.locator('#' + id).evaluate((e) => e.getBoundingClientRect().height);
+    expect(await h('curLong'), 'the hint does not stretch the longest-run box beside it').toBe(await h('curVol'));
+    await app.pick('#levelSeg [data-level="new"]');
+    await expect(vol(page)).toHaveValue('25');
+    await app.pick('#distSeg [data-dist="m"]');
+    await expect(vol(page)).toHaveValue('35');
+    await app.pick('#levelSeg [data-level="experienced"]');
+    await expect(vol(page)).toHaveValue('70');
+
+    await app.setField('curVol', 42);
+    await expect(hint(page)).toBeHidden();
+    await app.pick('#levelSeg [data-level="regular"]');
+    await app.pick('#distSeg [data-dist="5k"]');
+    await expect(vol(page), 'a typed volume is never replaced').toHaveValue('42');
+  });
+
+  test('a custom distance gets a suggestion between the nearest two', async ({ app, page }) => {
+    await app.showSetup();
+    await app.pick('#distSeg [data-dist="custom"]');
+    await app.setField('customKm', 15);
+    await expect(vol(page)).toHaveValue('25');
+    await app.setField('customKm', 30);
+    await expect(vol(page)).toHaveValue('35');
+  });
+
+  test('a cleared field takes the suggestion again on the next change', async ({ app, page }) => {
+    await app.showSetup();
+    await app.pick('#distSeg [data-dist="10k"]');
+    await app.setField('curVol', 18);
+    await app.setField('curVol', '');
+    await app.pick('#levelSeg [data-level="experienced"]');
+    await expect(vol(page)).toHaveValue('45');
+    await expect(hint(page)).toBeVisible();
+  });
+
+  test('the hint is in French too', async ({ app, page }) => {
+    await app.showSetup();
+    await app.pick('#distSeg [data-dist="hm"]');
+    await app.setLang('fr');
+    await app.closePrefs();
+    await app.showSetup();
+    await expect(hint(page)).toHaveText("Suggestion selon votre expérience et votre distance. Remplacez-la par ce que vous courez aujourd'hui.");
+  });
+});
+
+test('the example plan and a loaded plan keep their weekly volume when the distance or level changes (BB-71)', async ({ app, page }) => {
+  await app.showSetup();
+  await expect(page.locator('#curVol')).toHaveValue('30');
+  await app.pick('#distSeg [data-dist="m"]');
+  await app.pick('#levelSeg [data-level="experienced"]');
+  await expect(page.locator('#curVol')).toHaveValue('30');
+  await expect(page.locator('#volHint')).toBeHidden();
+});
+
 test.describe('experience level (BB-49)', () => {
   const hardRuns = (w: import('./helpers').Week) => w.sessions.filter((s) => ['hard', 'tempo'].includes(s.kind)).length;
 
@@ -330,9 +400,10 @@ test.describe('setup steps on phones (BB-34)', () => {
     await next(page).tap();
     await expect(nav(page).locator('.intro-step')).toHaveText('Step 3 of 4 · Your running now');
     await expect(page.locator('#introErr')).toBeHidden();
+    // BB-71: the weekly volume is already suggested for a regular 10K runner, so only the longest run is missing
+    await expect(page.locator('#curVol')).toHaveValue('25');
     await next(page).tap();
-    await expect(page.locator('#introErr')).toContainText('Enter your current weekly volume.');
-    await app.setField('curVol', 25);
+    await expect(page.locator('#introErr')).toHaveText('Before going on: Enter your longest recent run.');
     await app.setField('curLong', 9);
     await next(page).tap();
     await expect(nav(page).locator('.intro-step')).toHaveText('Step 4 of 4 · Your week');

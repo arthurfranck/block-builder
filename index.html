@@ -143,6 +143,7 @@ aside.setup{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto
 .sec:first-child{border-top:0;padding-top:0}
 .sec h3{margin:0;font-family:var(--f-body);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
 .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.row.top{align-items:start} /* BB-71: the volume hint must not stretch the field beside it */
 /* iOS WebKit gives date inputs an intrinsic min width that overflows grid cells */
 .field input[type=date]{-webkit-appearance:none;appearance:none;max-width:100%;min-height:36px}
 .field input[type=date]::-webkit-date-and-time-value{text-align:left;margin:0;min-height:1.2em}
@@ -526,8 +527,8 @@ aside.setup[data-step="1"] #goalSeg,aside.setup[data-step="1"] .goalquick{displa
       <section class="sec" data-step="3">
         <h3 data-i18n="secNow">Your running now</h3>
         <div class="field"><span class="lbl" id="levelLbl" data-i18n="level">Experience</span><div class="seg" id="levelSeg" role="group" aria-labelledby="levelLbl"></div><div class="hint" id="levelHint"></div></div>
-        <div class="row">
-          <div class="field"><label for="curVol" data-i18n="curVol">Weekly volume (km)</label><input id="curVol" type="number" min="5" max="200"></div>
+        <div class="row top">
+          <div class="field"><label for="curVol" data-i18n="curVol">Weekly volume (km)</label><input id="curVol" type="number" min="5" max="200" aria-describedby="volHint"><div class="hint" id="volHint" data-i18n="volHint" hidden></div></div>
           <div class="field"><label for="curLong" data-i18n="curLong">Longest recent run (km)</label><input id="curLong" type="number" min="3" max="45"></div>
         </div>
         <div class="row">
