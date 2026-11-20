@@ -8,11 +8,13 @@
     "test:desktop": "playwright test --project=desktop-*",
     "test:mobile": "playwright test --project=iphone-*",
     "test:chrome": "playwright test --project=desktop-chrome",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    "typecheck": "tsc -p ."
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.0",
     "@playwright/test": "^1.65.1",
-    "@types/node": "^22.0.0"
+    "@types/node": "^22.0.0",
+    "typescript": "^7.0.2"
   }
 }

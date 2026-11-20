@@ -16,7 +16,7 @@ async function scan(page: Page) {
   try { ({ AxeBuilder } = await import('@axe-core/playwright')); }
   catch { test.skip(true, '@axe-core/playwright is not installed (run npm install)'); }
   const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
-  const details = r.violations.map((v: any) => `${v.id} (${v.impact}): ${v.help} → ${v.nodes.slice(0, 3).map((n: any) => n.target.join(' ')).join(' | ')}`);
+  const details: string[] = r.violations.map((v: any) => `${v.id} (${v.impact}): ${v.help} → ${v.nodes.slice(0, 3).map((n: any) => n.target.join(' ')).join(' | ')}`);
   return { ids: r.violations.map((v: any) => v.id).filter((id: string) => !KNOWN.includes(id)), details };
 }
 const clean = async (page: Page, what: string) => {
