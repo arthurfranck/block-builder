@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.10.1] - 2026-11-20
+
+### Fixed
+- When the forecast couldn't load, the page no longer asks for it again on every change to the plan: it waits 30 seconds, then longer after each new failure (up to 30 minutes) (BB-11). Choosing a city or your location still tries straight away.
+
 ## [1.10.0] - 2026-11-20
 
 ### Changed

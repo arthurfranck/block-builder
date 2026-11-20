@@ -4,7 +4,7 @@
    Runs after engine.js (BBEngine) at the end of <body>. */
 (() => {
 "use strict";
-const VERSION = "1.10.0";
+const VERSION = "1.10.1";
 const $ = s => document.querySelector(s);
 /** @type {(s: string) => NodeListOf<HTMLElement>} */
 const $$ = s => document.querySelectorAll(s);
@@ -506,8 +506,8 @@ function renderPlan(){
 
 
 /* ---------- today: session of the day + forecast (Open-Meteo, no key) ---------- */
-const WX={loc:(()=>{try{const v=JSON.parse(localStorage.getItem("bb-wx")||"null");return v&&isFinite(v.lat)&&isFinite(v.lon)?v:null;}catch(_){return null;}})(),data:null,at:0,busy:false,err:"",editing:false,open:(()=>{try{return localStorage.getItem("bb-wx-open")==="1";}catch(_){return false;}})(),heat:null};
-function wxSaveLoc(l){WX.loc=l;WX.data=null;WX.at=0;WX.err="";WX.editing=false;try{localStorage.setItem("bb-wx",JSON.stringify(l));}catch(_){}}
+const WX={fails:0,failAt:0,loc:(()=>{try{const v=JSON.parse(localStorage.getItem("bb-wx")||"null");return v&&isFinite(v.lat)&&isFinite(v.lon)?v:null;}catch(_){return null;}})(),data:null,at:0,busy:false,err:"",editing:false,open:(()=>{try{return localStorage.getItem("bb-wx-open")==="1";}catch(_){return false;}})(),heat:null};
+function wxSaveLoc(l){WX.loc=l;WX.data=null;WX.at=0;WX.err="";WX.fails=0;WX.failAt=0;WX.editing=false;try{localStorage.setItem("bb-wx",JSON.stringify(l));}catch(_){}}
 function wmoKey(c){c=+c;if(c===0)return 0;if(c===1)return 1;if(c===2)return 2;if(c===3)return 3;if(c===45||c===48)return 45;if(c>=51&&c<=55)return 51;if(c===56||c===57)return 56;if(c===61||c===63)return 61;if(c===65)return 65;if(c===66||c===67)return 66;if(c>=71&&c<=77)return 71;if(c>=80&&c<=82)return 80;if(c===85||c===86)return 85;if(c>=95)return 95;return 3;}
 function wxIcon(c){const k=wmoKey(c);const sun=`<circle cx="20" cy="20" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><g stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 4v4M20 32v4M4 20h4M32 20h4M8.7 8.7l2.8 2.8M28.5 28.5l2.8 2.8M8.7 31.3l2.8-2.8M28.5 11.5l2.8-2.8"/></g>`;
   const cloud=(y=0)=>`<path d="M12 ${30+y}h17a6 6 0 0 0 0-12 9 9 0 0 0-17 2 5 5 0 0 0 0 10z" fill="var(--surface)" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>`;
@@ -521,13 +521,17 @@ function wxIcon(c){const k=wmoKey(c);const sun=`<circle cx="20" cy="20" r="7" fi
   else g=cloud(-6)+`<g stroke="var(--recovery)" stroke-width="2.4" stroke-linecap="round"><path d="M14 30l-2 5M21 30l-2 5M28 30l-2 5"/></g>`;
   return `<svg viewBox="0 0 40 40" aria-hidden="true">${g}</svg>`;}
 const hm=s=>String(s).slice(11,16);
+/* BB-11: after a failed forecast request, automatic reloads (every redraw of Today) wait 30 s, doubling with each
+   further failure up to 30 min. Choosing a city or the location (force) always tries at once. */
+const wxWait=n=>Math.min(30*60e3,30e3*2**Math.max(0,n-1));
 async function wxLoad(force){
   if(!WX.loc||WX.busy)return;if(!force&&WX.data&&Date.now()-WX.at<30*60e3)return;
+  if(!force&&WX.fails&&Date.now()-WX.failAt<wxWait(WX.fails))return;
   WX.busy=true;WX.err="";renderWx();
   const {lat,lon}=WX.loc;
   const u=`https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,apparent_temperature,precipitation_probability,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunset&timezone=auto&forecast_days=1`;
-  try{const r=await fetch(u);if(!r.ok)throw new Error("http "+r.status);WX.data=await r.json();WX.at=Date.now();}
-  catch(_){WX.err="blocked";}
+  try{const r=await fetch(u);if(!r.ok)throw new Error("http "+r.status);WX.data=await r.json();WX.at=Date.now();WX.fails=0;}
+  catch(_){WX.err="blocked";WX.fails=(WX.fails||0)+1;WX.failAt=Date.now();}
   WX.busy=false;renderWx();
 }
 async function wxFind(q){

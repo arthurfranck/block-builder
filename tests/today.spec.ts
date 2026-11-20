@@ -1,4 +1,4 @@
-import { test, expect } from './helpers';
+import { test, expect, TODAY } from './helpers';
 import type { Page } from '@playwright/test';
 
 /* Frozen "today" is Friday 6 November 2026. The default plan starts Monday 9 November;
@@ -102,6 +102,29 @@ test('a failed forecast request explains what to do', async ({ app, page }) => {
   await page.locator('#wxQ').fill('Deauville');
   await page.locator('#wxForm button[type="submit"]').click();
   await expect(page.locator('#wx')).toContainText("The forecast couldn't load.");
+});
+
+test('after a failed forecast, redraws do not refetch until a growing wait has passed (BB-11)', async ({ app, page }) => {
+  let calls = 0;
+  await page.route('https://geocoding-api.open-meteo.com/**', (r) => r.fulfill({ json: { results: [{ name: 'Deauville', latitude: 49.36, longitude: 0.07, country: 'France' }] } }));
+  await page.route('https://api.open-meteo.com/**', (r) => { calls++; return r.abort(); });
+  await app.showPlan();
+  await openWeather(page);
+  await page.locator('#wxQ').fill('Deauville');
+  await page.locator('#wxForm button[type="submit"]').click();
+  await expect(page.locator('#wx')).toContainText("The forecast couldn't load.");
+  expect(calls).toBe(1);
+  const redraw = async (km: number) => { await app.setField('curVol', km); await app.showPlan(); await expect(page.locator('#plan .today')).toBeVisible(); };
+  for (const km of [31, 32, 33]) await redraw(km);
+  expect(calls, 'redraws within 30 s of the failure do not refetch').toBe(1);
+  await page.clock.setFixedTime(new Date(TODAY.getTime() + 31e3));
+  await redraw(34);
+  await expect.poll(() => calls).toBe(2);
+  await redraw(35);
+  expect(calls, 'after a second failure the wait doubles').toBe(2);
+  await page.clock.setFixedTime(new Date(TODAY.getTime() + 31e3 + 61e3));
+  await redraw(36);
+  await expect.poll(() => calls).toBe(3);
 });
 
 /* ---------- BB-28: Today as hero ---------- */
