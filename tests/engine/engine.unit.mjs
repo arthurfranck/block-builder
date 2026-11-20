@@ -280,17 +280,22 @@ describe('suggested weekly volume (BB-71)', () => {
       ['5k', '10k', 'hm', 'm'].forEach((dist, i) => assert.equal(E.suggestVol({ dist, level }), row[i], `${level} ${dist}`));
   });
   test('no level reads as Regular; no distance yet gives no suggestion', () => {
-    assert.equal(E.suggestVol({ dist: 'hm' }), 30);
+    assert.equal(E.suggestVol({ dist: 'hm' }), 55);
     assert.equal(E.suggestVol({ dist: '', level: 'new' }), null);
   });
-  test('custom distances sit between the nearest two, rounded to 5, clamped at the ends', () => {
-    assert.equal(E.suggestVol({ dist: 'custom', customKm: 15, level: 'regular' }), 25);
-    assert.equal(E.suggestVol({ dist: 'custom', customKm: 30, level: 'regular' }), 35);
-    assert.equal(E.suggestVol({ dist: 'custom', customKm: 3, level: 'regular' }), 20);
-    assert.equal(E.suggestVol({ dist: 'custom', customKm: 100, level: 'experienced' }), 70);
+  test('custom distances sit between the nearest two, rounded to whole km, clamped at the ends', () => {
+    assert.equal(E.suggestVol({ dist: 'custom', customKm: 15, level: 'regular' }), 47);
+    assert.equal(E.suggestVol({ dist: 'custom', customKm: 30, level: 'regular' }), 61);
+    assert.equal(E.suggestVol({ dist: 'custom', customKm: 3, level: 'new' }), 12);
+    assert.equal(E.suggestVol({ dist: 'custom', customKm: 7, level: 'new' }), 15);
+    assert.equal(E.suggestVol({ dist: 'custom', customKm: 100, level: 'experienced' }), 100);
   });
-  test('regular and experienced suggestions do not trigger the low-volume warning', () => {
-    for (const level of ['regular', 'experienced']) for (const dist of ['5k', '10k', 'hm', 'm']) {
+  test('wide gaps between levels, and no suggestion triggers the low-volume warning', () => {
+    ['5k', '10k', 'hm', 'm'].forEach((dist, i) => {
+      assert.ok(E.VOL_SUGGEST.regular[i] - E.VOL_SUGGEST.new[i] >= 15, `new to regular ${dist}`);
+      assert.ok(E.VOL_SUGGEST.experienced[i] - E.VOL_SUGGEST.regular[i] >= 15, `regular to experienced ${dist}`);
+    });
+    for (const level of ['new', 'regular', 'experienced']) for (const dist of ['5k', '10k', 'hm', 'm']) {
       const inp = { ...base, ...PROFILES['C · weekday half, Mon-Fri, long run Friday'].inp, dist, level };
       inp.curVol = E.suggestVol(inp);
       assert.ok(!E.warnings(inp, types(), E.generate(inp, types()), false).some((w) => w.startsWith('wa_lowVol')), `${level} ${dist}`);

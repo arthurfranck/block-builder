@@ -64,15 +64,16 @@ const CUT_EVERY=lv=>lv==="new"?3:4; /* cutback week rhythm */
 /* post-race recovery weeks (BB-42): 0 (default), 1 or 2, race goal only */
 const recWeeksOf=inp=>inp&&inp.goal!=="fitness"?clamp(Math.round(+inp.recWeeks||0),0,2):0;
 function distKm(inp){const d=DISTS.find(x=>x.k===inp.dist);return d&&d.km?d.km:clamp(+inp.customKm||10,3,100);}
-/* suggested weekly volume (BB-71), km/week by level for 5K / 10K / half / marathon; at or above the low-volume warning
-   thresholds for regular and experienced. Custom distances interpolate on km, rounded to 5. null until a distance is chosen. */
-const VOL_SUGGEST={new:[15,20,25,35],regular:[20,25,30,40],experienced:[35,45,55,70]};
+/* suggested weekly volume (BB-71), km/week by level for 5K / 10K / half / marathon (Arthur, 2026-11-20: new runners
+   10-15 km for a 5K and 40 for a marathon, experienced 100 for a marathon, wide gaps between levels). All at or above
+   the low-volume warning thresholds. Custom distances interpolate on km, rounded to whole km. null until a distance is chosen. */
+const VOL_SUGGEST={new:[12,20,30,40],regular:[30,40,55,70],experienced:[50,65,80,100]};
 function suggestVol(inp){
   if(!inp||!DISTS.some(d=>d.k===inp.dist))return null;
   const row=VOL_SUGGEST[levelOf(inp)],kms=[5,10,21.0975,42.195],k=clamp(distKm(inp),5,42.195);
   let i=0;while(i<kms.length-2&&k>kms[i+1])i++;
   const f=(k-kms[i])/(kms[i+1]-kms[i]);
-  return Math.round((row[i]+f*(row[i+1]-row[i]))/5)*5;
+  return Math.round(row[i]+f*(row[i+1]-row[i]));
 }
 /* what the plan still needs, in setup order (BB-30 / BB-34: a new plan starts with distance, race date and weeks blank too).
    SETUP_STEP says which setup step each one belongs to. */
