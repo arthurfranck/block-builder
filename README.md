@@ -12,7 +12,7 @@ Plan a running training block in your browser and send every run to your watch. 
 
 1. **Pick a goal:** a race (5K to marathon, or a custom distance) with its date, or a personal plan over a set number of weeks.
 2. **Enter your running now:** experience, weekly volume (suggested from your experience and distance; change it to what you run), longest recent run if you know it (optional) and, for paces, a recent race time; then your week: runs per week, days and the run types you want. On a phone, New plan walks you through these as 4 steps.
-3. **Use the plan:** edit any run, then send a run, a week or the whole plan to Apple Watch or Garmin, or export it as a calendar, spreadsheet or PDF. Save it under My plans.
+3. **Use the plan:** edit any run, then send a run, a week or the whole plan to Apple Watch or Garmin, or export it as a calendar, spreadsheet or PDF. Your plan saves itself as soon as it can be built; the ▾ next to its name opens My plans. The example plan is only kept if you press Keep this plan.
 
 Just want one session? **Quick workout** builds a single run and sends it to your watch without touching the plan.
 
