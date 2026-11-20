@@ -7,6 +7,23 @@ on:
   workflow_dispatch:
 
 jobs:
+  # BB-62: type-check the Playwright tests and fail on high or critical advisories in the dependencies.
+  static:
+    name: static checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Type-check tests (tsc, strict, no emit)
+        run: npm run typecheck
+      - name: Dependency audit (high and critical)
+        run: npm audit --audit-level=high
+
   test:
     name: ${{ matrix.project }}
     runs-on: ubuntu-latest

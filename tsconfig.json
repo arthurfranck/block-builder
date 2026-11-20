@@ -1,0 +1,15 @@
+{
+  // Type-checks the Playwright tests (tests/*.ts) and their config (BB-62). Nothing is emitted: Playwright and Node run the sources as they are.
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "lib": ["es2022", "dom", "dom.iterable"],
+    "types": ["node"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["tests/**/*.ts", "playwright.config.ts"]
+}
