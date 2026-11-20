@@ -273,3 +273,32 @@ describe('BB-34 · what a new plan still needs', () => {
     assert.ok(E.generate(g, types()).weeks.length === 12, 'a stand-in plan can still be built behind the message');
   });
 });
+
+describe('suggested weekly volume (BB-71)', () => {
+  test('by level and distance, from the table', () => {
+    for (const [level, row] of Object.entries(E.VOL_SUGGEST))
+      ['5k', '10k', 'hm', 'm'].forEach((dist, i) => assert.equal(E.suggestVol({ dist, level }), row[i], `${level} ${dist}`));
+  });
+  test('no level reads as Regular; no distance yet gives no suggestion', () => {
+    assert.equal(E.suggestVol({ dist: 'hm' }), 55);
+    assert.equal(E.suggestVol({ dist: '', level: 'new' }), null);
+  });
+  test('custom distances sit between the nearest two, rounded to whole km, clamped at the ends', () => {
+    assert.equal(E.suggestVol({ dist: 'custom', customKm: 15, level: 'regular' }), 47);
+    assert.equal(E.suggestVol({ dist: 'custom', customKm: 30, level: 'regular' }), 61);
+    assert.equal(E.suggestVol({ dist: 'custom', customKm: 3, level: 'new' }), 12);
+    assert.equal(E.suggestVol({ dist: 'custom', customKm: 7, level: 'new' }), 15);
+    assert.equal(E.suggestVol({ dist: 'custom', customKm: 100, level: 'experienced' }), 100);
+  });
+  test('wide gaps between levels, and no suggestion triggers the low-volume warning', () => {
+    ['5k', '10k', 'hm', 'm'].forEach((dist, i) => {
+      assert.ok(E.VOL_SUGGEST.regular[i] - E.VOL_SUGGEST.new[i] >= 15, `new to regular ${dist}`);
+      assert.ok(E.VOL_SUGGEST.experienced[i] - E.VOL_SUGGEST.regular[i] >= 15, `regular to experienced ${dist}`);
+    });
+    for (const level of ['new', 'regular', 'experienced']) for (const dist of ['5k', '10k', 'hm', 'm']) {
+      const inp = { ...base, ...PROFILES['C · weekday half, Mon-Fri, long run Friday'].inp, dist, level };
+      inp.curVol = E.suggestVol(inp);
+      assert.ok(!E.warnings(inp, types(), E.generate(inp, types()), false).some((w) => w.startsWith('wa_lowVol')), `${level} ${dist}`);
+    }
+  });
+});

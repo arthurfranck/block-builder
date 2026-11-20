@@ -4,7 +4,7 @@
    Runs after engine.js (BBEngine) at the end of <body>. */
 (() => {
 "use strict";
-const VERSION = "1.7.1";
+const VERSION = "1.8.0";
 const $ = s => document.querySelector(s);
 /** @type {(s: string) => NodeListOf<HTMLElement>} */
 const $$ = s => document.querySelectorAll(s);
@@ -16,7 +16,7 @@ const I18N={
 en:{
 planNameLabel:"Plan name",editPlan:"Edit plan",done:"Done",secGoal:"Goal",secRace:"Race",secFocus:"Focus and dates",secYourWeek:"Your week",icRace:"A plan that builds to race day and tapers into it.",icFit:"Get fitter week by week, no race date.",icQuick:"One workout for your watch, no plan needed.",introStep:"Step {n} of 4 · {name}",introNext:"Next",introBack:"Back",introDone:"Build my plan",introSkip:"Show all settings",introNeed:"Before going on:",introWait:"Your plan's shape shows here once the steps are filled in.",needDist:"Choose a distance.",needDate:"Pick the race date.",needWeeks:"Enter the weeks of training (3 to 30).",goalRace:"Train for a race",goalFit:"Personal plan",focusDist:"Focus distance",startDate:"Start date",focusHint:"Sets the paces and how long the long runs get. No race, no taper: the plan just builds week by week.",fitHint:"Starts Monday {s}, ends Sunday {e}.",fitBlock:"{n}-week personal plan",hFitStarts:"Your {n}-week plan starts Monday {d}.",hFitIn:"Week {n} of {t}, {phase} phase{cut}.",hFitDone:"Your {n}-week plan finished on {d}. Set a new start date to plan the next block.",wa_pastFit:"Week 1 started on {d}. Move the start date if you want the plan to begin now.",planMetaFit:"{lbl} focus · {w} weeks · starts {d}",myPlans:"My plans",newPlan:"New plan",savePlan:"Save plan",language:"Language",theme:"Theme",thDark:"Dark",thLight:"Light",thAuto:"Auto",thHint:"Auto follows your device.",prefs:"Display and language",
 distance:"Distance",customKm:"Custom distance (km)",raceDate:"Race date",weeks:"Weeks of training",
-secNow:"Your running now",curVol:"Weekly volume (km)",curLong:"Longest recent run (km)",recDist:"Recent race",none:"None",
+secNow:"Your running now",curVol:"Weekly volume (km)",volHint:"Suggested for your experience and distance. Change it to what you run now.",curLong:"Longest recent run (km)",recDist:"Recent race",none:"None",
 halfMarathon:"Half marathon",marathon:"Marathon",recTime:"Finish time",recTimePh:"h:mm:ss or mm:ss",
 level:"Experience",lv_new:"New to running",lv_regular:"Regular",lv_experienced:"Experienced",lvHint_new:"No hard runs in the first phase, then one a week at most. A lighter week every 3rd week, shorter easy runs.",lvHint_regular:"Up to 2 hard runs a week from 5 runs a week. A lighter week every 4th week.",lvHint_experienced:"Up to 2 hard runs a week from 4 runs a week. A lighter week every 4th week.",wk_tooHardNew:"{n} hard runs this week: new runners do best with {m}. Change one to an easy run.",wa_wkTooHardNew:"{w}: more hard runs than suit a new runner. Details on the week.",
 secWeek:"Week shape",runsPerWeek:"Runs per week",runningDays:"Running days",longDay:"Long run day",
@@ -127,7 +127,7 @@ wmo0:"Clear",wmo1:"Mostly clear",wmo2:"Partly cloudy",wmo3:"Overcast",wmo45:"Fog
 fr:{
 planNameLabel:"Nom du plan",editPlan:"Modifier le plan",done:"OK",secGoal:"Objectif",secRace:"Course",secFocus:"Distance et dates",secYourWeek:"Votre semaine",icRace:"Un plan qui monte jusqu'à la course puis s'allège avant.",icFit:"Progresser semaine après semaine, sans date de course.",icQuick:"Une séance pour votre montre, sans plan.",introStep:"Étape {n} sur 4 · {name}",introNext:"Suivant",introBack:"Retour",introDone:"Créer mon plan",introSkip:"Voir tous les réglages",introNeed:"Avant de continuer :",introWait:"La forme de votre plan s'affiche ici une fois les étapes remplies.",needDist:"Choisissez une distance.",needDate:"Choisissez la date de la course.",needWeeks:"Indiquez les semaines d'entraînement (3 à 30).",goalRace:"Préparer une course",goalFit:"Plan perso",focusDist:"Distance de référence",startDate:"Date de début",focusHint:"Elle fixe les allures et la longueur des sorties longues. Pas de course, pas d'affûtage : le plan progresse simplement semaine après semaine.",fitHint:"Du lundi {s} au dimanche {e}.",fitBlock:"Plan perso {n} semaines",hFitStarts:"Votre plan de {n} semaines commence le lundi {d}.",hFitIn:"Semaine {n} sur {t}, phase {phase}{cut}.",hFitDone:"Votre plan de {n} semaines s'est terminé le {d}. Indiquez une nouvelle date de début pour préparer la suite.",wa_pastFit:"La semaine 1 a commencé le {d}. Déplacez la date de début pour que le plan démarre maintenant.",planMetaFit:"Base {lbl} · {w} semaines · début le {d}",myPlans:"Mes plans",newPlan:"Nouveau plan",savePlan:"Enregistrer",language:"Langue",theme:"Thème",thDark:"Sombre",thLight:"Clair",thAuto:"Auto",thHint:"Auto suit le réglage de l'appareil.",prefs:"Affichage et langue",
 distance:"Distance",customKm:"Distance personnalisée (km)",raceDate:"Date de la course",weeks:"Semaines d'entraînement",
-secNow:"Votre niveau actuel",curVol:"Volume hebdo (km)",curLong:"Plus longue sortie récente (km)",recDist:"Course récente",none:"Aucune",
+secNow:"Votre niveau actuel",curVol:"Volume hebdo (km)",volHint:"Suggestion selon votre expérience et votre distance. Remplacez-la par ce que vous courez aujourd'hui.",curLong:"Plus longue sortie récente (km)",recDist:"Course récente",none:"Aucune",
 halfMarathon:"Semi-marathon",marathon:"Marathon",recTime:"Temps final",recTimePh:"h:mm:ss ou mm:ss",
 level:"Expérience",lv_new:"Débutant",lv_regular:"Régulier",lv_experienced:"Confirmé",lvHint_new:"Pas de séance difficile dans la première phase, puis une par semaine au plus. Une semaine allégée toutes les 3 semaines, des footings plus courts.",lvHint_regular:"Jusqu'à 2 séances difficiles par semaine à partir de 5 sorties. Une semaine allégée toutes les 4 semaines.",lvHint_experienced:"Jusqu'à 2 séances difficiles par semaine à partir de 4 sorties. Une semaine allégée toutes les 4 semaines.",wk_tooHardNew:"{n} séances difficiles cette semaine : pour un débutant, restez à {m}. Passez-en une en footing.",wa_wkTooHardNew:"{w} : plus de séances difficiles que n'en supporte un débutant. Détails sur la semaine.",
 secWeek:"Semaine type",runsPerWeek:"Sorties par semaine",runningDays:"Jours de course",longDay:"Jour de la sortie longue",
@@ -268,10 +268,15 @@ const BLANK_INPUTS = () => ({...DEFAULT_INPUTS(),dist:"",raceDate:"",weeks:"",cu
 const BLANK_TYPES = () => DEFAULT_TYPES().map(x=>({...x,on:x.id==="easy"}));
 /* ---------- plan engine: engine.js (BB-7) ---------- */
 BBEngine.setLocale({t,days:()=>DAYS,fmtDate});
-const {SETUP_STEP,WEEK_PHASES,recWeeksOf,LEVELS,levelOf,durSec,kmIn,DISTS,PHASES,DEFAULT_DAYS,TYPE_DEFS,uid,clamp,r05,iso,parseISO,addDays,dow,raceTimeSec,REC_LBL,REC_EX,badRaceTime,badTimeMsg,vdotOf,velAt,raceTimeMin,fmtPace,fmtDur,distKm,missingSetup,genInputs,distLabel,cat,paces,effectiveDays,cyc,pickHardDays,workFor,fill,watchPlan,generate,raceDesc,warnings,maxHardRuns,longBoxedIn,weekChecks,weekCheckSummary}=BBEngine;
+const {SETUP_STEP,WEEK_PHASES,recWeeksOf,LEVELS,levelOf,suggestVol,durSec,kmIn,DISTS,PHASES,DEFAULT_DAYS,TYPE_DEFS,uid,clamp,r05,iso,parseISO,addDays,dow,raceTimeSec,REC_LBL,REC_EX,badRaceTime,badTimeMsg,vdotOf,velAt,raceTimeMin,fmtPace,fmtDur,distKm,missingSetup,genInputs,distLabel,cat,paces,effectiveDays,cyc,pickHardDays,workFor,fill,watchPlan,generate,raceDesc,warnings,maxHardRuns,longBoxedIn,weekChecks,weekCheckSummary}=BBEngine;
 
 /* ---------- state ---------- */
-const S={nameAuto:true,inputs:/** @type {Record<string, any>} */ (DEFAULT_INPUTS()),types:DEFAULT_TYPES(),plan:null,planId:uid(),name:cap(t("blockName",{lbl:t("lhm")})),edited:false,savedAt:null,isExample:true,saved:[],saving:false,dirty:false};
+const S={nameAuto:true,inputs:/** @type {Record<string, any>} */ (DEFAULT_INPUTS()),types:DEFAULT_TYPES(),plan:null,planId:uid(),name:cap(t("blockName",{lbl:t("lhm")})),edited:false,savedAt:null,isExample:true,saved:[],saving:false,dirty:false,volSug:null};
+/* BB-71: Weekly volume follows the suggestion for the level and distance while it is empty or still holds the last
+   suggestion (S.volSug). A typed value, a loaded plan's and the example's are never replaced. */
+const volIsSuggested=()=>S.volSug!=null&&S.inputs.curVol!==""&&+S.inputs.curVol===S.volSug;
+function suggestVolume(){const I=S.inputs;if(I.curVol!==""&&!volIsSuggested())return;const v=suggestVol(I);if(v==null)return;I.curVol=v;S.volSug=v;}
+function renderVolHint(){$("#volHint").hidden=!volIsSuggested();}
 function regen(){const g=generate(genInputs(S.inputs),S.types);S.plan=g;S.edited=false;}
 
 /* ---------- setup UI ---------- */
@@ -289,7 +294,7 @@ function renderSetup(){
   $("#raceDateF").hidden=fit;$("#startDateF").hidden=!fit;$("#raceBox").hidden=fit;$("#focusHint").hidden=!fit;
   $("#distLbl").textContent=t(fit?"focusDist":"distance");$("#secRaceH").textContent=t(fit?"secFocus":"secRace");
   $("#introCards").innerHTML=[["race","goalRace","icRace"],["fitness","goalFit","icFit"]].map(([g,a,b])=>`<button type="button" class="icard" data-goal="${g}" aria-pressed="${(fit?"fitness":"race")===g}"><b>${t(a)}</b><span>${t(b)}</span></button>`).join("")+`<button type="button" class="icard" data-intro="quick"><b>${t("qwOpen")}</b><span>${t("icQuick")}</span></button>`;$("#focusHint").textContent=t("focusHint");
-  $("#curVol").value=I.curVol;$("#curLong").value=I.curLong;$("#recDist").value=I.recDist;$("#recTime").value=I.recTime;
+  $("#curVol").value=I.curVol;renderVolHint();$("#curLong").value=I.curLong;$("#recDist").value=I.recDist;$("#recTime").value=I.recTime;
   const lv=levelOf(I);
   $("#levelSeg").innerHTML=LEVELS.map(l=>`<button type="button" data-level="${l}" aria-pressed="${lv===l}">${t("lv_"+l)}</button>`).join("");
   $("#levelHint").textContent=t("lvHint_"+lv);
@@ -354,9 +359,9 @@ function inputsChanged(){
 $("#setup").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;const I=S.inputs;
   if(b.dataset.goal){const prevName=defaultName();I.goal=b.dataset.goal;if(S.nameAuto||S.name===prevName){S.nameAuto=true;S.name=defaultName();$("#planName").value=S.name;}renderSetup();inputsChanged();}
-  else if(b.dataset.dist){const prevName=defaultName();I.dist=b.dataset.dist;if((!S.savedAt&&S.isExample)||(S.nameAuto&&!S.savedAt)||S.name===prevName)S.name=defaultName();renderSetup();$("#planName").value=S.name;inputsChanged();}
+  else if(b.dataset.dist){const prevName=defaultName();I.dist=b.dataset.dist;if((!S.savedAt&&S.isExample)||(S.nameAuto&&!S.savedAt)||S.name===prevName)S.name=defaultName();suggestVolume();renderSetup();$("#planName").value=S.name;inputsChanged();}
   else if(b.dataset.rec!==undefined){I.recWeeks=+b.dataset.rec;renderSetup();inputsChanged();}
-  else if(b.dataset.level){I.level=b.dataset.level;renderSetup();inputsChanged();}
+  else if(b.dataset.level){I.level=b.dataset.level;suggestVolume();renderSetup();inputsChanged();}
   else if(b.dataset.runs){I.runs=+b.dataset.runs;I.days=DEFAULT_DAYS[I.runs].slice();if(!I.days.includes(+I.longDay))I.longDay=I.days[I.days.length-1];renderSetup();inputsChanged();}
   else if(b.dataset.day!==undefined){const d=+b.dataset.day;I.days=I.days.includes(d)?I.days.filter(x=>x!==d):[...I.days,d].sort((a,b)=>a-b);renderSetup();inputsChanged();}
   else if(b.dataset.phase){const t=S.types[+b.closest(".type").dataset.i];const p=b.dataset.phase;t.phases=t.phases.includes(p)?t.phases.filter(x=>x!==p):PHASES.filter(x=>x===p||t.phases.includes(x));if(!t.phases.length)t.phases=[p];const open=(/** @type {HTMLDetailsElement} */ (b.closest("details"))).open;renderTypes();if(open)cardDetails(`.type[data-i="${S.types.indexOf(t)}"] details`).open=true;inputsChanged();}
@@ -373,6 +378,8 @@ $("#setup").addEventListener("change",e=>{
     I[map[el.id]]=el.type==="number"&&el.value===""?"":el.type==="number"||el.id==="longDay"?+el.value:el.value;
     if(el.id==="longDay"&&+el.value>=0&&!I.days.includes(+el.value)){I.days=[...I.days.filter(d=>d!==I.days[I.days.length-1]),+el.value].sort((a,b)=>a-b);}
     if(el.id==="longDay")renderSetup();
+    if(el.id==="customKm"){suggestVolume();$("#curVol").value=I.curVol;}
+    if(el.id==="customKm"||el.id==="curVol")renderVolHint();
     if(el.id==="recTime"||el.id==="recDist"){const sec=raceTimeSec(I.recTime,+I.recDist);if(sec){I.recTime=fmtDur(sec);$("#recTime").value=I.recTime;}}
     if(S.name===prevName){S.name=defaultName();$("#planName").value=S.name;}
     inputsChanged();return;
@@ -1351,7 +1358,7 @@ document.addEventListener("visibilitychange",()=>{if(document.visibilityState===
 addEventListener("beforeunload",e=>{flushSave();if(S.dirty&&!S.savedAt&&!S.isExample&&!missingSetup(S.inputs).length){e.preventDefault();e.returnValue="";}});
 function loadPlan(p){
   S.intake=0;
-  S.planId=p.id;S.name=p.name;S.nameAuto=false;S.inputs={...DEFAULT_INPUTS(),...JSON.parse(JSON.stringify(p.inputs))};S.types=JSON.parse(JSON.stringify(p.types));S.plan=JSON.parse(JSON.stringify(p.plan));S.edited=!!p.edited;S.savedAt=p.updatedAt;S.isExample=false;S.pendingRegen=false;S.dirty=false;
+  S.planId=p.id;S.name=p.name;S.nameAuto=false;S.volSug=null;S.inputs={...DEFAULT_INPUTS(),...JSON.parse(JSON.stringify(p.inputs))};S.types=JSON.parse(JSON.stringify(p.types));S.plan=JSON.parse(JSON.stringify(p.plan));S.edited=!!p.edited;S.savedAt=p.updatedAt;S.isExample=false;S.pendingRegen=false;S.dirty=false;
   $("#planName").value=S.name;renderSetup();renderPlan();setStatus(t("savedLocal")+" · "+new Date(p.updatedAt).toLocaleDateString(LOC(),{day:"numeric",month:"short"}));
 }
 function openPlans(){
@@ -1421,7 +1428,7 @@ $("#setup").addEventListener("click",e=>{
 });
 function newPlan(){
   flushSave();
-  const go=()=>{S.nameAuto=true;S.inputs=BLANK_INPUTS();S.types=BLANK_TYPES();S.planId=uid();S.savedAt=null;S.isExample=false;S.dirty=false;S.pendingRegen=false;S.name=cap(t("blockName",{lbl:t("lhm")}));$("#planName").value=S.name;S.intake=phoneLayout()?1:0;S.introErr="";regen();renderSetup();renderPlan();setStatus(t("notSaved"));if(S.intake)setTab("setup");};
+  const go=()=>{S.nameAuto=true;S.volSug=null;S.inputs=BLANK_INPUTS();S.types=BLANK_TYPES();S.planId=uid();S.savedAt=null;S.isExample=false;S.dirty=false;S.pendingRegen=false;S.name=cap(t("blockName",{lbl:t("lhm")}));$("#planName").value=S.name;S.intake=phoneLayout()?1:0;S.introErr="";regen();renderSetup();renderPlan();setStatus(t("notSaved"));if(S.intake)setTab("setup");};
   if(S.dirty&&S.savedAt===null&&!S.isExample)confirmBox(t("newQ"),t("newT"),t("startNew"),go);else go();
 }
 
