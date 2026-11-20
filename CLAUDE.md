@@ -1,46 +1,36 @@
-# Instructions for Claude working in this repo
+# Block Builder: instructions for Claude
 
-## Keep the docs current (required)
+## How Arthur works
+- Act, don't ask, on anything these rules already settle. Ask only for real product or design choices.
+- Before planning any feature or problem, check `docs/brainstorms/` for existing thinking on it and use it as input. If there's none, create a brainstorm file there before writing the plan.
+- One backlog item per branch and PR (`bb-<n>-<slug>`). `/release <id>` is the checklist.
+- After opening a PR, turn on Auto-fix right away (auto-fix + address comments) and say so; skip only if told "no Auto-fix on this one".
+- Backlog: `../backlog-block-builder.md`, ids `BB-<n>`, edited with the `tool-backlog` skill. Rank by dependencies, not score alone: never put an item above the one that would kill, absorb or rework it ("I don't want to implement a feature if it is going to be killed 3 versions later").
+- Report briefly: PR link, version, tests run, what was not checked.
 
-The docs are split by reader. Every commit that changes `index.html` or `engine.js` must update them in the same commit:
-
-- **`docs/features.md`** (every rule, number and edge case): add, change or remove bullets so they match what the page actually does.
-- **`README.md`** (short, for runners first): keep **one line per feature** under Features and the How to use it steps true. Update **Privacy and storage** if a `localStorage` key or an outside request is added or removed, and **Repository map / Tech / Run locally** if files, hosting or dependencies change. Detail goes in `docs/features.md`, not the README.
-- **`tests/README.md`**: update the "What each file covers" table when tests are added or changed, and the setups if `playwright.config.ts` changes.
-- **`docs/screenshot.png`**: retake it when the main screen looks noticeably different (1440×900, frozen date 6 Nov 2026, default example plan, no personal data).
-
-Before committing, reread all three files against the current `index.html` and fix anything that is no longer true. Do not commit a page change with stale docs. Don't add version or date badges to the README: they go stale; the Tests badge updates itself.
-
-## Changelog and version (required)
-
-`CHANGELOG.md` is the only changelog; README.md just links to it. For every release that changes `index.html` or `engine.js`:
-
-- Bump `const VERSION` in `index.html` (semantic versioning).
-- Add a `## [x.y.z] - YYYY-MM-DD` section at the top of `CHANGELOG.md` ([Keep a Changelog](https://keepachangelog.com) headings), saying what changed for the person using the page.
-
-The tests read the version from `index.html` and fail if the footer or the top `CHANGELOG.md` entry don't match it, so no test needs editing on a version bump.
-
-## Run the tests (required)
-
-Before every commit that changes `index.html` or `engine.js`, run `npm test` and make sure it passes. If WebKit can't be installed where you work, run at least `npm run test:chrome` and say in the commit message that the WebKit setups were not run locally (CI runs them all).
-
-- A change to what the page does needs a test change in the same commit: add or update tests in `tests/` for the new or changed behaviour.
-- Never delete or loosen a failing test to make the suite pass; fix the page, or ask.
-- If you fix a known issue (a `test.fail` line, or an id in `KNOWN` in `tests/a11y.spec.ts`), remove it and the matching bullet under Known issues in `tests/README.md`.
-- If you change the saved-plan format, keep `tests/fixtures/plans-v1.json` importing, and add a new fixture for the new version.
+## Every change to `index.html` or `engine.js`, in the same commit
+1. **Version:** bump `const VERSION` in `index.html` (semver) and add `## [x.y.z] - YYYY-MM-DD` at the top of `CHANGELOG.md` (Keep a Changelog headings, written for the runner, ending `(BB-n)`). Tests check footer and changelog match; no test edit needed.
+2. **Docs:** reread and fix what's no longer true:
+   - `docs/features.md`: every rule, number and edge case.
+   - `README.md`: one line per feature, How to use it, Privacy and storage (any `localStorage` key or outside request), Repository map / Tech / Run locally. No version or date badges, no changelog.
+   - `tests/README.md`: the "What each file covers" table, setups, Known issues.
+   - `docs/screenshot.png` when the main screen changes noticeably (1440×900, date frozen 6 Nov 2026, default example plan, no personal data).
+3. **Tests:**
+   - Behaviour change → test change. Engine change → Node test in `tests/engine/engine.unit.mjs`; re-check the five athlete profiles when plan building changes.
+   - Run `npm test`. Exception: copy, labels or tiny CSS → only the affected spec(s) on desktop Chrome plus the version/changelog test, and say so in the commit; CI runs the rest. No WebKit locally → `npm run test:chrome` and say WebKit wasn't run.
+   - Never delete or loosen a failing test: fix the page, or ask.
+   - Fixing a known issue (`test.fail`, or an id in `KNOWN` in `tests/a11y.spec.ts`) → remove it and its Known issues bullet.
+   - Saved-plan format change → `tests/fixtures/plans-v1.json` must still import; add a fixture for the new version.
 
 ## Project facts
+- App = `index.html` + `engine.js` (`BBEngine`, classic script, no DOM or storage, so the page opens from `file://`). No build step.
+- Every user-facing string exists in `I18N.en` and `I18N.fr`.
+- Plans live in `localStorage` key `bb-plans`; export is `{app:"block-builder", version:1, plans:{…}}`. Keep import backward compatible.
+- GitHub Pages serves `main` (https://arthurfranck.github.io/block-builder/). `main` is protected by the six Tests jobs: never push to it, always a PR.
+- Node: `~/.local/node/bin`; `gh`: `~/.local/bin/gh` if not on PATH.
 
-- The app is `index.html` plus `engine.js` (the plan engine: paces, generate, warnings, week checks; no DOM, no storage). `engine.js` is a classic script exposing `BBEngine`, not an ES module, so the page still opens from disk (file://). There is no build step.
-- Engine changes need a Node test in `tests/engine/engine.unit.mjs` (`npm run test:engine`, also run by `npm test` and CI). Re-check the five athlete profiles there when changing how plans are built.
-- It is served by GitHub Pages from `main`, root folder: https://arthurfranck.github.io/block-builder/
-- `main` is protected: the six Tests jobs must pass before anything lands. Work on a branch and open a pull request; don't try to push to `main` directly.
-- Plans live in `localStorage` under the key `bb-plans`. The export format is `{app:"block-builder", version:1, plans:{…}}`. Keep import backward compatible.
-- Every user-facing string exists in both English and French (`I18N.en` / `I18N.fr`). Add both.
-
-## Claude Code setup (`.claude/`)
-
-- `settings.json` has a PreToolUse hook (`hooks/test-before-commit.sh`): before any `git commit`, if `index.html` or `engine.js` differs from HEAD, it runs `npm run test:engine` and `npm run test:chrome` and blocks the commit when it fails. It does not replace the full `npm test` run above.
-- `launch.json` serves the repo with `node tests/serve.mjs 8765` (the same server the tests and CI use) for the preview pane.
-- `/release <id> [patch|minor|major]` (`commands/release.md`) walks through branch, version bump, CHANGELOG, README, tests, commit and pull request for one backlog item.
-- `health.md` is the profile for the `codebase-health` skill (a weekly health check, run outside the repo): quick tests, tracked metrics, rules and known risks. Update it when a file it measures is renamed, or when a known risk is fixed or added.
+## `.claude/`
+- `settings.json`: pre-commit hook runs `test:engine` + `test:chrome` when `index.html`/`engine.js` changed, blocking on failure.
+- `launch.json`: preview via `node tests/serve.mjs 8765` (same server as tests and CI).
+- `commands/release.md`: `/release <id> [patch|minor|major]`.
+- `health.md`: profile for the weekly `codebase-health` check. Update it when a measured file is renamed or a known risk is fixed or added.
