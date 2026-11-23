@@ -53,6 +53,29 @@ The page only reaches outside for:
 - [Open-Meteo](https://open-meteo.com) (free, no key), once you set a city or use your location;
 - cdnjs, for the PDF library, only when you export a PDF.
 
+## How it's built
+
+I run Block Builder as a team lead. I make the product, design and technical decisions. AI agents (Claude Code) do the work of the product managers, designers and engineers. Everything the team does goes through this repo, so you can follow the whole loop.
+
+**My part**
+- **Product:** what to build and in what order. I keep a scored backlog, ranked so that nothing is built before an item that would rework it, and I pick each next item. The training rules come from audits of generated plans against five athlete profiles, from a beginner to an experienced marathoner.
+- **Design:** every flow and screen. For bigger changes the team mocks up options and I choose.
+- **Tech:** the architecture and the working rules in [CLAUDE.md](CLAUDE.md), which serves as the team handbook: what every change must include, what is never allowed, and how a release is made.
+- **Merge:** a change reaches `main` only when I merge it, and only after CI is green.
+
+**The AI team's part**
+- **Product manager:** writes a brainstorm for each backlog item before any plan ([docs/brainstorms/](docs/brainstorms/)).
+- **Designer:** mock-ups and options for screen changes.
+- **Engineer:** the code, tests, docs and changelog for one backlog item per branch and pull request (`BB-<n>`).
+- **Ops:** a weekly codebase health check that reports trends and risks against a profile ([.claude/health.md](.claude/health.md)).
+
+**Guardrails that make delegating safe**
+- `main` is protected: type checks, a dependency audit and the tests on six desktop and iPhone setups must all pass.
+- A pre-commit hook runs the engine and Chrome tests before any commit that touches the app.
+- A behaviour change comes with a test change, and a failing test is never deleted or loosened: the page gets fixed.
+- The plan engine has no DOM and no storage, so every training rule is unit-tested in Node.
+- Each release bumps the version, adds a changelog entry and updates the docs in the same commit.
+
 ## For developers
 
 ### Repository map
