@@ -4,7 +4,7 @@
    Runs after engine.js (BBEngine) at the end of <body>. */
 (() => {
 "use strict";
-const VERSION = "1.12.0";
+const VERSION = "1.13.0";
 const $ = s => document.querySelector(s);
 /** @type {(s: string) => NodeListOf<HTMLElement>} */
 const $$ = s => document.querySelectorAll(s);
@@ -1366,7 +1366,7 @@ async function savePlan(auto){
   try{
     setStatus(t("saving"));
     {const all=lsAll();all[S.planId]=data;localStorage.setItem("bb-plans",JSON.stringify(all));refreshLocalList();}
-    S.savedAt=Date.now();S.dirty=false;S.isExample=false;S.fromExample=false;syncSaveUi();bkNoteSave();askPersist();
+    S.savedAt=Date.now();S.dirty=false;S.isExample=false;S.fromExample=false;syncSaveUi();bkNoteSave();askPersist();rememberPlan();
     S.savedLbl=null;setStatus(t("savedLocal")+" · "+new Date().toLocaleTimeString(LOC(),{hour:"2-digit",minute:"2-digit"}));
     if(!auto){toast(t("planSaved"));renderPlan();}
   }catch(e){setStatus(t("notSaved"));toast(t("saveFail"));}
@@ -1394,7 +1394,12 @@ function loadPlan(p){
   S.intake=0;
   S.planId=p.id;S.name=p.name;S.nameAuto=false;S.volSug=null;S.fromExample=false;S.inputs={...DEFAULT_INPUTS(),...JSON.parse(JSON.stringify(p.inputs))};S.types=JSON.parse(JSON.stringify(p.types));S.plan=JSON.parse(JSON.stringify(p.plan));S.edited=!!p.edited;S.savedAt=p.updatedAt;S.isExample=false;S.pendingRegen=false;S.dirty=false;
   $("#planName").value=S.name;renderSetup();renderPlan();setStatus(t("savedLocal")+" · "+new Date(p.updatedAt).toLocaleDateString(LOC(),{day:"numeric",month:"short"}));
+  rememberPlan();
 }
+/* BB-88: the next visit reopens the plan open last ("bb-last"), or the most recently changed one if it is gone;
+   the example only shows on a first visit or with no saved plans */
+function rememberPlan(){try{localStorage.setItem("bb-last",S.planId);}catch(_){}}
+function lastPlan(){let id=null;try{id=localStorage.getItem("bb-last");}catch(_){}return S.saved.find(x=>x.id===id)||S.saved[0]||null;}
 function openPlans(){
   const list=S.saved;
   const bkAt=bkGet().at;
@@ -1538,4 +1543,5 @@ applyStatic();
 regen();renderSetup();$("#planName").value=S.name;renderPlan();setStatus(t("notSaved"));
 refreshLocalList();
 if(S.saved.length&&!(bkGet().since>0)&&!(bkGet().at>0))bkNoteSave();
+{const last=lastPlan();if(last)loadPlan(last);}
 })();

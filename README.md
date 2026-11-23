@@ -12,7 +12,7 @@ Plan a running training block in your browser and send every run to your watch. 
 
 1. **Pick a goal:** a race (5K to marathon, or a custom distance) with its date, or a personal plan over a set number of weeks.
 2. **Enter your running now:** experience, weekly volume (suggested from your experience and distance; change it to what you run), longest recent run if you know it (optional) and, for paces, a recent race time; then your week: runs per week, days and the run types you want. On a phone, New plan walks you through these as 4 steps.
-3. **Use the plan:** edit any run, then send a run, a week or the whole plan to Apple Watch or Garmin, or export it as a calendar, spreadsheet or PDF. Your plan saves itself as soon as it can be built; the ▾ next to its name opens My plans. The example plan is only kept if you press Keep this plan.
+3. **Use the plan:** edit any run, then send a run, a week or the whole plan to Apple Watch or Garmin, or export it as a calendar, spreadsheet or PDF. Your plan saves itself as soon as it can be built; the ▾ next to its name opens My plans, and the page opens on the plan you had open last time. The example plan is only kept if you press Keep this plan.
 
 Just want one session? **Quick workout** builds a single run and sends it to your watch without touching the plan.
 
@@ -45,6 +45,7 @@ There are no accounts, no server and no tracking. Everything stays in your brows
 | `bb-export-fmt` | the last plan export format |
 | `bb-wx`, `bb-wx-open` | the weather city, and whether the forecast is open |
 | `bb-quick-unit`, `bb-quick-paces`, `bb-quick-recent` | quick workout unit, its recent race, and the last 5 quick workouts |
+| `bb-last` | the plan open last, reopened on the next visit |
 | `bb-backup` | when plans were last saved to a file, the first change since, and until when Later hides the reminder |
 
 **My plans → Save plan** downloads every plan as one JSON file, and **Import** loads it back on any device or browser. Imported files are checked field by field and cleaned before they are stored, so a file from someone else can't inject anything into the page. Importing a plan you already have never loses either version: a newer file replaces yours, and when yours is newer the file's version is added beside it. A saved plan saves itself 1.5 seconds after each change, and right away before another plan replaces it or the tab closes; leaving with a plan that was never saved asks first. A browser can delete what a site keeps (clearing site data, or Safari after 7 days of use without a visit), so the page asks the browser to keep its storage once a plan is saved, My plans says when plans were last saved to a file, and the plan shows a reminder when saved plans have changes not saved to a file for a week (Later hides it for a week).
