@@ -6,7 +6,9 @@
 - Structural decisions live in `docs/adr/` (index in its README). Read the relevant ADR before changing what it covers; a new structural choice gets a new ADR, and one that changes an old decision supersedes it instead of editing it.
 - One backlog item per branch and PR (`bb-<n>-<slug>`). `/release <id>` is the checklist.
 - After opening a PR, turn on Auto-fix right away (auto-fix + address comments) and say so; skip only if told "no Auto-fix on this one".
-- Backlog: `../backlog-block-builder.md`, ids `BB-<n>`, edited with the `tool-backlog` skill. Rank by dependencies, not score alone: never put an item above the one that would kill, absorb or rework it ("I don't want to implement a feature if it is going to be killed 3 versions later").
+- Backlog: `../backlog-block-builder.md`, ids `BB-<n>`, edited with the `tool-backlog` skill. Open items only; Done log and Dropped live in `../backlog-block-builder-done.md`.
+- Completing or dropping an item = move it, in the same edit: remove its row from the Active table, add it at the top of the Done log or Dropped table in the done file, bump "Last updated" in both. Never leave a done/dropped item in Active or an open item in the done file; an ID exists in exactly one file. Next ID = highest across both files + 1. Whenever you touch the backlog, check the two files are in sync (no shared IDs, no Done/Dropped status in Active) and fix any drift.
+- Rank by dependencies, not score alone: never put an item above the one that would kill, absorb or rework it ("I don't want to implement a feature if it is going to be killed 3 versions later").
 - Report briefly: PR link, version, tests run, what was not checked.
 
 ## Every change to `index.html`, `app.js`, `theme.js` or `engine.js`, in the same commit

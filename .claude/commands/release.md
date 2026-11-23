@@ -12,4 +12,4 @@ Release the change for backlog item `$1` (version bump: `$2`, default `patch`). 
 5. **Tests:** a behaviour change needs a test change. Run `npm test` (or at least `npm run test:chrome`, saying in the commit message that WebKit was not run locally). Never loosen a failing test. Node is in `~/.local/node/bin` if `npm` is not on PATH.
 6. **Commit:** `feat|fix|chore: <what> (vX.Y.Z, $1)`, body with what changed and the local test count. The project hook re-runs the Chrome tests if an app file changed and blocks the commit on failure.
 7. **PR:** push the branch and open a PR with `gh pr create` (GitHub CLI may be at `~/.local/bin/gh`). Title ends with `($1)`; body says what changed, how it was checked, and the version.
-8. **Report:** PR link, version, tests run. After the merge, the backlog file next to the repo (`../backlog-block-builder.md`) gets the item moved to the Done log with what it brought.
+8. **Report:** PR link, version, tests run. After the merge, the item's row is removed from `../backlog-block-builder.md` (Active) and added at the top of the Done log in `../backlog-block-builder-done.md`, with what it brought; both files' dates bumped.

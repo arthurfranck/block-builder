@@ -5,7 +5,7 @@ Read by the `codebase-health` skill. Project rules live in [CLAUDE.md](../CLAUDE
 - **Reports:** ~/Claude/health/block-builder/
 - **Cadence:** weekly, Monday 14:00 (after Dependabot's Monday pull requests); also by hand before a minor or major release
 - **PATH additions:** ~/.local/node/bin, ~/.local/bin
-- **Backlog:** ~/Claude/backlog-block-builder.md (edited with the tool-backlog skill; ids are BB-<n>)
+- **Backlog:** ~/Claude/backlog-block-builder.md, open items; done and dropped in ~/Claude/backlog-block-builder-done.md (edited with the tool-backlog skill; ids are BB-<n>)
 
 ## Quick local tests
 - `npm run test:engine`: plan engine unit tests (Node), a few seconds.
@@ -42,9 +42,8 @@ From CLAUDE.md; check each:
 - The Known issues section of `tests/README.md` agrees with `test.fail` lines and `KNOWN` in `tests/a11y.spec.ts`.
 
 ## Known risks
-- Plans live only in `localStorage` (`bb-plans`): lost when site data is cleared or evicted by the browser; the only backup is manual Export (no item yet).
-- `app.js` is one ~1,500-line script with long lines (split out of index.html in BB-66).
-- Type checking is strict for `tests/*.ts` but non-strict for `app.js`; `engine.js` and `tests/engine/*.mjs` are not checked.
+- Plans live only in `localStorage` (`bb-plans`): lost when site data is cleared or evicted by the browser; the only backup is manual Export (BB-84; ADR 0003).
+- `app.js` is one ~1,500-line script with long lines (split out of index.html in BB-66). Format: BB-79; architecture: BB-75; split: BB-76.
+- Type checking is strict for `tests/*.ts` but non-strict for `app.js`; `engine.js` and `tests/engine/*.mjs` are not checked (BB-70, then BB-81).
 - PDF export needs cdnjs (jsPDF 4.2.1, AutoTable 5.0.9) and fails offline; Google Fonts is another outside request.
-- Weather refetches on every redraw after a failure (BB-11).
 - ICS line folding counts characters, not octets (BB-16).
