@@ -76,14 +76,15 @@ Build one workout from the run types and send it to a watch without changing the
 - **Watch:** Apple Watch (`.workout`, through WorkoutKit), Garmin and other devices (`.fit`), per run, per week or for the whole plan, in one zip. Files are named by week, day and run (`w01-mon-easy-run.fit`); two runs with the same name on one day get `-2`, `-3` instead of overwriting each other.
 - **Calendar:** `.ics`.
 - **Plan file:** a format dropdown for spreadsheet (`.csv`) or printable PDF (A4 landscape week-by-day grid with phases, weekly km, run descriptions and plan totals). The dropdown remembers the last format picked.
-- **All plans:** My plans → Export / Import, see [Privacy and storage](../README.md#privacy-and-storage).
+- **All plans:** My plans → Save plan / Import, see [Privacy and storage](../README.md#privacy-and-storage). Save plan downloads every saved plan as one JSON file (`block-builder-plans-YYYY-MM-DD.json`).
+- **Reminder to save to a file (BB-84):** My plans shows "Last saved to a file: never" or the date. The first save (or import) after the last file starts a 7-day clock; after 7 days, the plan view shows a reminder with Save plan and Later. Later hides it for 7 days; saving to a file hides it and resets the clock. Never on the example plan or with no saved plans. Plans that existed before 1.12.0 start the clock on the first visit. Once a plan is saved, the page calls `navigator.storage.persist()` once per visit; the browser decides, silently or with a prompt (Firefox).
 - **Importing a plan you already have** (same plan, for example exported from another device): a newer copy in the file replaces yours; the same version is skipped; if yours was changed more recently, yours is kept and the file's version is added beside it as "(imported)". The toast says which happened. If the plan you have open is replaced, it reloads.
 
 ## Saving
 
 - **Autosave:** a plan saves itself in this browser 1.5 seconds after each change, as soon as its setup is complete (it can be built); a new plan needs no Save button. The status next to the name says "Unsaved changes", then "Saved in this browser · 14:05". Changes are also written just before New plan, opening another plan or leaving the page.
 - **Example plan:** the plan shown on a first visit is never saved on its own, even once you change it. Keep this plan (shown only on the example) saves it as yours; from then on it autosaves.
-- **Header:** plan name (tap to rename), ▾ to open My plans (switch, rename, delete, export, import), save status, New plan, Quick workout and the settings gear.
+- **Header:** plan name (tap to rename), ▾ to open My plans (switch, rename, delete, save to a file, import), save status, New plan, Quick workout and the settings gear.
 
 ## Settings and display
 

@@ -304,3 +304,73 @@ test.describe('autosave and header (BB-32)', () => {
     await expect(page.getByRole('dialog', { name: 'Quick workout' })).toBeVisible();
   });
 });
+
+test.describe('saving plans to a file and the weekly reminder (BB-84)', () => {
+  const DAY = 864e5;
+  const backup = (page: import('@playwright/test').Page) =>
+    page.evaluate(() => JSON.parse(localStorage.getItem('bb-backup') || 'null'));
+  /* move the first unsaved-to-file change back in time, then reopen the plan so the plan view redraws */
+  const ageChanges = async (app: import('./helpers').App, page: import('@playwright/test').Page, days: number) => {
+    await page.evaluate((since) => localStorage.setItem('bb-backup', JSON.stringify({ since })), TODAY_MS - days * DAY);
+    await page.locator('#btnPlans').click();
+    await app.modal().getByRole('button', { name: 'Open' }).first().click();
+    await app.showPlan();
+  };
+  const TODAY_MS = new Date('2026-11-06T09:00:00+01:00').getTime();
+
+  test('My plans says when plans were last saved to a file', async ({ app, page }) => {
+    await page.locator('#btnSave').click();
+    await page.locator('#btnPlans').click();
+    await expect(page.locator('#bkLast')).toHaveText('Last saved to a file: never.');
+    await expect(page.locator('#pExport')).toHaveText('Save plan');
+    await app.download(() => page.locator('#pExport').click());
+    await expect(page.locator('#bkLast')).toHaveText('Last saved to a file: 6 Nov 2026.');
+    expect(await backup(page)).toEqual({ at: TODAY_MS });
+  });
+
+  test('no reminder in the first week, then one with Save plan and Later', async ({ app, page }) => {
+    await page.locator('#btnSave').click();
+    expect(await backup(page)).toEqual({ since: TODAY_MS });
+    await expect(page.locator('#bkBanner')).toHaveCount(0);
+
+    await ageChanges(app, page, 6);
+    await expect(page.locator('#bkBanner')).toHaveCount(0);
+
+    await ageChanges(app, page, 8);
+    const banner = page.locator('#bkBanner');
+    await expect(banner).toContainText('Your plans are only kept in this browser');
+    await banner.getByRole('button', { name: 'Later' }).click();
+    await expect(page.locator('#bkBanner')).toHaveCount(0);
+    expect((await backup(page)).snooze).toBe(TODAY_MS + 7 * DAY);
+  });
+
+  test('Save plan in the reminder downloads every plan and hides it', async ({ app, page }) => {
+    await page.locator('#btnSave').click();
+    await ageChanges(app, page, 8);
+    const { name, buf } = await app.download(() => page.locator('#bkBanner').getByRole('button', { name: 'Save plan' }).click());
+    expect(name).toBe('block-builder-plans-2026-11-06.json');
+    expect(Object.keys(JSON.parse(buf.toString()).plans)).toHaveLength(1);
+    await expect(page.locator('#bkBanner')).toHaveCount(0);
+    expect(await backup(page)).toEqual({ at: TODAY_MS });
+  });
+
+  test('never on the example plan', async ({ app, page }) => {
+    await page.locator('#btnSave').click();
+    await page.evaluate((since) => localStorage.setItem('bb-backup', JSON.stringify({ since })), TODAY_MS - 30 * DAY);
+    await app.open();
+    await app.showPlan();
+    await expect(page.locator('#bkBanner')).toHaveCount(0);
+  });
+
+  test('asks the browser to keep the storage once a plan is saved', async ({ app, page }) => {
+    await page.addInitScript(() => {
+      const w = window as any; w.__persist = 0;
+      Object.defineProperty(navigator, 'storage', { configurable: true, value: { persist: () => { w.__persist++; return Promise.resolve(true); } } });
+    });
+    await app.open();
+    expect(await page.evaluate(() => (window as any).__persist)).toBe(0);
+    await page.locator('#btnSave').click();
+    await expect(page.locator('#saveStatus')).toContainText('Saved in this browser');
+    expect(await page.evaluate(() => (window as any).__persist)).toBe(1);
+  });
+});
