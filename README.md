@@ -63,7 +63,7 @@ app.js                the interface: rendering, storage, exports
 theme.js              sets the theme before the page paints
 engine.js             the plan engine: paces, plan building, warnings, week checks (no DOM, no storage)
 vendor/               third-party code served from this repo (see vendor/README.md)
-docs/                 features in detail, README screenshot
+docs/                 features in detail, architecture decisions (adr/), brainstorms per backlog item, README screenshot
 tests/                Playwright browser tests, Node engine tests, test server (see tests/README.md)
 .github/              CI workflow and Dependabot
 .claude/              Claude Code setup (see CLAUDE.md)
