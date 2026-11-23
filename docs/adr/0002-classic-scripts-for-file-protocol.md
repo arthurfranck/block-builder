@@ -1,6 +1,6 @@
 # 0002. Classic scripts, so the page opens from disk
 
-- Status: Accepted, under review in BB-75
+- Status: Superseded by [0008](0008-es-modules-bundled-with-esbuild.md) (2026-11-23)
 - Decided: BB-7 (engine moved to `engine.js`) and BB-66 (v1.7.1, app moved to `app.js`)
 
 ## Context

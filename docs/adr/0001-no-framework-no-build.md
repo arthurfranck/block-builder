@@ -1,6 +1,6 @@
 # 0001. No framework and no build step
 
-- Status: Accepted, under review in BB-75
+- Status: Superseded by [0008](0008-es-modules-bundled-with-esbuild.md) (2026-11-23)
 - Decided: v1.0.0 (6 Nov 2026), when the claude.ai artifact became this repo
 
 ## Context
