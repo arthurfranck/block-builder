@@ -3,6 +3,7 @@
 ## How Arthur works
 - Act, don't ask, on anything these rules already settle. Ask only for real product or design choices.
 - Before planning any feature or problem, check `docs/brainstorms/` for existing thinking on it and use it as input. If there's none, create a brainstorm file there before writing the plan.
+- Structural decisions live in `docs/adr/` (index in its README). Read the relevant ADR before changing what it covers; a new structural choice gets a new ADR, and one that changes an old decision supersedes it instead of editing it.
 - One backlog item per branch and PR (`bb-<n>-<slug>`). `/release <id>` is the checklist.
 - After opening a PR, turn on Auto-fix right away (auto-fix + address comments) and say so; skip only if told "no Auto-fix on this one".
 - Backlog: `../backlog-block-builder.md`, ids `BB-<n>`, edited with the `tool-backlog` skill. Rank by dependencies, not score alone: never put an item above the one that would kill, absorb or rework it ("I don't want to implement a feature if it is going to be killed 3 versions later").
