@@ -45,8 +45,9 @@ There are no accounts, no server and no tracking. Everything stays in your brows
 | `bb-export-fmt` | the last plan export format |
 | `bb-wx`, `bb-wx-open` | the weather city, and whether the forecast is open |
 | `bb-quick-unit`, `bb-quick-paces`, `bb-quick-recent` | quick workout unit, its recent race, and the last 5 quick workouts |
+| `bb-backup` | when plans were last saved to a file, the first change since, and until when Later hides the reminder |
 
-**My plans → Export** downloads every plan as one JSON file, and **Import** loads it back on any device or browser. Imported files are checked field by field and cleaned before they are stored, so a file from someone else can't inject anything into the page. Importing a plan you already have never loses either version: a newer file replaces yours, and when yours is newer the file's version is added beside it. A saved plan saves itself 1.5 seconds after each change, and right away before another plan replaces it or the tab closes; leaving with a plan that was never saved asks first.
+**My plans → Save plan** downloads every plan as one JSON file, and **Import** loads it back on any device or browser. Imported files are checked field by field and cleaned before they are stored, so a file from someone else can't inject anything into the page. Importing a plan you already have never loses either version: a newer file replaces yours, and when yours is newer the file's version is added beside it. A saved plan saves itself 1.5 seconds after each change, and right away before another plan replaces it or the tab closes; leaving with a plan that was never saved asks first. A browser can delete what a site keeps (clearing site data, or Safari after 7 days of use without a visit), so the page asks the browser to keep its storage once a plan is saved, My plans says when plans were last saved to a file, and the plan shows a reminder when saved plans have changes not saved to a file for a week (Later hides it for a week).
 
 The page only reaches outside for:
 - Google Fonts, for the type;

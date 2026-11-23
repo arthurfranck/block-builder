@@ -2,6 +2,16 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.12.0] - 2026-11-23
+
+### Added
+- Your plans are only kept in this browser, and a browser can delete them (clearing site data, or Safari after a week without a visit). When saved plans have changes you haven't saved to a file for a week, the plan shows a reminder with **Save plan**, which downloads every plan as one file, and **Later**, which hides it for a week (BB-84).
+- My plans says when you last saved your plans to a file.
+- Once a plan is saved, the page asks the browser to keep its storage, so it is less likely to clear it on its own.
+
+### Changed
+- In My plans, Export is now called **Save plan**. It still downloads every plan as one file that Import loads back.
+
 ## [1.11.1] - 2026-11-20
 
 ### Fixed

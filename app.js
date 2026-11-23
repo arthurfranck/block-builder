@@ -4,7 +4,7 @@
    Runs after engine.js (BBEngine) at the end of <body>. */
 (() => {
 "use strict";
-const VERSION = "1.11.1";
+const VERSION = "1.12.0";
 const $ = s => document.querySelector(s);
 /** @type {(s: string) => NodeListOf<HTMLElement>} */
 const $$ = s => document.querySelectorAll(s);
@@ -109,7 +109,7 @@ dlFail:"Couldn't save the file.",dlFailM:"Couldn't save the file: {m}",
 icsDesc:"Week {n} ({phase}). {desc}",icsNote:"Note: ",csvHead:"Week|Phase|Date|Day|Run|Km|Description|Note",
 unsaved:"Unsaved changes",saving:"Saving…",saved:"Saved",savedLocal:"Saved in this browser",planSaved:"Plan saved.",notSaved:"Not saved",
 saveFail:"Save failed. Your plan is still here; try again.",
-localOnly:"Plans are kept in this browser only. Use Export to keep a copy or move them to another device.",exportPlans:"Export",importPlans:"Import…",imported:"Imported {n} plan(s).",impCopy:"{n} added as a copy, because the plan here was changed more recently.",impSame:"{n} already up to date.",impNone:"Nothing new: {n} plan(s) already up to date.",copyName:"{name} (imported)",importFail:"That file isn't a Block Builder export.",planMeta:"{lbl} · {w} weeks · race {d}",
+localOnly:"Plans are kept in this browser only. Use Save plan to keep a copy in a file or move them to another device.",bkSave:"Save plan",bkLater:"Later",bkBanner:"Your plans are only kept in this browser, which can delete them. Save a copy to a file.",bkLast:"Last saved to a file: {d}.",bkNever:"Last saved to a file: never.",importPlans:"Import…",imported:"Imported {n} plan(s).",impCopy:"{n} added as a copy, because the plan here was changed more recently.",impSame:"{n} already up to date.",impNone:"Nothing new: {n} plan(s) already up to date.",copyName:"{name} (imported)",importFail:"That file isn't a Block Builder export.",planMeta:"{lbl} · {w} weeks · race {d}",
 open:"Open",del:"Delete",noPlans:"No saved plans yet. Build one and press Save plan.",close:"Close",delQ:"Delete plan?",delT:"\"{name}\" will be removed for good.",
 deleted:"Plan deleted.",delFail:"Couldn't delete that plan.",newQ:"Start a new plan?",newT:"This plan hasn't been saved.",startNew:"Start new",
 langEdited:"Hand-edited sessions keep their current text. Use Rebuild from settings to translate them.",
@@ -220,7 +220,7 @@ dlFail:"Impossible d'enregistrer le fichier.",dlFailM:"Impossible d'enregistrer 
 icsDesc:"Semaine {n} ({phase}). {desc}",icsNote:"Note : ",csvHead:"Semaine|Phase|Date|Jour|Séance|Km|Description|Note",
 unsaved:"Modifications non enregistrées",saving:"Enregistrement…",saved:"Enregistré",savedLocal:"Enregistré dans ce navigateur",planSaved:"Plan enregistré.",notSaved:"Non enregistré",
 saveFail:"Échec de l'enregistrement. Votre plan est toujours là, réessayez.",
-localOnly:"Les plans sont conservés dans ce navigateur uniquement. Utilisez Exporter pour en garder une copie ou les passer sur un autre appareil.",exportPlans:"Exporter",importPlans:"Importer…",imported:"{n} plan(s) importé(s).",impCopy:"{n} ajouté(s) en copie, car le plan d'ici a été modifié plus récemment.",impSame:"{n} déjà à jour.",impNone:"Rien de nouveau : {n} plan(s) déjà à jour.",copyName:"{name} (importé)",importFail:"Ce fichier n'est pas un export Block Builder.",planMeta:"{lbl} · {w} semaines · course le {d}",
+localOnly:"Les plans sont conservés dans ce navigateur uniquement. Utilisez Enregistrer le plan pour en garder une copie dans un fichier ou les passer sur un autre appareil.",bkSave:"Enregistrer le plan",bkLater:"Plus tard",bkBanner:"Vos plans ne sont conservés que dans ce navigateur, qui peut les effacer. Enregistrez-en une copie dans un fichier.",bkLast:"Dernier enregistrement dans un fichier : {d}.",bkNever:"Dernier enregistrement dans un fichier : jamais.",importPlans:"Importer…",imported:"{n} plan(s) importé(s).",impCopy:"{n} ajouté(s) en copie, car le plan d'ici a été modifié plus récemment.",impSame:"{n} déjà à jour.",impNone:"Rien de nouveau : {n} plan(s) déjà à jour.",copyName:"{name} (importé)",importFail:"Ce fichier n'est pas un export Block Builder.",planMeta:"{lbl} · {w} semaines · course le {d}",
 open:"Ouvrir",del:"Supprimer",noPlans:"Aucun plan enregistré. Créez-en un puis cliquez sur Enregistrer.",close:"Fermer",delQ:"Supprimer le plan ?",delT:"« {name} » sera supprimé définitivement.",
 deleted:"Plan supprimé.",delFail:"Impossible de supprimer ce plan.",newQ:"Commencer un nouveau plan ?",newT:"Ce plan n'a pas été enregistré.",startNew:"Nouveau plan",
 langEdited:"Les séances modifiées à la main gardent leur texte. Utilisez « Recalculer depuis les réglages » pour les traduire.",
@@ -457,6 +457,7 @@ function renderPlan(){fitName();
   const setupF=[...new Set(items.filter(x=>x.f&&(x.f!=="pace"||badRaceTime(I))).map(x=>x.f))];
   let h="";
   if(S.isExample)h+=`<div class="banner info"><span>${t("exampleBanner")}</span><button class="btn sm m-only" type="button" data-tabgo="setup">${t("editSettings")}</button></div>`;
+  if(!S.isExample&&backupDue())h+=`<div class="banner info" id="bkBanner"><span>${t("bkBanner")}</span><button class="btn sm primary" data-act="bksave">${t("bkSave")}</button><button class="btn sm ghost" data-act="bklater">${t("bkLater")}</button></div>`;
   if(S.pendingRegen)h+=`<div class="banner"><span>${t("pendingBanner")}</span><button class="btn sm primary" data-act="regen">${t("rebuildPlan")}</button><button class="btn sm ghost" data-act="keep">${t("keepEdits")}</button></div>`;
   if(setupF.length)h+=`<div class="banner" id="setupWarn"><span>${esc(t("setupWarn",{f:setupF.map(fieldLabel).join(", ")}))}</span><button class="btn sm m-only" type="button" data-tabgo="setup">${t("editSettings")}</button></div>`;
   if(warns.length)h+=`<div class="banner"><ul>${warns.map(w=>`<li>${esc(w)}</li>`).join("")}</ul></div>`;
@@ -963,6 +964,8 @@ $("#plan").addEventListener("click",e=>{
   const act=a.dataset.act;
   if(act==="regen"||act==="rebuild"){if(act==="rebuild"&&S.edited){confirmBox(t("rebuildQ"),t("rebuildT"),t("rebuild"),()=>{S.pendingRegen=false;regen();renderPlan();markDirty();});return;}S.pendingRegen=false;regen();renderPlan();markDirty();}
   else if(act==="keep"){S.pendingRegen=false;renderPlan();}
+  else if(act==="bksave"){exportAllPlans();renderPlan();}
+  else if(act==="bklater"){const b=bkGet();b.snooze=Date.now()+7*BK_DAY;bkSet(b);renderPlan();}
   else if(act==="tedit"){openEditor(+a.dataset.w,a.dataset.s);}
   else if(act==="twatch"){const w=S.plan.weeks[+a.dataset.w],s=w.sessions.find(x=>x.id===a.dataset.s);if(s)sendToWatch(planWorkouts([{w,s}]),t("tdWatchTitle",{name:s.name,d:fmtDay(sessionDate(w,s))}),`${slug(S.name)}-${iso(sessionDate(w,s))}`);}
   else if(act==="wxedit"){WX.editing=true;WX.err="";renderWx();const q=$("#wxQ");q&&q.focus();}
@@ -1363,11 +1366,22 @@ async function savePlan(auto){
   try{
     setStatus(t("saving"));
     {const all=lsAll();all[S.planId]=data;localStorage.setItem("bb-plans",JSON.stringify(all));refreshLocalList();}
-    S.savedAt=Date.now();S.dirty=false;S.isExample=false;S.fromExample=false;syncSaveUi();
+    S.savedAt=Date.now();S.dirty=false;S.isExample=false;S.fromExample=false;syncSaveUi();bkNoteSave();askPersist();
     S.savedLbl=null;setStatus(t("savedLocal")+" · "+new Date().toLocaleTimeString(LOC(),{hour:"2-digit",minute:"2-digit"}));
     if(!auto){toast(t("planSaved"));renderPlan();}
   }catch(e){setStatus(t("notSaved"));toast(t("saveFail"));}
 }
+/* BB-84: plans live only in this browser (ADR 0003). "bb-backup" remembers when they were last saved to a file (at),
+   the first save since then (since) and a Later (snooze). The plan view reminds at most once a week while changes
+   were never saved to a file; the browser is also asked to keep the storage (it may say no, silently). */
+const BK_DAY=864e5;
+function bkGet(){try{const o=JSON.parse(localStorage.getItem("bb-backup")||"null");return o&&typeof o==="object"?o:{};}catch(_){return {};}}
+function bkSet(o){try{localStorage.setItem("bb-backup",JSON.stringify(o));}catch(_){}}
+function bkNoteSave(){const b=bkGet();if(!(b.since>0)){b.since=Date.now();bkSet(b);}}
+function backupDue(){const b=bkGet(),now=Date.now();return S.saved.length>0&&b.since>0&&now-b.since>=7*BK_DAY&&!(b.snooze>now);}
+function exportAllPlans(){saveFile("block-builder-plans-"+iso(new Date())+".json",new Blob([JSON.stringify({app:"block-builder",version:1,plans:lsAll()},null,1)],{type:"application/json"}));bkSet({at:Date.now()});}
+let persistAsked=false;
+function askPersist(){if(persistAsked)return;persistAsked=true;try{const st=navigator.storage;if(st&&st.persist)st.persist().catch(()=>{});}catch(_){}}
 function lsAll(){try{return JSON.parse(localStorage.getItem("bb-plans")||"{}")||{};}catch(_){return {};}}
 function refreshLocalList(){const all=lsAll();S.saved=Object.entries(all).filter(([id])=>nId(id)).map(([id,d])=>{const n=normalizeSaved(d);return n&&{id,...n};}).filter(Boolean).sort((a,b)=>b.updatedAt-a.updatedAt);}
 /* autosave waits 1.5 s after the last change: write it now before anything replaces the current plan */
@@ -1383,11 +1397,12 @@ function loadPlan(p){
 }
 function openPlans(){
   const list=S.saved;
-  modal(`<h2>${t("myPlans")}</h2><p class="hint" style="margin:0">${t("localOnly")}</p>
+  const bkAt=bkGet().at;
+  modal(`<h2>${t("myPlans")}</h2><p class="hint" style="margin:0">${t("localOnly")}</p><p class="hint" id="bkLast" style="margin:0">${bkAt>0?t("bkLast",{d:new Date(bkAt).toLocaleDateString(LOC(),{day:"numeric",month:"short",year:"numeric"})}):t("bkNever")}</p>
   <div class="plans-list">${list.length?list.map(p=>`<div class="pl ${p.id===S.planId?"cur":""}"><div class="info"><b>${esc(p.name)}</b><span>${esc(cap(t(p.inputs&&p.inputs.goal==="fitness"?"planMetaFit":"planMeta",{lbl:p.inputs?distLabel(p.inputs):"",w:p.plan?p.plan.weeks.length:"?",d:p.inputs?fmtDate(parseISO(p.inputs.goal==="fitness"?(p.plan&&p.plan.meta.start||p.inputs.startDate):p.inputs.raceDate)):""})))}</span></div><button class="btn sm" data-open="${p.id}">${t("open")}</button><button class="btn sm ghost" data-delp="${p.id}">${t("del")}</button></div>`).join(""):`<p class="hint" style="margin:0">${t("noPlans")}</p>`}</div>
-  <div class="actions"><button class="btn left" id="pImport">${t("importPlans")}</button><button class="btn" id="pExport" ${list.length?"":"disabled"}>${t("exportPlans")}</button><button class="btn" id="pClose">${t("close")}</button></div>`,m=>{
+  <div class="actions"><button class="btn left" id="pImport">${t("importPlans")}</button><button class="btn" id="pExport" ${list.length?"":"disabled"}>${t("bkSave")}</button><button class="btn" id="pClose">${t("close")}</button></div>`,m=>{
     m.querySelector("#pClose").onclick=closeModal;
-    m.querySelector("#pExport").onclick=()=>{saveFile("block-builder-plans-"+iso(new Date())+".json",new Blob([JSON.stringify({app:"block-builder",version:1,plans:lsAll()},null,1)],{type:"application/json"}));};
+    m.querySelector("#pExport").onclick=()=>{exportAllPlans();const l=m.querySelector("#bkLast");if(l)l.textContent=t("bkLast",{d:new Date().toLocaleDateString(LOC(),{day:"numeric",month:"short",year:"numeric"})});};
     m.querySelector("#pImport").onclick=()=>{const inp=document.createElement("input");inp.type="file";inp.accept=".json,application/json";
       inp.onchange=async()=>{const f=inp.files&&inp.files[0];if(!f)return;
         try{const j=JSON.parse(await f.text());const src=j&&j.app==="block-builder"&&j.plans&&typeof j.plans==="object"?j.plans:null;if(!src)throw 0;
@@ -1401,7 +1416,7 @@ function openPlans(){
             else if(c.updatedAt===here.updatedAt&&JSON.stringify(c)===JSON.stringify(here))same++;
             else{all[uid()]={...c,name:nStr(t("copyName",{name:c.name}),120)};n++;copies++;}}
           if(!valid)throw 0;
-          localStorage.setItem("bb-plans",JSON.stringify(all));refreshLocalList();closeModal();
+          localStorage.setItem("bb-plans",JSON.stringify(all));refreshLocalList();if(n)bkNoteSave();closeModal();
           if(reopen){const cur=S.saved.find(x=>x.id===S.planId);if(cur)loadPlan(cur);}
           toast(n?t("imported",{n})+(copies?" "+t("impCopy",{n:copies}):"")+(same?" "+t("impSame",{n:same}):""):t("impNone",{n:same}));openPlans();}
         catch(_){toast(t("importFail"));}};
@@ -1522,4 +1537,5 @@ document.addEventListener("click",e=>{if(!$("#prefsPanel").hidden&&!(/** @type {
 applyStatic();
 regen();renderSetup();$("#planName").value=S.name;renderPlan();setStatus(t("notSaved"));
 refreshLocalList();
+if(S.saved.length&&!(bkGet().since>0)&&!(bkGet().at>0))bkNoteSave();
 })();
