@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.13.0] - 2026-11-23
+
+### Changed
+- The page opens on your plan: the one you had open last time, or the one you changed most recently if that plan is gone (BB-88). The example plan only shows on a first visit, or when you have no saved plans. Today's run and the reminder to save your plans to a file are there without opening My plans.
+
 ## [1.12.0] - 2026-11-23
 
 ### Added

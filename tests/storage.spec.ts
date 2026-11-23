@@ -354,12 +354,13 @@ test.describe('saving plans to a file and the weekly reminder (BB-84)', () => {
     expect(await backup(page)).toEqual({ at: TODAY_MS });
   });
 
-  test('never on the example plan', async ({ app, page }) => {
+  test('shows on launch when due, never on the example of a first visit (BB-88)', async ({ app, page }) => {
+    await expect(page.locator('#bkBanner')).toHaveCount(0);
     await page.locator('#btnSave').click();
     await page.evaluate((since) => localStorage.setItem('bb-backup', JSON.stringify({ since })), TODAY_MS - 30 * DAY);
     await app.open();
     await app.showPlan();
-    await expect(page.locator('#bkBanner')).toHaveCount(0);
+    await expect(page.locator('#bkBanner')).toBeVisible();
   });
 
   test('asks the browser to keep the storage once a plan is saved', async ({ app, page }) => {
@@ -372,5 +373,58 @@ test.describe('saving plans to a file and the weekly reminder (BB-84)', () => {
     await page.locator('#btnSave').click();
     await expect(page.locator('#saveStatus')).toContainText('Saved in this browser');
     expect(await page.evaluate(() => (window as any).__persist)).toBe(1);
+  });
+});
+
+test.describe('reopening the last plan on launch (BB-88)', () => {
+  /* a second saved plan, changed after the first one */
+  const addNewer = (page: import('@playwright/test').Page) => page.evaluate(() => {
+    const all = JSON.parse(localStorage.getItem('bb-plans') || '{}');
+    const first = Object.values(all)[0] as any;
+    all['newer-plan'] = { ...first, name: 'Spring 10K', updatedAt: first.updatedAt + 60000 };
+    localStorage.setItem('bb-plans', JSON.stringify(all));
+  });
+  const reopen = async (app: import('./helpers').App, page: import('@playwright/test').Page, name: string) => {
+    await page.locator('#btnPlans').click();
+    await app.modal().locator('.pl', { hasText: name }).getByRole('button', { name: 'Open' }).click();
+    await expect(page.locator('#planName')).toHaveValue(name);
+  };
+
+  test('a first visit shows the example; after saving, a reload opens that plan', async ({ app, page }) => {
+    await expect(page.locator('#planName')).toHaveValue('Half marathon block');
+    await expect(page.locator('#btnSave')).toBeVisible();
+    await app.configure({ dist: '10k', weeks: 9 });
+    await page.locator('#btnSave').click();
+    await expect(app.toast()).toHaveText('Plan saved.');
+    await app.open();
+    await expect(page.locator('#planName')).toHaveValue('10K block');
+    await expect(page.locator('#btnSave')).toBeHidden();
+    await expect(page.locator('#saveStatus')).toContainText('Saved in this browser');
+    await app.showPlan();
+    await expect(page.locator('#plan')).not.toContainText('Example settings');
+  });
+
+  test('reopens the plan open last, not the one changed last', async ({ app, page }) => {
+    await page.locator('#btnSave').click();
+    await expect(app.toast()).toHaveText('Plan saved.');
+    await addNewer(page);
+    await app.open();
+    await expect(page.locator('#planName')).toHaveValue('Half marathon block');
+    await reopen(app, page, 'Spring 10K');
+    await app.open();
+    await expect(page.locator('#planName')).toHaveValue('Spring 10K');
+  });
+
+  test('if the plan open last was deleted, the most recently changed one opens; with none left, the example', async ({ app, page }) => {
+    await page.locator('#btnSave').click();
+    await expect(app.toast()).toHaveText('Plan saved.');
+    await addNewer(page);
+    await page.evaluate(() => localStorage.setItem('bb-last', 'gone'));
+    await app.open();
+    await expect(page.locator('#planName')).toHaveValue('Spring 10K');
+    await page.evaluate(() => localStorage.setItem('bb-plans', '{}'));
+    await app.open();
+    await expect(page.locator('#planName')).toHaveValue('Half marathon block');
+    await expect(page.locator('#btnSave')).toBeVisible();
   });
 });
