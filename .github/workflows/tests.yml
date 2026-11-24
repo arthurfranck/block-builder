@@ -68,7 +68,7 @@ jobs:
         run: |
           want=$(node -p "require('./package-lock.json').packages['node_modules/playwright-core'].version")
           grep -q "mcr.microsoft.com/playwright:v$want-" .github/workflows/tests.yml || { echo "::error::package-lock.json has Playwright $want: set the container image in tests.yml to v$want"; exit 1; }
-      - name: Unit tests (Node): plan engine and safe HTML
+      - name: "Unit tests (Node): plan engine and safe HTML"
         run: npm run test:engine
       - run: npx playwright test --project=${{ matrix.project }}
       - uses: actions/upload-artifact@v7
