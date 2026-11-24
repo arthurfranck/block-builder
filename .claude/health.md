@@ -43,7 +43,7 @@ From CLAUDE.md; check each:
 
 ## Known risks
 - Plans live only in `localStorage` (`bb-plans`): lost when site data is cleared or evicted by the browser; the only backup is manual Export (BB-84; ADR 0003).
-- `app.js` is one ~1,500-line script with long lines (split out of index.html in BB-66). Format: BB-79; architecture: BB-75; split: BB-76.
+- `app.js` is one ~4,700-line script (formatted in BB-79). About 100 lines are still over 160 characters: prose strings and HTML template literals (BB-78). Split: BB-76.
 - Type checking is strict for `tests/*.ts` but non-strict for `app.js`; `engine.js` and `tests/engine/*.mjs` are not checked (BB-70, then BB-81).
 - PDF export needs cdnjs (jsPDF 4.2.1, AutoTable 5.0.9) and fails offline; Google Fonts is another outside request.
 - ICS line folding counts characters, not octets (BB-16).

@@ -14,6 +14,8 @@ npm run test:engine    # engine unit tests only (Node, no browser)
 npm run test:desktop   # or test:mobile, test:chrome
 npm run test:report    # open the last HTML report
 npm run typecheck      # type-check the Playwright tests (strict) and app.js (non-strict)
+npm run lint           # ESLint on the page scripts and engine tests
+npm run format         # Prettier on the page scripts (format:check only checks)
 ```
 
 Every test starts on a frozen date (Friday 6 November 2026, Paris time) with empty storage, so generated plans are the same on every run. Tests that load jsPDF from cdnjs are skipped when `OFFLINE=1` is set. The page is served by a small Node server, `serve.mjs` (`node tests/serve.mjs 8765`).
@@ -35,7 +37,7 @@ Every iOS browser, Chrome included, runs on WebKit, so the iPhone Chrome setup c
 
 | File | Covers |
 |---|---|
-| `engine/engine.unit.mjs` | paces, watch workouts, the five athlete profiles against the plan rules at each experience level, what each level changes (BB-49), recovery weeks after the race (BB-42), week 1 within the stated volume (BB-41) |
+| `engine/engine.unit.mjs` | paces, watch workouts, the five athlete profiles against the plan rules at each experience level, what each level changes (BB-49), recovery weeks after the race (BB-42), week 1 within the stated volume (BB-41), a Personal plan with no start date built without the page (BB-79) |
 | `plan-generation.spec.ts` | distances, weeks, dates, runs per week, fitness goal, load profile (phase bands, race flag, current week and today), summary numbers (weeks to go, units, French labels), recovery weeks after the race, script URLs carry the version (BB-74) |
 | `plan-rules.spec.ts` | phase order, taper length, cutback and taper volume, one race on race day, long-run day, weekly increase, goal readiness, hard runs per week, hard runs back to back or next to the long run and no rest day (on the week and in the banner, also after edits), setup warnings for days in a row, a boxed-in long run and 7 runs at their field (BB-27), days in a row and 7 runs a week (setup warnings), week 1 against the volume run now |
 | `setup-form.spec.ts` | paces, finish time read to fit the race distance, running days, run type chips and Customise workouts, warnings, New plan starting blank, weekly volume suggested from level and distance, optional longest run and its estimate, setup warnings under their field with one banner line naming them, experience level choice, setup steps on phones and sections on desktop |
@@ -65,7 +67,7 @@ Every iOS browser, Chrome included, runs on WebKit, so the iPhone Chrome setup c
 
 GitHub Actions runs every setup on each push and pull request (`.github/workflows/tests.yml`) and keeps each setup's HTML report for 14 days. Jobs run inside Playwright's own Docker image, which already has the browsers and their system libraries, so nothing is installed through apt. `main` is protected: all six setups must pass before a pull request can merge or a push can land, admins included, and force-pushes are blocked. GitHub Pages publishes `main` as soon as it changes, so only tested code goes live.
 
-A separate `static checks` job type-checks `tests/*.ts` and `playwright.config.ts` with `tsc` (strict, `tsconfig.json`, no emit) and runs `npm audit --audit-level=high`, so a high or critical advisory in a test dependency fails the run. It also checks `app.js` and `theme.js` (`tsconfig.app.json`, non-strict: wrong DOM members, duplicate keys, type mix-ups; `app.js` has `// @ts-check` for editors). `engine.js` and the engine unit tests (`.mjs`) are not type-checked yet.
+A separate `static checks` job type-checks `tests/*.ts` and `playwright.config.ts` with `tsc` (strict, `tsconfig.json`, no emit), runs ESLint and the Prettier check on the page scripts (BB-79), and runs `npm audit --audit-level=high`, so a high or critical advisory in a test dependency fails the run. It also checks `app.js` and `theme.js` (`tsconfig.app.json`, non-strict: wrong DOM members, duplicate keys, type mix-ups; `app.js` has `// @ts-check` for editors). `engine.js` and the engine unit tests (`.mjs`) are not type-checked yet.
 
 ## Test tool versions
 

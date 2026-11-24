@@ -340,3 +340,14 @@ describe('warnings by field (BB-27)', () => {
     assert.ok(items.some((x) => x.f === null), 'a plan problem (e.g. goal readiness) has no field');
   });
 });
+
+describe('engine stands alone (BB-79)', () => {
+  const C = { ...base, ...PROFILES['C · weekday half, Mon-Fri, long run Friday'].inp };
+  test('a Personal plan with no start date starts next Monday, without anything from the page', () => {
+    const plan = E.generate({ ...C, goal: 'fitness', startDate: '' }, types());
+    const start = E.parseISO(plan.weeks[0].start), today = new Date();
+    assert.equal(plan.weeks[0].start, E.nextMonday());
+    assert.equal(start.getDay(), 1);
+    assert.ok(start > today && start - today <= 7 * 864e5, 'within the coming week');
+  });
+});

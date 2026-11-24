@@ -7,7 +7,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  # BB-62, BB-66: type-check the Playwright tests and app.js, and fail on high or critical advisories in the dependencies.
+  # BB-62, BB-66, BB-79: type-check the Playwright tests and app.js, lint and format-check the page scripts,
+  # and fail on high or critical advisories in the dependencies.
   static:
     name: static checks
     runs-on: ubuntu-latest
@@ -21,6 +22,11 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Type-check tests (strict) and app.js (non-strict)
         run: npm run typecheck
+      # BB-79: ESLint (eslint.config.mjs) and Prettier (.prettierrc.json) on the page scripts.
+      - name: Lint
+        run: npm run lint
+      - name: Formatting
+        run: npm run format:check
       - name: Dependency audit (high and critical)
         run: npm audit --audit-level=high
 

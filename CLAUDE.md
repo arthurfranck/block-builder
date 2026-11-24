@@ -29,13 +29,14 @@
 ## Project facts
 - App = `index.html` (markup, CSS) + `app.js` (interface, storage, exports) + `engine.js` (`BBEngine`, no DOM or storage) + `theme.js` (theme before first paint). All classic scripts, not ES modules, so the page opens from `file://`. No build step.
 - No inline `<script>` or `on…=` attributes: the CSP has no script `'unsafe-inline'` (a security test checks). `app.js` has `// @ts-check`; `npm run typecheck` runs it (non-strict, `tsconfig.app.json`) and the strict test check (`tsconfig.json`).
+- `app.js`, `engine.js` and `theme.js` are formatted by Prettier (`.prettierrc.json`, width 120) and linted by ESLint (`eslint.config.mjs`): run `npm run format` before committing; `npm run lint` and `npm run format:check` run in CI and in the pre-commit hook. Lines over 120 that remain are prose strings and HTML template literals (BB-78 replaces the templates).
 - Every user-facing string exists in `I18N.en` and `I18N.fr` (in `app.js`).
 - Plans live in `localStorage` key `bb-plans`; export is `{app:"block-builder", version:1, plans:{…}}`. Keep import backward compatible.
 - GitHub Pages serves `main` (https://arthurfranck.github.io/block-builder/). `main` is protected by the six Tests jobs: never push to it, always a PR.
 - Node: `~/.local/node/bin`; `gh`: `~/.local/bin/gh` if not on PATH.
 
 ## `.claude/`
-- `settings.json`: pre-commit hook runs `test:engine` + `test:chrome` when `index.html`/`app.js`/`theme.js`/`engine.js` changed, blocking on failure.
+- `settings.json`: pre-commit hook runs `lint` + `format:check`, then `test:engine` + `test:chrome` when `index.html`/`app.js`/`theme.js`/`engine.js` changed, blocking on failure.
 - `launch.json`: preview via `node tests/serve.mjs 8765` (same server as tests and CI).
 - `commands/release.md`: `/release <id> [patch|minor|major]`.
 - `health.md`: profile for the weekly `codebase-health` check. Update it when a measured file is renamed or a known risk is fixed or added.
