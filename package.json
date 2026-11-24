@@ -11,14 +11,16 @@
     "test:report": "playwright show-report",
     "typecheck": "tsc -p . && tsc -p tsconfig.app.json",
     "lint": "eslint .",
-    "format": "prettier --write src/app.js src/engine.js theme.js eslint.config.mjs",
-    "format:check": "prettier --check src/app.js src/engine.js theme.js eslint.config.mjs"
+    "format": "prettier --write src/*.js theme.js eslint.config.mjs",
+    "format:check": "prettier --check src/*.js theme.js eslint.config.mjs",
+    "build": "esbuild src/app.js --bundle --format=iife --target=es2022 --sourcemap --external:./vendor/* --legal-comments=none --banner:js=\"/* Block Builder: built from src/ by esbuild (npm run build). Edit src/, not this file. */\" --outfile=app.js"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.0",
     "@eslint/js": "10.0.1",
     "@playwright/test": "^1.65.1",
     "@types/node": "^22.0.0",
+    "esbuild": "0.28.2",
     "eslint": "10.15.0",
     "globals": "17.14.0",
     "prettier": "3.10.1",

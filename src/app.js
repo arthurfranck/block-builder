@@ -1,10 +1,14 @@
 // @ts-check
 /* Block Builder app (BB-66): interface, storage, exports. Was the inline script in index.html.
-   A classic script, not an ES module, so index.html still works when opened from disk (file://).
-   Runs after engine.js (BBEngine) at the end of <body>. */
+   An ES module (ADR 0008, BB-86): esbuild bundles it with the engine into ../app.js, a classic script,
+   so the built page still opens from disk (file://). Run `npm run build` after editing. */
+import * as engine from "./engine.js";
+/** Typed as any for now, as before the move to modules: the engine has no JSDoc types yet (BB-70). @type {any} */
+const BBEngine = engine;
+
 (() => {
   "use strict";
-  const VERSION = "1.13.1";
+  const VERSION = "1.13.2";
   const $ = (s) => document.querySelector(s);
   /** @type {(s: string) => NodeListOf<HTMLElement>} */
   const $$ = (s) => document.querySelectorAll(s);
@@ -3216,8 +3220,11 @@
   function loadWK() {
     if (!WK)
       WK = Promise.all([
-        import("../vendor/workoutkit-0.2.0/index.js"),
-        import("../vendor/workoutkit-0.2.0/encode.js"),
+        // Loaded at runtime from the page's folder, not bundled (esbuild --external:./vendor/*), so tsc can't resolve it from src/.
+        // @ts-expect-error
+        import("./vendor/workoutkit-0.2.0/index.js"),
+        // @ts-expect-error
+        import("./vendor/workoutkit-0.2.0/encode.js"),
       ]).catch((e) => {
         WK = null;
         throw e;

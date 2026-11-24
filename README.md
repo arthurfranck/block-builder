@@ -84,9 +84,10 @@ I run Block Builder as a team lead. I make the product, design and technical dec
 
 ```text
 index.html            the page: HTML and CSS
-app.js                the interface: rendering, storage, exports
+src/app.js            the interface: rendering, storage, exports (ES module)
+src/engine.js         the plan engine: paces, plan building, warnings, week checks (no DOM, no storage)
+app.js, app.js.map    built from src/ by npm run build (committed, so the page opens as is)
 theme.js              sets the theme before the page paints
-engine.js             the plan engine: paces, plan building, warnings, week checks (no DOM, no storage)
 vendor/               third-party code served from this repo (see vendor/README.md)
 docs/                 features in detail, architecture decisions (adr/), brainstorms per backlog item, README screenshot
 tests/                Playwright browser tests, Node engine tests, test server (see tests/README.md)
@@ -98,7 +99,7 @@ CLAUDE.md             rules for working on this repo with Claude Code
 
 ### Tech
 
-- No build step. `app.js`, `engine.js` and `theme.js` are classic scripts rather than ES modules so the page still works opened from disk.
+- The code is ES modules in `src/`. [esbuild](https://esbuild.github.io) bundles them into one classic script, `app.js` (with a source map), so the page still works opened from disk; the bundle is committed and CI checks it matches `src/` ([ADR 0008](docs/adr/0008-es-modules-bundled-with-esbuild.md)). `theme.js` is a separate classic script that runs before the page paints.
 - Google Fonts: Archivo (expanded and heavy) for the brand and big numbers, Inter for everything else.
 - [jsPDF](https://github.com/parallax/jsPDF) 4.2.1 and [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable) 5.0.9 from cdnjs, loaded only when exporting a PDF, with integrity hashes: if the CDN serves a different file, the browser refuses it.
 - Vendored [`@bibixx/workoutkit`](https://www.npmjs.com/package/@bibixx/workoutkit) 0.2.0 (MIT) in `vendor/workoutkit-0.2.0/`, loaded only when exporting to Apple Watch.
@@ -109,6 +110,8 @@ CLAUDE.md             rules for working on this repo with Claude Code
 ### Run locally
 
 Open `index.html` in a browser. Everything works offline except the fonts, which fall back to system fonts, the weather, the Apple Watch export and the PDF export.
+
+After changing anything in `src/`, run `npm ci` once, then `npm run build` to rebuild `app.js`.
 
 To serve it the way the tests and CI do, run `node tests/serve.mjs 8765` and open http://127.0.0.1:8765/. Working on it with Claude Code: see the `.claude/` section in [CLAUDE.md](CLAUDE.md) (pre-commit test hook, preview config, `/release` command).
 

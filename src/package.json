@@ -1,0 +1,4 @@
+{
+  "//": "ES modules (ADR 0008). Bundled by esbuild into ../app.js; the Node engine tests import engine.js directly.",
+  "type": "module"
+}

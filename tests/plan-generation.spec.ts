@@ -25,7 +25,8 @@ test.describe('default example plan', () => {
 
   test('index.html loads every script of its own with ?v= set to the page version (BB-74)', () => {
     const srcs = [...read('index.html').matchAll(/<script src="([^"]+)"/g)].map((m) => m[1]);
-    expect(srcs).toEqual([`theme.js?v=${VERSION}`, `src/engine.js?v=${VERSION}`, `src/app.js?v=${VERSION}`]);
+    // BB-86: the engine is bundled into app.js, so two scripts.
+    expect(srcs).toEqual([`theme.js?v=${VERSION}`, `app.js?v=${VERSION}`]);
   });
 
   test('the latest CHANGELOG.md entry is the page version', () => {

@@ -1,8 +1,11 @@
 {
-  // Checks the page scripts (BB-66): app.js carries // @ts-check. Not strict yet: the app has no JSDoc types,
+  // Checks the page code (BB-66): src/app.js carries // @ts-check and imports src/engine.js (BB-86; the engine
+  // is followed for types but not checked itself, see BB-70). Not strict yet: the app has no JSDoc types,
   // so this catches wrong DOM members, duplicate keys and type mix-ups, not implicit any.
   "compilerOptions": {
     "target": "es2022",
+    "module": "es2022",
+    "moduleResolution": "bundler",
     "lib": ["es2022", "dom", "dom.iterable"],
     "types": [],
     "allowJs": true,
