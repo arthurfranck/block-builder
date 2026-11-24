@@ -1006,11 +1006,51 @@
     Object.assign(LOCALE, o);
   }
 
+  // src/html.js
+  var ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" };
+  var escapeText = (s) => String(s).replace(/[&<>"]/g, (c) => ESC[c]);
+  var SafeHtml = class {
+    /** @param {string} s markup that is safe to insert  @param {string} [text] the plain text it came from, if any */
+    constructor(s, text) {
+      this.s = s;
+      this.text = text;
+    }
+    toString() {
+      return this.s;
+    }
+  };
+  function part(v) {
+    if (v instanceof SafeHtml) return v.s;
+    if (Array.isArray(v)) return v.map(part).join("");
+    if (v === null || v === void 0) return "";
+    return escapeText(v);
+  }
+  function html(strings, ...values) {
+    let out = strings[0];
+    for (let i = 0; i < values.length; i++) out += part(values[i]) + strings[i + 1];
+    return new SafeHtml(out);
+  }
+  function esc(s) {
+    if (s instanceof SafeHtml) return s;
+    const text = String(s ?? "");
+    return new SafeHtml(escapeText(text), text);
+  }
+  var htmlJoin = (list, sep = "") => new SafeHtml(list.map(part).join(part(sep)));
+  var trustedHtml = (s) => new SafeHtml(String(s));
+  var plainText = (v) => v instanceof SafeHtml ? v.text ?? v.s : String(v);
+  function setHtml(el, value) {
+    if (value === "") return clearHtml(el);
+    if (!(value instanceof SafeHtml) && !Array.isArray(value))
+      throw new TypeError("setHtml needs html`` output, not a plain string (BB-78)");
+    el.innerHTML = part(value);
+  }
+  var clearHtml = (el) => el.replaceChildren();
+
   // src/app.js
   var BBEngine = engine_exports;
   (() => {
     "use strict";
-    const VERSION = "1.13.2";
+    const VERSION = "1.13.3";
     const $ = (s) => document.querySelector(s);
     const $$ = (s) => document.querySelectorAll(s);
     const cardDetails = (s) => document.querySelector(s);
@@ -1976,7 +2016,16 @@
     function t2(k, v) {
       let s = I18N[LANG] && I18N[LANG][k];
       if (s == null) s = I18N.en[k] != null ? I18N.en[k] : k;
-      return v ? s.replace(/\{(\w+)\}/g, (m, x) => v[x] !== void 0 ? v[x] : m) : s;
+      const has = (x) => v && v[x] !== void 0;
+      if (/[<&]/.test(s)) return trustedHtml(v ? s.replace(/\{(\w+)\}/g, (m, x) => has(x) ? String(esc(v[x])) : m) : s);
+      if (v && Object.values(v).some((x) => x instanceof SafeHtml && x.text === void 0))
+        return trustedHtml(
+          s.split(/(\{\w+\})/).map((p) => {
+            const x = /^\{(\w+)\}$/.exec(p);
+            return String(esc(x && has(x[1]) ? v[x[1]] : p));
+          }).join("")
+        );
+      return v ? s.replace(/\{(\w+)\}/g, (m, x) => has(x) ? plainText(v[x]) : m) : s;
     }
     const cap2 = (x) => String(x).charAt(0).toUpperCase() + String(x).slice(1);
     const LOC = () => LANG === "fr" ? "fr-FR" : "en-GB";
@@ -1984,7 +2033,6 @@
     const phaseLbl = (p) => t2("ph_" + p);
     const KINDS_KEYS = { easy: "kEasy", recovery: "kRecovery", long: "kLong", hard: "kHard" };
     const kindLbl = (k) => t2(KINDS_KEYS[k] || "kHard");
-    const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
     const DEFAULT_TYPES = () => TYPE_DEFS2.map(([id, kind, on, locked, ph]) => ({
       id,
       name: t2("ty_" + id),
@@ -2134,9 +2182,14 @@
     }
     function renderSetup() {
       const I = S.inputs;
-      $("#distSeg").innerHTML = DISTS2.map(
-        (d) => `<button type="button" data-dist="${d.k}" aria-pressed="${I.dist === d.k}">${t2("d" + d.k)}</button>`
-      ).join("");
+      setHtml(
+        $("#distSeg"),
+        htmlJoin(
+          DISTS2.map(
+            (d) => html`<button type="button" data-dist="${d.k}" aria-pressed="${I.dist === d.k}">${t2("d" + d.k)}</button>`
+          )
+        )
+      );
       $("#customRow").hidden = I.dist !== "custom";
       $("#customKm").value = I.customKm;
       $("#raceDate").value = I.raceDate;
@@ -2148,7 +2201,14 @@
       );
       $("#recWeeksF").hidden = fit;
       const rw = recWeeksOf2({ ...I, goal: "race" });
-      $("#recSeg").innerHTML = [0, 1, 2].map((n) => `<button type="button" data-rec="${n}" aria-pressed="${rw === n}">${t2("rec" + n)}</button>`).join("");
+      setHtml(
+        $("#recSeg"),
+        htmlJoin(
+          [0, 1, 2].map(
+            (n) => html`<button type="button" data-rec="${n}" aria-pressed="${rw === n}">${t2("rec" + n)}</button>`
+          )
+        )
+      );
       $("#recHint").textContent = t2(rw ? "recHint" : "recHint0");
       $("#raceDateF").hidden = fit;
       $("#startDateF").hidden = !fit;
@@ -2156,12 +2216,17 @@
       $("#focusHint").hidden = !fit;
       $("#distLbl").textContent = t2(fit ? "focusDist" : "distance");
       $("#secRaceH").textContent = t2(fit ? "secFocus" : "secRace");
-      $("#introCards").innerHTML = [
-        ["race", "goalRace", "icRace"],
-        ["fitness", "goalFit", "icFit"]
-      ].map(
-        ([g, a, b]) => `<button type="button" class="icard" data-goal="${g}" aria-pressed="${(fit ? "fitness" : "race") === g}"><b>${t2(a)}</b><span>${t2(b)}</span></button>`
-      ).join("") + `<button type="button" class="icard" data-intro="quick"><b>${t2("qwOpen")}</b><span>${t2("icQuick")}</span></button>`;
+      setHtml($("#introCards"), [
+        htmlJoin(
+          [
+            ["race", "goalRace", "icRace"],
+            ["fitness", "goalFit", "icFit"]
+          ].map(
+            ([g, a, b]) => html`<button type="button" class="icard" data-goal="${g}" aria-pressed="${(fit ? "fitness" : "race") === g}"><b>${t2(a)}</b><span>${t2(b)}</span></button>`
+          )
+        ),
+        html`<button type="button" class="icard" data-intro="quick"><b>${t2("qwOpen")}</b><span>${t2("icQuick")}</span></button>`
+      ]);
       $("#focusHint").textContent = t2("focusHint");
       $("#curVol").value = I.curVol;
       renderVolHint();
@@ -2170,16 +2235,36 @@
       $("#recDist").value = I.recDist;
       $("#recTime").value = I.recTime;
       const lv = levelOf2(I);
-      $("#levelSeg").innerHTML = LEVELS2.map(
-        (l) => `<button type="button" data-level="${l}" aria-pressed="${lv === l}">${t2("lv_" + l)}</button>`
-      ).join("");
+      setHtml(
+        $("#levelSeg"),
+        htmlJoin(
+          LEVELS2.map(
+            (l) => html`<button type="button" data-level="${l}" aria-pressed="${lv === l}">${t2("lv_" + l)}</button>`
+          )
+        )
+      );
       $("#levelHint").textContent = t2("lvHint_" + lv);
-      $("#runsSeg").innerHTML = [1, 2, 3, 4, 5, 6, 7].map((n) => `<button type="button" data-runs="${n}" aria-pressed="${+I.runs === n}">${n}</button>`).join("");
-      $("#daysSeg").innerHTML = DAYS1.map(
-        (d, i) => `<button type="button" data-day="${i}" aria-label="${DAYS[i]}" aria-pressed="${I.days.includes(i)}" class="${+I.longDay === i ? "long" : ""}">${d}</button>`
-      ).join("");
+      setHtml(
+        $("#runsSeg"),
+        htmlJoin(
+          [1, 2, 3, 4, 5, 6, 7].map(
+            (n) => html`<button type="button" data-runs="${n}" aria-pressed="${+I.runs === n}">${n}</button>`
+          )
+        )
+      );
+      setHtml(
+        $("#daysSeg"),
+        htmlJoin(
+          DAYS1.map(
+            (d, i) => html`<button type="button" data-day="${i}" aria-label="${DAYS[i]}" aria-pressed="${I.days.includes(i)}" class="${+I.longDay === i ? "long" : ""}">${d}</button>`
+          )
+        )
+      );
       $("#daysCount").textContent = t2("daysCount", { a: I.days.length, b: I.runs || "-" });
-      $("#longDay").innerHTML = (+I.longDay < 0 ? `<option value="-1" selected>-</option>` : "") + DAYS.map((d, i) => `<option value="${i}" ${+I.longDay === i ? "selected" : ""}>${d}</option>`).join("");
+      setHtml($("#longDay"), [
+        +I.longDay < 0 ? html`<option value="-1" selected>-</option>` : "",
+        htmlJoin(DAYS.map((d, i) => html`<option value="${i}" ${+I.longDay === i ? "selected" : ""}>${d}</option>`))
+      ]);
       renderTypes();
       renderHints();
       renderRaceBox();
@@ -2203,16 +2288,19 @@
     function renderChips() {
       const tt = t2;
       const focusId = document.activeElement && document.activeElement.closest && document.activeElement.closest("#typeChips") ? document.activeElement.id : null;
-      const chip = (t3, i) => `<label class="tchip ${t3.on ? "" : "off"}" data-i="${i}"><input type="checkbox" id="t-on-${t3.id}" ${t3.on ? "checked" : ""} ${t3.locked ? "disabled" : ""} aria-label="${esc(tt("useType", { name: t3.name }))}"><span class="kind-dot" style="background:${effColor(effort(t3.id, t3.kind))}" aria-hidden="true"></span>${esc(t3.name)}${t3.locked ? `<svg class="lock" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><title>${tt("alwaysOn")}</title><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>` : ""}</label>`;
-      const grp = (key, list) => list.length ? `<div class="tgrp"><span class="lbl" id="tg-${key}">${tt(key)}</span><div class="tchips" role="group" aria-labelledby="tg-${key}">${list.map(([t3, i]) => chip(t3, i)).join("")}</div></div>` : "";
+      const chip = (t3, i) => html`<label class="tchip ${t3.on ? "" : "off"}" data-i="${i}"><input type="checkbox" id="t-on-${t3.id}" ${t3.on ? "checked" : ""} ${t3.locked ? "disabled" : ""} aria-label="${esc(tt("useType", { name: t3.name }))}"><span class="kind-dot" style="background:${effColor(effort(t3.id, t3.kind))}" aria-hidden="true"></span>${esc(t3.name)}${t3.locked ? html`<svg class="lock" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><title>${tt("alwaysOn")}</title><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>` : ""}</label>`;
+      const grp = (key, list) => list.length ? html`<div class="tgrp"><span class="lbl" id="tg-${key}">${tt(key)}</span><div class="tchips" role="group" aria-labelledby="tg-${key}">${htmlJoin(list.map(([t3, i]) => chip(t3, i)))}</div></div>` : "";
       const idx = S.types.map((t3, i) => [t3, i]);
-      $("#typeChips").innerHTML = grp(
-        "grpEasy",
-        idx.filter(([t3]) => t3.kind !== "hard")
-      ) + grp(
-        "grpQuality",
-        idx.filter(([t3]) => t3.kind === "hard")
-      );
+      setHtml($("#typeChips"), [
+        grp(
+          "grpEasy",
+          idx.filter(([t3]) => t3.kind !== "hard")
+        ),
+        grp(
+          "grpQuality",
+          idx.filter(([t3]) => t3.kind === "hard")
+        )
+      ]);
       $("#typesCount").textContent = tt("typesCount", { a: S.types.filter((t3) => t3.on).length, b: S.types.length });
       if (focusId) {
         const f = document.getElementById(focusId);
@@ -2228,23 +2316,28 @@
         )
       );
       renderChips();
-      $("#types").innerHTML = S.types.map(
-        (t3, i) => `
+      setHtml(
+        $("#types"),
+        htmlJoin(
+          S.types.map(
+            (t3, i) => html`
   <div class="type ${t3.on ? "" : "off"}" data-i="${i}">
     <div class="type-head">
       <span class="kind-dot" style="background:${effColor(effort(t3.id, t3.kind))}" title="${kindLbl(t3.kind)}"></span>
       <input class="tname" id="t-name-${t3.id}" data-f="name" value="${esc(t3.name)}" aria-label="${tt("typeNameLbl")}">
-      ${t3.locked || DEFAULT_TYPES().some((d) => d.id === t3.id) ? "" : `<button class="icon-btn" data-del="${i}" aria-label="${tt("remove")} ${esc(t3.name)}">${tt("remove")}</button>`}
+      ${t3.locked || DEFAULT_TYPES().some((d) => d.id === t3.id) ? "" : html`<button class="icon-btn" data-del="${i}" aria-label="${tt("remove")} ${esc(t3.name)}">${tt("remove")}</button>`}
     </div>
-    <details><summary>${kindLbl(t3.kind)}${t3.kind === "hard" ? " \xB7 " + t3.phases.map(phaseLbl).join(", ") : ""} \xB7 ${tt("editDesc")}</summary>
+    <details><summary>${kindLbl(t3.kind)}${t3.kind === "hard" ? " \xB7 " + t3.phases.map(phaseLbl).join(", ") : ""} · ${tt("editDesc")}</summary>
       <div class="opts">
-        ${t3.locked || t3.id === "long" ? "" : `<div class="field"><label for="t-kind-${t3.id}">${tt("kind")}</label><select id="t-kind-${t3.id}" data-f="kind">${["easy", "recovery", "hard"].map((k) => `<option value="${k}" ${t3.kind === k ? "selected" : ""}>${kindLbl(k)}</option>`).join("")}</select></div>`}
-        ${t3.kind === "hard" ? `<div class="field"><span class="lbl">${tt("usedPhases")}</span><div class="chips">${PHASES2.map((p) => `<button type="button" class="chip" data-phase="${p}" aria-pressed="${t3.phases.includes(p)}">${phaseLbl(p)}</button>`).join("")}</div></div>` : ""}
+        ${t3.locked || t3.id === "long" ? "" : html`<div class="field"><label for="t-kind-${t3.id}">${tt("kind")}</label><select id="t-kind-${t3.id}" data-f="kind">${htmlJoin(["easy", "recovery", "hard"].map((k) => html`<option value="${k}" ${t3.kind === k ? "selected" : ""}>${kindLbl(k)}</option>`))}</select></div>`}
+        ${t3.kind === "hard" ? html`<div class="field"><span class="lbl">${tt("usedPhases")}</span><div class="chips">${htmlJoin(PHASES2.map((p) => html`<button type="button" class="chip" data-phase="${p}" aria-pressed="${t3.phases.includes(p)}">${phaseLbl(p)}</button>`))}</div></div>` : ""}
         <div class="field"><label for="t-tpl-${t3.id}">${tt("tplLbl")}</label><textarea id="t-tpl-${t3.id}" data-f="tpl" rows="3">${esc(t3.tpl)}</textarea></div>
       </div>
     </details>
   </div>`
-      ).join("");
+          )
+        )
+      );
       for (const i of openCards) {
         const d = cardDetails(`.type[data-i="${i}"] details`);
         if (d) d.open = true;
@@ -2431,18 +2524,24 @@
         const st = parseISO2(w.start);
         return today >= st && today < addDays2(st, 7);
       });
-      let g = "";
+      let g = [];
       for (let i = 0; i < weeks.length; ) {
         let j = i;
         while (j + 1 < weeks.length && weeks[j + 1].phase === weeks[i].phase) j++;
         const ph = weeks[i].phase, x0 = pl + i * bw, wd = (j - i + 1) * bw, lbl = phaseLbl(ph);
-        g += `<rect class="band" data-phase="${esc(ph)}" x="${x0 + 1}" y="${pt - 22}" width="${Math.max(0, wd - 2)}" height="${H - pb - pt + 22}" rx="4" fill="${phaseColor(ph)}" opacity=".13"/>`;
+        g.push(
+          html`<rect class="band" data-phase="${esc(ph)}" x="${x0 + 1}" y="${pt - 22}" width="${Math.max(0, wd - 2)}" height="${H - pb - pt + 22}" rx="4" fill="${phaseColor(ph)}" opacity=".13"/>`
+        );
         if (wd >= lbl.length * 6.6 + 10)
-          g += `<text class="band-lbl" x="${x0 + 6}" y="${pt - 9}" style="fill:${phaseText(ph)};font-weight:600">${esc(lbl)}</text>`;
+          g.push(
+            html`<text class="band-lbl" x="${x0 + 6}" y="${pt - 9}" style="fill:${phaseText(ph)};font-weight:600">${esc(lbl)}</text>`
+          );
         i = j + 1;
       }
       for (let t3 = 0; t3 <= top; t3 += top > 60 ? 20 : 10) {
-        g += `<line x1="${pl}" x2="${W}" y1="${y(t3)}" y2="${y(t3)}" stroke="var(--line)" stroke-width="1"/><text x="${pl - 6}" y="${y(t3) + 4}" text-anchor="end">${t3}</text>`;
+        g.push(
+          html`<line x1="${pl}" x2="${W}" y1="${y(t3)}" y2="${y(t3)}" stroke="var(--line)" stroke-width="1"/><text x="${pl - 6}" y="${y(t3) + 4}" text-anchor="end">${t3}</text>`
+        );
       }
       weeks.forEach((w, i) => {
         const km = w.sessions.reduce((a, s) => a + s.km, 0);
@@ -2451,24 +2550,26 @@
         const race = w.sessions.some((s) => s.kind === "race"), now = i === nowI;
         const lab = i % every === 0 || i === weeks.length - 1 || race || now;
         const extra = [w.cutback ? t2("cutback") : "", now ? t2("svgNow") : "", race ? t2("svgRace") : ""].filter(Boolean).join(", ");
-        g += `<g${race ? ' class="race"' : ""}${now ? ' class="now"' : ""}><title>${esc(t2("svgTitle", { n: w.n, km: km.toFixed(1), phase: phaseLbl(w.phase) }))}${extra ? " (" + esc(extra) + ")" : ""}</title><rect x="${x}" y="${y(km)}" width="${bwi}" height="${Math.max(0, y(0) - y(km))}" rx="2" fill="${phaseColor(w.phase)}" opacity="${w.cutback ? 0.55 : 1}"/>
-    ${lk ? `<rect x="${x}" y="${y(lk)}" width="${bwi}" height="2" fill="var(--ink)" opacity=".55"/>` : ""}
-    ${lab ? `<text x="${x + bwi / 2}" y="${y(km) - 5}" text-anchor="middle">${Math.round(km)}</text>` : ""}
-    ${race ? `<path class="flag" d="M${x + bwi / 2 - 4} ${y(km) - 16}v-14l10 4l-10 4" fill="var(--race)" stroke="var(--race)" stroke-width="1.5" stroke-linejoin="round"/>` : ""}
-    ${lab ? `<text x="${x + bwi / 2}" y="${H - 6}" text-anchor="middle"${now ? ' style="fill:var(--ink);font-weight:700"' : ""}>${w.n}</text>` : ""}</g>`;
+        g.push(html`<g${race ? html` class="race"` : ""}${now ? html` class="now"` : ""}><title>${esc(t2("svgTitle", { n: w.n, km: km.toFixed(1), phase: phaseLbl(w.phase) }))}${extra ? " (" + esc(extra) + ")" : ""}</title><rect x="${x}" y="${y(km)}" width="${bwi}" height="${Math.max(0, y(0) - y(km))}" rx="2" fill="${phaseColor(w.phase)}" opacity="${w.cutback ? 0.55 : 1}"/>
+    ${lk ? html`<rect x="${x}" y="${y(lk)}" width="${bwi}" height="2" fill="var(--ink)" opacity=".55"/>` : ""}
+    ${lab ? html`<text x="${x + bwi / 2}" y="${y(km) - 5}" text-anchor="middle">${Math.round(km)}</text>` : ""}
+    ${race ? html`<path class="flag" d="M${x + bwi / 2 - 4} ${y(km) - 16}v-14l10 4l-10 4" fill="var(--race)" stroke="var(--race)" stroke-width="1.5" stroke-linejoin="round"/>` : ""}
+    ${lab ? html`<text x="${x + bwi / 2}" y="${H - 6}" text-anchor="middle"${now ? html` style="fill:var(--ink);font-weight:700"` : ""}>${w.n}</text>` : ""}</g>`);
       });
       if (nowI >= 0) {
         const st = parseISO2(weeks[nowI].start), d = Math.round((+today - +st) / 864e5), xn = pl + nowI * bw + bw * (d + 0.5) / 7;
-        g += `<line class="today-mark" x1="${xn}" x2="${xn}" y1="${pt - 22}" y2="${H - pb}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="3 3" opacity=".8"><title>${esc(cap2(t2("svgToday")))}</title></line>`;
+        g.push(
+          html`<line class="today-mark" x1="${xn}" x2="${xn}" y1="${pt - 22}" y2="${H - pb}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="3 3" opacity=".8"><title>${esc(cap2(t2("svgToday")))}</title></line>`
+        );
       }
-      return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t2("svgAria")}">${g}</svg>`;
+      return html`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t2("svgAria")}">${g}</svg>`;
     }
     let chartW = 0;
     function drawProfile() {
       const el = $("#profileChart");
       if (!el || !S.plan) return;
       chartW = el.clientWidth;
-      el.innerHTML = profileSVG(S.plan.weeks, chartW);
+      setHtml(el, profileSVG(S.plan.weeks, chartW));
     }
     try {
       new ResizeObserver(() => {
@@ -2497,7 +2598,7 @@
         if (!el) continue;
         const ms = items.filter((x) => x.f === f).map((x) => x.m);
         el.hidden = !ms.length;
-        el.innerHTML = ms.map((m) => `<p>${esc(m)}</p>`).join("");
+        setHtml(el, htmlJoin(ms.map((m) => html`<p>${esc(m)}</p>`)));
       }
     }
     let nameCtx = null;
@@ -2524,8 +2625,11 @@
       if (miss.length) {
         renderFieldWarns([]);
         const h0 = $("#hello");
-        if (h0) h0.innerHTML = "";
-        $("#plan").innerHTML = `<div class="banner info"><span>${esc(t2("needTitle"))}</span><ul>${miss.map((k) => `<li>${esc(t2(k))}</li>`).join("")}</ul><button class="btn sm m-only" type="button" data-tabgo="setup">${t2("editSettings")}</button></div><p class="qempty">${t2("qwEmpty")} <button type="button" class="linkbtn" data-act="quick">${t2("qwEmptyGo")}</button></p>`;
+        if (h0) clearHtml(h0);
+        setHtml(
+          $("#plan"),
+          html`<div class="banner info"><span>${esc(t2("needTitle"))}</span><ul>${htmlJoin(miss.map((k) => html`<li>${esc(t2(k))}</li>`))}</ul><button class="btn sm m-only" type="button" data-tabgo="setup">${t2("editSettings")}</button></div><p class="qempty">${t2("qwEmpty")} <button type="button" class="linkbtn" data-act="quick">${t2("qwEmptyGo")}</button></p>`
+        );
         return;
       }
       renderHello();
@@ -2536,16 +2640,25 @@
       renderFieldWarns(items);
       const warns = items.filter((x) => !x.f).map((x) => x.m);
       const setupF = [...new Set(items.filter((x) => x.f && (x.f !== "pace" || badRaceTime2(I))).map((x) => x.f))];
-      let h = "";
+      let h = [];
       if (S.isExample)
-        h += `<div class="banner info"><span>${t2("exampleBanner")}</span><button class="btn sm m-only" type="button" data-tabgo="setup">${t2("editSettings")}</button></div>`;
+        h.push(
+          html`<div class="banner info"><span>${t2("exampleBanner")}</span><button class="btn sm m-only" type="button" data-tabgo="setup">${t2("editSettings")}</button></div>`
+        );
       if (!S.isExample && backupDue())
-        h += `<div class="banner info" id="bkBanner"><span>${t2("bkBanner")}</span><button class="btn sm primary" data-act="bksave">${t2("bkSave")}</button><button class="btn sm ghost" data-act="bklater">${t2("bkLater")}</button></div>`;
+        h.push(
+          html`<div class="banner info" id="bkBanner"><span>${t2("bkBanner")}</span><button class="btn sm primary" data-act="bksave">${t2("bkSave")}</button><button class="btn sm ghost" data-act="bklater">${t2("bkLater")}</button></div>`
+        );
       if (S.pendingRegen)
-        h += `<div class="banner"><span>${t2("pendingBanner")}</span><button class="btn sm primary" data-act="regen">${t2("rebuildPlan")}</button><button class="btn sm ghost" data-act="keep">${t2("keepEdits")}</button></div>`;
+        h.push(
+          html`<div class="banner"><span>${t2("pendingBanner")}</span><button class="btn sm primary" data-act="regen">${t2("rebuildPlan")}</button><button class="btn sm ghost" data-act="keep">${t2("keepEdits")}</button></div>`
+        );
       if (setupF.length)
-        h += `<div class="banner" id="setupWarn"><span>${esc(t2("setupWarn", { f: setupF.map(fieldLabel).join(", ") }))}</span><button class="btn sm m-only" type="button" data-tabgo="setup">${t2("editSettings")}</button></div>`;
-      if (warns.length) h += `<div class="banner"><ul>${warns.map((w) => `<li>${esc(w)}</li>`).join("")}</ul></div>`;
+        h.push(
+          html`<div class="banner" id="setupWarn"><span>${esc(t2("setupWarn", { f: setupF.map(fieldLabel).join(", ") }))}</span><button class="btn sm m-only" type="button" data-tabgo="setup">${t2("editSettings")}</button></div>`
+        );
+      if (warns.length)
+        h.push(html`<div class="banner"><ul>${htmlJoin(warns.map((w) => html`<li>${esc(w)}</li>`))}</ul></div>`);
       const today = /* @__PURE__ */ new Date();
       today.setHours(0, 0, 0, 0);
       const raceI = weeks.findIndex((w) => w.sessions.some((s) => s.kind === "race")), endI = raceI >= 0 ? raceI : weeks.length - 1;
@@ -2554,50 +2667,61 @@
         return today >= st && today < addDays2(st, 7);
       });
       const toGo = today < parseISO2(weeks[0].start) ? endI + 1 : nowI >= 0 ? Math.max(0, endI - nowI + 1) : 0;
-      const u = (x) => `<small>${x}</small>`;
+      const u = (x) => html`<small>${x}</small>`;
       const hm2 = (sec) => {
         sec = Math.round(sec / 60) * 60;
         const h2 = Math.floor(sec / 3600), m = Math.round(sec % 3600 / 60);
-        return h2 ? `${h2}${u(t2("uH"))}${String(m).padStart(2, "0")}` : `${m}${u(t2("uMin"))}`;
+        return h2 ? html`${h2}${u(t2("uH"))}${String(m).padStart(2, "0")}` : html`${m}${u(t2("uMin"))}`;
       };
-      h += `<div class="summary">
+      h.push(html`<div class="summary">
     <div class="stat" data-stat="togo"><b>${toGo}</b><span>${t2(toGo === 1 ? "sToGo1" : "sToGo")}</span></div>
     <div class="stat" data-stat="peak"><b>${Math.round(Math.max(...totals))}${u("km")}</b><span>${t2("sPeak")}</span></div>
     <div class="stat" data-stat="long"><b>${longest}${u("km")}</b><span>${t2("sLongest")}</span></div>
-    ${P.meta.raceSec ? `<div class="stat" data-stat="target" title="${esc(fmtDur2(P.meta.raceSec))}"><b>${hm2(P.meta.raceSec)}</b><span>${esc(cap2(t2("sTarget", { lbl: distLabel2(I) })))}</span></div>` : ""}
-  </div>`;
-      h += renderToday();
-      h += `<div class="profile"><div class="profile-head"><h2>${t2("loadProfile")}</h2><div class="legend"><span><i style="background:var(--ink);height:2px;opacity:.55;vertical-align:3px"></i>${t2("longRunLeg")}</span></div></div><div class="chart" id="profileChart"></div></div>`;
-      h += `<div class="toolbar">
+    ${P.meta.raceSec ? html`<div class="stat" data-stat="target" title="${esc(fmtDur2(P.meta.raceSec))}"><b>${hm2(P.meta.raceSec)}</b><span>${esc(cap2(t2("sTarget", { lbl: distLabel2(I) })))}</span></div>` : ""}
+  </div>`);
+      h.push(renderToday());
+      h.push(
+        html`<div class="profile"><div class="profile-head"><h2>${t2("loadProfile")}</h2><div class="legend"><span><i style="background:var(--ink);height:2px;opacity:.55;vertical-align:3px"></i>${t2("longRunLeg")}</span></div></div><div class="chart" id="profileChart"></div></div>`
+      );
+      h.push(html`<div class="toolbar">
     <span class="spacer"></span>
     <button class="btn sm" data-act="quick">${t2("qwOpen")}</button>
     <button class="btn sm" data-act="allwatch">${t2("sendAll")}</button>
     <button class="btn sm" data-act="ics">${t2("exportCal")}</button>
     <span class="exp"><select id="expFmt" aria-label="${esc(t2("exportFmt"))}"><option value="csv" ${S.exportFmt === "csv" ? "selected" : ""}>${t2("fmtCsv")}</option><option value="pdf" ${S.exportFmt === "pdf" ? "selected" : ""}>${t2("fmtPdf")}</option></select><button class="btn sm" data-act="export">${t2("exportGo")}</button></span>
     <button class="btn sm ghost" data-act="rebuild">${t2("rebuildFrom")}</button>
-  </div>`;
+  </div>`);
       const pastN = nowI > 0 ? nowI : 0;
       if (pastN)
-        h += `<button type="button" class="btn sm ghost mpast" data-act="past" aria-expanded="${!!S.showPast}">${t2(S.showPast ? "hidePast" : "showPast", { n: pastN })}</button>`;
-      h += `<div class="grid-wrap${S.showPast ? " show-past" : ""}"><table class="grid"><thead><tr><th class="wk">${t2("week")}</th>${DAYS.map((d) => `<th>${d}</th>`).join("")}</tr></thead><tbody>`;
+        h.push(
+          html`<button type="button" class="btn sm ghost mpast" data-act="past" aria-expanded="${!!S.showPast}">${t2(S.showPast ? "hidePast" : "showPast", { n: pastN })}</button>`
+        );
+      h.push(
+        html`<div class="grid-wrap${S.showPast ? " show-past" : ""}"><table class="grid"><thead><tr><th class="wk">${t2("week")}</th>${htmlJoin(DAYS.map((d) => html`<th>${d}</th>`))}</tr></thead><tbody>`
+      );
       weeks.forEach((w, wi) => {
         const st = parseISO2(w.start), en = addDays2(st, 6);
         const rc = (wi < pastN ? " past" : "") + (wi === nowI ? " now" : "");
-        h += `<tr class="wrow${w.cutback ? " cutback" : ""}${rc}"><td class="wk"><div class="wkcell"><span class="bar" style="background:${phaseColor(w.phase)}"></span><div>
-      <div class="n">${t2("wAbbr")}${esc(w.n)}</div><div class="meta"><span>${fmtShort(st)} \u2013 ${fmtShort(en)}</span><span class="ph" data-cut="${t2("cutback")}" style="color:${phaseText(w.phase)}">${phaseLbl(w.phase)}</span><span class="km">${totals[wi].toFixed(1)} km</span></div>
-      <button class="btn sm ghost wbtn" data-act="wwatch" data-w="${wi}" aria-label="${esc(t2("sendWatchWeek", { n: w.n }))}" title="${esc(t2("sendWatchWeek", { n: w.n }))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3M12 10v2l1.5 1"/></svg>${t2("watchShort")}</button></div></div></td>`;
+        h.push(html`<tr class="wrow${w.cutback ? " cutback" : ""}${rc}"><td class="wk"><div class="wkcell"><span class="bar" style="background:${phaseColor(w.phase)}"></span><div>
+      <div class="n">${t2("wAbbr")}${esc(w.n)}</div><div class="meta"><span>${fmtShort(st)} – ${fmtShort(en)}</span><span class="ph" data-cut="${t2("cutback")}" style="color:${phaseText(w.phase)}">${phaseLbl(w.phase)}</span><span class="km">${totals[wi].toFixed(1)} km</span></div>
+      <button class="btn sm ghost wbtn" data-act="wwatch" data-w="${wi}" aria-label="${esc(t2("sendWatchWeek", { n: w.n }))}" title="${esc(t2("sendWatchWeek", { n: w.n }))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3M12 10v2l1.5 1"/></svg>${t2("watchShort")}</button></div></div></td>`);
         for (let d = 0; d < 7; d++) {
           const ss = w.sessions.filter((s) => s.day === d);
-          h += `<td class="day" data-w="${wi}" data-d="${d}" data-dl="${esc(DAYS[d])}">${ss.length ? ss.map((s) => `<button type="button" class="ses ${s.kind === "race" ? "race" : ""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${effColor(sesEffort(s))};--kt:${effText(sesEffort(s))}"><span class="t">${esc(s.name)}</span><span class="k">${esc(s.km)} km</span><span class="d">${esc(s.desc)}</span>${s.note ? `<span class="nb">${t2("noteBadge")}</span>` : ""}</button>`).join("") : `<div class="empty" tabindex="0" role="button" aria-label="${esc(t2("rest") + " " + t2("addRun") + " \xB7 " + t2("eTitle", { n: w.n, day: DAYS[d] }))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t2("rest")}</span><span class="plus">${t2("addRun")}</span></div>`}</td>`;
+          h.push(
+            html`<td class="day" data-w="${wi}" data-d="${d}" data-dl="${esc(DAYS[d])}">${ss.length ? htmlJoin(ss.map((s) => html`<button type="button" class="ses ${s.kind === "race" ? "race" : ""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${effColor(sesEffort(s))};--kt:${effText(sesEffort(s))}"><span class="t">${esc(s.name)}</span><span class="k">${esc(s.km)} km</span><span class="d">${esc(s.desc)}</span>${s.note ? html`<span class="nb">${t2("noteBadge")}</span>` : ""}</button>`)) : html`<div class="empty" tabindex="0" role="button" aria-label="${esc(t2("rest") + " " + t2("addRun") + " \xB7 " + t2("eTitle", { n: w.n, day: DAYS[d] }))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t2("rest")}</span><span class="plus">${t2("addRun")}</span></div>`}</td>`
+          );
         }
-        h += `</tr>`;
+        h.push(html`</tr>`);
         weekChecks2(w, I, weeks[wi - 1]).forEach((c) => {
-          h += `<tr class="wwarn${rc}" data-check="${c.k}"><td colspan="8"><p><b>${t2("wkWarn")}</b>${esc(c.txt)}</p></td></tr>`;
+          h.push(
+            html`<tr class="wwarn${rc}" data-check="${c.k}"><td colspan="8"><p><b>${t2("wkWarn")}</b>${esc(c.txt)}</p></td></tr>`
+          );
         });
-        if (w.note) h += `<tr class="wnote${rc}"><td colspan="8"><p><b>${t2("note")}</b>${esc(w.note)}</p></td></tr>`;
+        if (w.note)
+          h.push(html`<tr class="wnote${rc}"><td colspan="8"><p><b>${t2("note")}</b>${esc(w.note)}</p></td></tr>`);
       });
-      h += `</tbody></table></div>`;
-      $("#plan").innerHTML = h;
+      h.push(html`</tbody></table></div>`);
+      setHtml($("#plan"), h);
       drawProfile();
       renderWx();
       wxLoad(false);
@@ -2660,21 +2784,22 @@
     }
     function wxIcon(c) {
       const k = wmoKey(c);
-      const sun = `<circle cx="20" cy="20" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><g stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 4v4M20 32v4M4 20h4M32 20h4M8.7 8.7l2.8 2.8M28.5 28.5l2.8 2.8M8.7 31.3l2.8-2.8M28.5 11.5l2.8-2.8"/></g>`;
-      const cloud = (y = 0) => `<path d="M12 ${30 + y}h17a6 6 0 0 0 0-12 9 9 0 0 0-17 2 5 5 0 0 0 0 10z" fill="var(--surface)" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>`;
+      const sun = html`<circle cx="20" cy="20" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><g stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 4v4M20 32v4M4 20h4M32 20h4M8.7 8.7l2.8 2.8M28.5 28.5l2.8 2.8M8.7 31.3l2.8-2.8M28.5 11.5l2.8-2.8"/></g>`;
+      const cloud = (y = 0) => html`<path d="M12 ${30 + y}h17a6 6 0 0 0 0-12 9 9 0 0 0-17 2 5 5 0 0 0 0 10z" fill="var(--surface)" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>`;
       let g;
       if (k === 0) g = sun;
-      else if (k === 1 || k === 2) g = `<g transform="translate(-5 -6) scale(.75)" opacity=".85">${sun}</g>` + cloud(2);
+      else if (k === 1 || k === 2)
+        g = html`<g transform="translate(-5 -6) scale(.75)" opacity=".85">${sun}</g>${cloud(2)}`;
       else if (k === 3) g = cloud(-2);
       else if (k === 45)
-        g = `<g stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 14h26M5 20h30M8 26h24M11 32h18"/></g>`;
+        g = html`<g stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 14h26M5 20h30M8 26h24M11 32h18"/></g>`;
       else if (k === 71 || k === 85)
-        g = cloud(-6) + `<g fill="currentColor"><circle cx="14" cy="33" r="1.8"/><circle cx="21" cy="36" r="1.8"/><circle cx="28" cy="33" r="1.8"/></g>`;
+        g = html`${cloud(-6)}<g fill="currentColor"><circle cx="14" cy="33" r="1.8"/><circle cx="21" cy="36" r="1.8"/><circle cx="28" cy="33" r="1.8"/></g>`;
       else if (k === 95)
-        g = cloud(-6) + `<path d="M21 28l-4 7h5l-3 6" fill="none" stroke="var(--long)" stroke-width="2.4" stroke-linejoin="round"/>`;
+        g = html`${cloud(-6)}<path d="M21 28l-4 7h5l-3 6" fill="none" stroke="var(--long)" stroke-width="2.4" stroke-linejoin="round"/>`;
       else
-        g = cloud(-6) + `<g stroke="var(--recovery)" stroke-width="2.4" stroke-linecap="round"><path d="M14 30l-2 5M21 30l-2 5M28 30l-2 5"/></g>`;
-      return `<svg viewBox="0 0 40 40" aria-hidden="true">${g}</svg>`;
+        g = html`${cloud(-6)}<g stroke="var(--recovery)" stroke-width="2.4" stroke-linecap="round"><path d="M14 30l-2 5M21 30l-2 5M28 30l-2 5"/></g>`;
+      return html`<svg viewBox="0 0 40 40" aria-hidden="true">${g}</svg>`;
     }
     const hm = (s) => String(s).slice(11, 16);
     const wxWait = (n) => Math.min(30 * 6e4, 3e4 * 2 ** Math.max(0, n - 1));
@@ -2784,35 +2909,38 @@
       const errMsg = WX.err === "blocked" ? t2("wxBlocked") : WX.err === "geo" ? t2("wxGeoFail") : WX.err.startsWith("nocity:") ? t2("wxNoCity", { q: esc(WX.err.slice(7)) }) : "";
       const open = WX.open || WX.editing || !!errMsg;
       const city = WX.loc ? esc(WX.loc.name || `${WX.loc.lat.toFixed(2)}, ${WX.loc.lon.toFixed(2)}`) : "";
-      const chev = `<svg class="chev" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      const chev = html`<svg class="chev" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
       let sum, more;
       if (!WX.loc || WX.editing) {
         const sug = S.inputs.race && S.inputs.race.city || WX.loc && WX.loc.name || "";
-        sum = `${wxIcon(2)}<span>${WX.loc ? `<b>${t2("wxTitle")}</b> \xB7 ${city}` : t2("wxAdd")}</span>`;
-        more = `<span class="hint">${t2("wxSet")}</span>
+        sum = html`${wxIcon(2)}<span>${WX.loc ? html`<b>${t2("wxTitle")}</b> · ${city}` : t2("wxAdd")}</span>`;
+        more = html`<span class="hint">${t2("wxSet")}</span>
       <form id="wxForm"><input id="wxQ" aria-label="${esc(t2("wxCity"))}" placeholder="${esc(t2("wxCityPh"))}" value="${esc(sug)}" autocomplete="address-level2"><button class="btn sm primary" type="submit" ${WX.busy ? "disabled" : ""}>${t2("wxGo")}</button></form>
-      <div class="wxloc">${navigator.geolocation ? `<button type="button" class="icon-btn" data-act="wxgeo">${t2("wxGeo")}</button>` : ""}${WX.busy ? `<span>${t2("wxLoading")}</span>` : ""}</div>
-      ${errMsg ? `<span class="hint">${errMsg}</span>` : ""}`;
+      <div class="wxloc">${navigator.geolocation ? html`<button type="button" class="icon-btn" data-act="wxgeo">${t2("wxGeo")}</button>` : ""}${WX.busy ? html`<span>${t2("wxLoading")}</span>` : ""}</div>
+      ${errMsg ? html`<span class="hint">${errMsg}</span>` : ""}`;
       } else {
-        const change = `<div class="wxloc">${D ? `<span>${t2("wxUpd", { t: new Date(WX.at).toLocaleTimeString(LOC(), { hour: "2-digit", minute: "2-digit" }) })}</span>` : ""}<button type="button" class="icon-btn" data-act="wxedit">${t2("wxChange")}</button></div>`;
+        const change = html`<div class="wxloc">${D ? html`<span>${t2("wxUpd", { t: new Date(WX.at).toLocaleTimeString(LOC(), { hour: "2-digit", minute: "2-digit" }) })}</span>` : ""}<button type="button" class="icon-btn" data-act="wxedit">${t2("wxChange")}</button></div>`;
         if (!D) {
-          sum = `${wxIcon(3)}<span><b>${t2("wxTitle")}</b> \xB7 ${city}${WX.busy ? ` \xB7 ${t2("wxLoading")}` : ""}</span>`;
-          more = `${errMsg ? `<span class="hint">${errMsg}</span>` : ""}${change}`;
+          sum = html`${wxIcon(3)}<span><b>${t2("wxTitle")}</b> · ${city}${WX.busy ? ` \xB7 ${t2("wxLoading")}` : ""}</span>`;
+          more = html`${errMsg ? html`<span class="hint">${errMsg}</span>` : ""}${change}`;
         } else {
           const c = D.current || {}, dd = D.daily || {}, H = D.hourly || {};
           const { idx, best } = wxBestSlot(D);
           const step = idx.length > 8 ? 2 : 1;
           const hrs = idx.filter((_, j) => j % step === 0);
           const wk = wmoKey(c.weather_code);
-          sum = `${wxIcon(c.weather_code)}<span><b>${Math.round(c.temperature_2m)}\xB0</b> ${esc(t2("wmo" + wk).toLowerCase())} \xB7 ${t2("wxRain", { p: dd.precipitation_probability_max ? dd.precipitation_probability_max[0] ?? 0 : 0 })}${best ? ` \xB7 ${t2("wxDriest", { h: hm(H.time[best.i]) })}` : ""} \xB7 ${city}</span>`;
-          more = `<div class="wxnow">${wxIcon(c.weather_code)}<span class="tmp">${Math.round(c.temperature_2m)}\xB0</span><span class="dsc"><b>${t2("wmo" + wk)}</b><span>${t2("wxFeels", { v: Math.round(c.apparent_temperature) })}</span></span></div>
-    <div class="wxfacts"><span>${t2("wxHiLo", { h: `<b>${Math.round(dd.temperature_2m_max[0])}</b>`, l: `<b>${Math.round(dd.temperature_2m_min[0])}</b>` })}</span><span>${t2("wxRain", { p: `<b>${dd.precipitation_probability_max[0] ?? 0}</b>` })}</span><span>${t2("wxWind", { w: `<b>${Math.round(c.wind_speed_10m)}</b>` })}</span>${dd.sunset ? `<span>${t2("wxSun", { t: `<b>${hm(dd.sunset[0])}</b>` })}</span>` : ""}</div>
-    ${hrs.length ? `<div class="wxhours">${hrs.map((o) => `<div class="wxh ${best && best.i === o.i ? "best" : ""}"><span class="hr">${hm(o.tm)}</span><span class="tp">${Math.round(H.temperature_2m[o.i])}\xB0</span><span class="pp">${H.precipitation_probability[o.i] ?? 0}%</span></div>`).join("")}</div>` : ""}
-    ${best ? `<span class="wxbest">${t2("wxBest", { h: hm(H.time[best.i]), p: best.p, tp: Math.round(best.tp) })}</span>` : ""}
+          sum = html`${wxIcon(c.weather_code)}<span><b>${Math.round(c.temperature_2m)}°</b> ${esc(t2("wmo" + wk).toLowerCase())} · ${t2("wxRain", { p: dd.precipitation_probability_max ? dd.precipitation_probability_max[0] ?? 0 : 0 })}${best ? ` \xB7 ${t2("wxDriest", { h: hm(H.time[best.i]) })}` : ""} · ${city}</span>`;
+          more = html`<div class="wxnow">${wxIcon(c.weather_code)}<span class="tmp">${Math.round(c.temperature_2m)}°</span><span class="dsc"><b>${t2("wmo" + wk)}</b><span>${t2("wxFeels", { v: Math.round(c.apparent_temperature) })}</span></span></div>
+    <div class="wxfacts"><span>${t2("wxHiLo", { h: html`<b>${Math.round(dd.temperature_2m_max[0])}</b>`, l: html`<b>${Math.round(dd.temperature_2m_min[0])}</b>` })}</span><span>${t2("wxRain", { p: html`<b>${dd.precipitation_probability_max[0] ?? 0}</b>` })}</span><span>${t2("wxWind", { w: html`<b>${Math.round(c.wind_speed_10m)}</b>` })}</span>${dd.sunset ? html`<span>${t2("wxSun", { t: html`<b>${hm(dd.sunset[0])}</b>` })}</span>` : ""}</div>
+    ${hrs.length ? html`<div class="wxhours">${htmlJoin(hrs.map((o) => html`<div class="wxh ${best && best.i === o.i ? "best" : ""}"><span class="hr">${hm(o.tm)}</span><span class="tp">${Math.round(H.temperature_2m[o.i])}°</span><span class="pp">${H.precipitation_probability[o.i] ?? 0}%</span></div>`))}</div>` : ""}
+    ${best ? html`<span class="wxbest">${t2("wxBest", { h: hm(H.time[best.i]), p: best.p, tp: Math.round(best.tp) })}</span>` : ""}
     ${change}`;
         }
       }
-      el.innerHTML = `<button type="button" class="wxline" data-act="wxtoggle" aria-expanded="${open}" aria-controls="wxMore">${sum}${chev}</button><div class="wxmore" id="wxMore" ${open ? "" : "hidden"}>${more}</div>`;
+      setHtml(
+        el,
+        html`<button type="button" class="wxline" data-act="wxtoggle" aria-expanded="${open}" aria-controls="wxMore">${sum}${chev}</button><div class="wxmore" id="wxMore" ${open ? "" : "hidden"}>${more}</div>`
+      );
       WX.heat = wxHeat(D);
       applyHeat();
     }
@@ -2849,35 +2977,46 @@
       return t2("durHM", { h: Math.floor(r / 60), m: String(r % 60).padStart(2, "0") });
     }
     function mainSetHtml(wp) {
-      return wp.blocks.map((b) => {
-        const w = b.steps.find((x) => x.p !== "recovery") || b.steps[0], rec = b.steps.find((x) => x.p === "recovery");
-        if (b.n > 1) return `<b>${b.n} \xD7 ${gTxt(w.g)}</b>${rec ? ` \xB7 ${gTxt(rec.g)} ${t2("tdJog")}` : ""}`;
-        return b.steps.map((x) => `<b>${gTxt(x.g)}</b>${x.pace ? " " + paceLbl(x.pace) : ""}`).join(" + ");
-      }).join(" + ");
+      return htmlJoin(
+        wp.blocks.map((b) => {
+          const w = b.steps.find((x) => x.p !== "recovery") || b.steps[0], rec = b.steps.find((x) => x.p === "recovery");
+          if (b.n > 1) return html`<b>${b.n} × ${gTxt(w.g)}</b>${rec ? ` \xB7 ${gTxt(rec.g)} ${t2("tdJog")}` : ""}`;
+          return htmlJoin(
+            b.steps.map((x) => html`<b>${gTxt(x.g)}</b>${x.pace ? " " + paceLbl(x.pace) : ""}`),
+            " + "
+          );
+        }),
+        " + "
+      );
     }
     function workoutBar(wp, sesE, P) {
       const segs = workoutSegs(wp, sesE, P);
-      const bar = `<div class="wbar" role="img" aria-label="${esc(watchSummary(wp, P))}">${segs.map((g) => `<i class="${g.role === "rec" ? "rec" : ""}" style="flex:${Math.max(1, Math.round(g.sec))} 1 0;background:${effColor(g.e)}"></i>`).join("")}</div>`;
+      const bar = html`<div class="wbar" role="img" aria-label="${esc(watchSummary(wp, P))}">${htmlJoin(segs.map((g) => html`<i class="${g.role === "rec" ? "rec" : ""}" style="flex:${Math.max(1, Math.round(g.sec))} 1 0;background:${effColor(g.e)}"></i>`))}</div>`;
       const main = mainSetHtml(wp);
-      const lbl = `<div class="wbarlbl">${wp.wu ? `<span><b>${gTxt(wp.wu)}</b> ${t2("warmup").toLowerCase()}</span>` : ""}<span>${main}</span>${wp.cd ? `<span><b>${gTxt(wp.cd)}</b> ${t2("cooldown").toLowerCase()}</span>` : ""}</div>`;
-      return { html: `<div>${bar}${lbl}</div>`, sec: segs.reduce((a, g) => a + g.sec, 0), segs };
+      const lbl = html`<div class="wbarlbl">${wp.wu ? html`<span><b>${gTxt(wp.wu)}</b> ${t2("warmup").toLowerCase()}</span>` : ""}<span>${main}</span>${wp.cd ? html`<span><b>${gTxt(wp.cd)}</b> ${t2("cooldown").toLowerCase()}</span>` : ""}</div>`;
+      return { html: html`<div>${bar}${lbl}</div>`, sec: segs.reduce((a, g) => a + g.sec, 0), segs };
     }
     let TD = { keys: [], eff: {}, hard: false };
     const HEAT_KEYS = /* @__PURE__ */ new Set(["easy", "tempo", "mp"]);
     function paceChips() {
       const P = paces2(S.inputs), add = WX.heat ? WX.heat.add : 0;
-      return TD.keys.map((k) => {
-        const e = TD.eff[k] || "easy";
-        const val = P.vdot ? add && HEAT_KEYS.has(k) ? `<b>${fmtPace2(P.sec[k] + add).replace("/km", "")}</b>/km <s>${P.txt[k].replace("/km", "")}</s>` : `<b>${P.txt[k].replace("/km", "")}</b>/km` : `<b>${esc(P.txt[k])}</b>`;
-        return `<span class="pc" data-k="${k}" style="--c:${effColor(e)}">${esc(cap2(paceLbl(k)))} ${val}</span>`;
-      }).join("");
+      return htmlJoin(
+        TD.keys.map((k) => {
+          const e = TD.eff[k] || "easy";
+          const val = P.vdot ? add && HEAT_KEYS.has(k) ? html`<b>${fmtPace2(P.sec[k] + add).replace("/km", "")}</b>/km <s>${P.txt[k].replace("/km", "")}</s>` : html`<b>${P.txt[k].replace("/km", "")}</b>/km` : html`<b>${esc(P.txt[k])}</b>`;
+          return html`<span class="pc" data-k="${k}" style="--c:${effColor(e)}">${esc(cap2(paceLbl(k)))} ${val}</span>`;
+        })
+      );
     }
     function applyHeat() {
       const pe = document.getElementById("tdPaces"), he = document.getElementById("tdHeat");
-      if (pe) pe.innerHTML = paceChips();
+      if (pe) setHtml(pe, paceChips());
       if (he) {
         const h = WX.heat;
-        he.innerHTML = h && (TD.keys.length || TD.hard) ? t2("tdHeat", { v: h.feels, s: h.add }) + (TD.hard ? t2("tdHeatHard") : "") : "";
+        setHtml(
+          he,
+          h && (TD.keys.length || TD.hard) ? html`${t2("tdHeat", { v: h.feels, s: h.add })}${TD.hard ? t2("tdHeatHard") : ""}` : ""
+        );
       }
     }
     function sendLbl(name) {
@@ -2905,40 +3044,44 @@
         }
         return null;
       };
-      let eb = `<b>${t2("tdToday")}</b><span>${cap2(fmtDay(today))}</span>`, body, cta = "";
+      let eb = [html`<b>${t2("tdToday")}</b><span>${cap2(fmtDay(today))}</span>`], body, cta = html``;
       if (today < st0) {
         const n = nextAfter(0, -1);
-        body = `<div class="rest"><b>${t2("tdBefore", { d: fmtDate2(st0) })}</b>${n ? `<p class="tnext">${t2("tdBeforeT", { when: whenOf(n.w, n.s), name: esc(n.s.name.toLowerCase()), km: n.s.km })}</p>` : ""}</div>`;
+        body = html`<div class="rest"><b>${t2("tdBefore", { d: fmtDate2(st0) })}</b>${n ? html`<p class="tnext">${t2("tdBeforeT", { when: whenOf(n.w, n.s), name: esc(n.s.name.toLowerCase()), km: n.s.km })}</p>` : ""}</div>`;
       } else if (wi < 0 || today > end) {
-        body = `<div class="rest"><b>${t2("tdDone")}</b><p>${t2("tdDoneT", { d: fmtDate2(end) })}</p></div>`;
+        body = html`<div class="rest"><b>${t2("tdDone")}</b><p>${t2("tdDoneT", { d: fmtDate2(end) })}</p></div>`;
       } else {
         const w = P.weeks[wi];
-        eb += `<span style="color:${phaseText(w.phase)}">${t2("tdWeek", { n: w.n, phase: phaseLbl(w.phase) })}</span>`;
+        eb.push(
+          html`<span style="color:${phaseText(w.phase)}">${t2("tdWeek", { n: w.n, phase: phaseLbl(w.phase) })}</span>`
+        );
         const ss = w.sessions.filter((s) => s.day === td);
         if (ss.length) {
           const Pc = paces2(S.inputs);
           const hard = [], easy = [];
-          body = ss.map((s) => {
-            const e = sesEffort(s), wp = s.watch || watchPlan2(s.kind, s.km), wb = workoutBar(wp, e, Pc);
-            for (const g of wb.segs) {
-              if (g.role === "main" && (g.e === "hard" || g.e === "race")) TD.hard = true;
-            }
-            for (const g of wb.segs)
-              if (g.pace && !TD.eff[g.pace]) {
-                TD.eff[g.pace] = g.e;
-                (g.pace === "easy" ? easy : hard).push(g.pace);
+          body = htmlJoin(
+            ss.map((s) => {
+              const e = sesEffort(s), wp = s.watch || watchPlan2(s.kind, s.km), wb = workoutBar(wp, e, Pc);
+              for (const g of wb.segs) {
+                if (g.role === "main" && (g.e === "hard" || g.e === "race")) TD.hard = true;
               }
-            return `<div class="tses" style="--k:${effColor(e)};--kt:${effText(e)}"><div class="tn"><b>${esc(s.name)}</b></div>
-        <div class="tbig"><b>${esc(s.km)}<small> km</small></b><span>${t2("tdEst", { d: estDur(wb.sec) })}</span></div>${wb.html}${s.desc ? `<p>${esc(s.desc)}</p>` : ""}</div>`;
-          }).join("");
+              for (const g of wb.segs)
+                if (g.pace && !TD.eff[g.pace]) {
+                  TD.eff[g.pace] = g.e;
+                  (g.pace === "easy" ? easy : hard).push(g.pace);
+                }
+              return html`<div class="tses" style="--k:${effColor(e)};--kt:${effText(e)}"><div class="tn"><b>${esc(s.name)}</b></div>
+        <div class="tbig"><b>${esc(s.km)}<small> km</small></b><span>${t2("tdEst", { d: estDur(wb.sec) })}</span></div>${wb.html}${s.desc ? html`<p>${esc(s.desc)}</p>` : ""}</div>`;
+            })
+          );
           TD.keys = [...hard, ...easy];
-          cta = `<div class="tcta">${ss.map((s) => `<button type="button" class="btn primary" data-act="twatch" data-w="${wi}" data-s="${s.id}" data-n="${ss.length > 1 ? esc(s.name) : ""}">${esc(sendLbl(ss.length > 1 ? s.name : ""))}</button><button type="button" class="btn" data-act="tedit" data-w="${wi}" data-s="${s.id}">${t2("tdEdit")}${ss.length > 1 ? `<span class="sr"> ${esc(s.name)}</span>` : ""}</button>`).join("")}</div>`;
+          cta = html`<div class="tcta">${htmlJoin(ss.map((s) => html`<button type="button" class="btn primary" data-act="twatch" data-w="${wi}" data-s="${s.id}" data-n="${ss.length > 1 ? esc(s.name) : ""}">${esc(sendLbl(ss.length > 1 ? s.name : ""))}</button><button type="button" class="btn" data-act="tedit" data-w="${wi}" data-s="${s.id}">${t2("tdEdit")}${ss.length > 1 ? html`<span class="sr"> ${esc(s.name)}</span>` : ""}</button>`))}</div>`;
         } else {
           const n = nextAfter(wi, td);
-          body = `<div class="rest"><b>${t2("tdRest")}</b><p>${t2("tdRestT")}</p></div>${n ? `<p class="tnext">${t2("tdNext", { when: whenOf(n.w, n.s), name: esc(n.s.name.toLowerCase()), km: n.s.km })}</p>` : ""}<p class="tnext"><button type="button" class="linkbtn" data-act="quick" data-type="easy">${t2("qwAnyway")}</button></p>`;
+          body = html`<div class="rest"><b>${t2("tdRest")}</b><p>${t2("tdRestT")}</p></div>${n ? html`<p class="tnext">${t2("tdNext", { when: whenOf(n.w, n.s), name: esc(n.s.name.toLowerCase()), km: n.s.km })}</p>` : ""}<p class="tnext"><button type="button" class="linkbtn" data-act="quick" data-type="easy">${t2("qwAnyway")}</button></p>`;
         }
       }
-      return `<section class="today" aria-label="${esc(t2("tdToday"))}"><div class="tmain"><div class="eyebrow">${eb}</div>${body}</div><div class="tside"><div><div class="tpaces" id="tdPaces"></div><div class="theat" id="tdHeat" role="note"></div><div class="wxp" id="wx" aria-live="polite"></div></div>${cta}</div></section>`;
+      return html`<section class="today" aria-label="${esc(t2("tdToday"))}"><div class="tmain"><div class="eyebrow">${eb}</div>${body}</div><div class="tside"><div><div class="tpaces" id="tdPaces"></div><div class="theat" id="tdHeat" role="note"></div><div class="wxp" id="wx" aria-live="polite"></div></div>${cta}</div></section>`;
     }
     $("#plan").addEventListener("submit", (e) => {
       if (e.target.id !== "wxForm") return;
@@ -3116,7 +3259,7 @@
         race: QW.race || (S.inputs.goal !== "fitness" && QW_RACES.some((r) => r[0] === S.inputs.dist) ? S.inputs.dist : "10k")
       });
       qwSetAmt();
-      modal(`<h2>${t2("qwTitle")}</h2><div class="qw" id="qwBody"></div>`, (m) => {
+      modal(html`<h2>${t2("qwTitle")}</h2><div class="qw" id="qwBody"></div>`, (m) => {
         m.addEventListener("click", (e) => {
           const b = e.target.closest("[data-qk]");
           if (!b) return;
@@ -3253,14 +3396,14 @@
     }
     function qwRender(m, focusKey) {
       const Q = QW, R = qwBuild(Q), body = m.querySelector("#qwBody");
-      const radio = (k, v, on, html, cls = "") => `<button type="button" role="radio" class="${cls}" aria-checked="${on}" data-qk="${k}:${v}">${html}</button>`;
+      const radio = (k, v, on, label, cls = "") => html`<button type="button" role="radio" class="${cls}" aria-checked="${on}" data-qk="${k}:${v}">${label}</button>`;
       const typeBtn = (id) => {
         const def = TYPE_DEFS2.find((d) => d[0] === id);
         return radio(
           "type",
           id,
           Q.type === id,
-          `<span class="kind-dot" style="background:${effColor(effort(id, def[1]))}" aria-hidden="true"></span>${esc(qwTypeName(id))}`,
+          html`<span class="kind-dot" style="background:${effColor(effort(id, def[1]))}" aria-hidden="true"></span>${esc(qwTypeName(id))}`,
           "qt"
         );
       };
@@ -3268,38 +3411,40 @@
       let shape;
       if (QW_EASY[Q.type]) {
         const u = Q.unit === "t" ? "min" : "km";
-        shape = `<div class="qrow"><span class="lbl" id="qwAmtL">${t2(Q.unit === "t" ? "qwDur" : "qwDist")}</span>
-      <div class="qstep" role="group" aria-labelledby="qwAmtL"><button type="button" class="btn" data-qk="amt:-" aria-label="${esc(t2("qwLess"))}">\u2212</button><output aria-live="polite">${Q.amt.toLocaleString(LOC())} ${u}</output><button type="button" class="btn" data-qk="amt:+" aria-label="${esc(t2("qwMore"))}">+</button></div></div>`;
+        shape = html`<div class="qrow"><span class="lbl" id="qwAmtL">${t2(Q.unit === "t" ? "qwDur" : "qwDist")}</span>
+      <div class="qstep" role="group" aria-labelledby="qwAmtL"><button type="button" class="btn" data-qk="amt:-" aria-label="${esc(t2("qwLess"))}">−</button><output aria-live="polite">${Q.amt.toLocaleString(LOC())} ${u}</output><button type="button" class="btn" data-qk="amt:+" aria-label="${esc(t2("qwMore"))}">+</button></div></div>`;
       } else {
-        const sizes = Object.keys(QW_SIZES).map((k) => {
-          const r2 = qwBuild({ ...Q, size: k });
-          return radio(
-            "size",
-            k,
-            Q.size === k,
-            `<b>${t2("qwSize_" + k)}</b><span>${r2.main.replace(/<\/?b>/g, "")}</span>`,
-            "qsz"
-          );
-        }).join("");
-        shape = `<div class="qrow"><span class="lbl" id="qwSizeL">${t2("qwSize")}</span><div class="qsizes" role="radiogroup" aria-labelledby="qwSizeL">${sizes}</div></div>
-      <div class="qrow"><span class="lbl" id="qwRaceL">${t2("qwRace")}</span><div class="seg" role="radiogroup" aria-labelledby="qwRaceL">${QW_RACES.map(([k]) => radio("race", k, Q.race === k, esc(cap2(t2("l" + k))))).join("")}</div></div>
+        const sizes = htmlJoin(
+          Object.keys(QW_SIZES).map((k) => {
+            const r2 = qwBuild({ ...Q, size: k });
+            return radio(
+              "size",
+              k,
+              Q.size === k,
+              html`<b>${t2("qwSize_" + k)}</b><span>${String(r2.main).replace(/<\/?b>/g, "")}</span>`,
+              "qsz"
+            );
+          })
+        );
+        shape = html`<div class="qrow"><span class="lbl" id="qwSizeL">${t2("qwSize")}</span><div class="qsizes" role="radiogroup" aria-labelledby="qwSizeL">${sizes}</div></div>
+      <div class="qrow"><span class="lbl" id="qwRaceL">${t2("qwRace")}</span><div class="seg" role="radiogroup" aria-labelledby="qwRaceL">${htmlJoin(QW_RACES.map(([k]) => radio("race", k, Q.race === k, esc(cap2(t2("l" + k))))))}</div></div>
       <label class="qcheck"><input type="checkbox" id="qwWucd" ${Q.wucd ? "checked" : ""}> ${t2("qwWucd")}</label>`;
         const b = R.wp.blocks[R.mi], w = b.steps.find((x) => x.p !== "recovery"), r = b.steps.find((x) => x.p === "recovery");
-        const stepper = (f, lbl, val) => `<div class="qft"><span id="qwFt_${f}">${lbl}</span><div class="qstep" role="group" aria-labelledby="qwFt_${f}"><button type="button" class="btn" data-qk="ft:${f},-" aria-label="${esc(t2("qwLess") + " \xB7 " + lbl)}">\u2212</button><output aria-live="polite">${val}</output><button type="button" class="btn" data-qk="ft:${f},+" aria-label="${esc(t2("qwMore") + " \xB7 " + lbl)}">+</button></div></div>`;
+        const stepper = (f, lbl, val) => html`<div class="qft"><span id="qwFt_${f}">${lbl}</span><div class="qstep" role="group" aria-labelledby="qwFt_${f}"><button type="button" class="btn" data-qk="ft:${f},-" aria-label="${esc(t2("qwLess") + " \xB7 " + lbl)}">−</button><output aria-live="polite">${val}</output><button type="button" class="btn" data-qk="ft:${f},+" aria-label="${esc(t2("qwMore") + " \xB7 " + lbl)}">+</button></div></div>`;
         const isT = w.g[0] === "t";
         const paceVal = Q.ft && Q.ft.pace ? fmtPace2(Q.ft.pace).replace("/km", "") : w.pace && hasPace(R.P, w.pace) ? fmtPace2(R.P.sec[w.pace]).replace("/km", "") : "";
-        const icon = `<svg class="qfi" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></g></svg>`;
-        const chev = `<svg class="chev" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-        shape += `<details class="qfine" id="qwFt" ${Q.ftOpen ? "open" : ""}><summary>${icon}<span class="qfs"><b>${t2("qwFt")}</b><small>${t2("qwFtSub")}</small></span>${Q.ft ? `<span class="qtag">${t2("qwFtTag")}</span>` : ""}${chev}</summary><div class="qfts">
+        const icon = html`<svg class="qfi" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></g></svg>`;
+        const chev = html`<svg class="chev" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+        shape = html`${shape}${html`<details class="qfine" id="qwFt" ${Q.ftOpen ? "open" : ""}><summary>${icon}<span class="qfs"><b>${t2("qwFt")}</b><small>${t2("qwFtSub")}</small></span>${Q.ft ? html`<span class="qtag">${t2("qwFtTag")}</span>` : ""}${chev}</summary><div class="qfts">
       ${R.repeated ? stepper("n", t2("qwReps"), b.n) : ""}
       ${stepper("rep", t2(isT ? "qwRepT" : "qwRepD"), gTxt(w.g))}
       ${r ? stepper("rec", t2(r.g[0] === "t" ? "qwRecT" : "qwRecD"), gTxt(r.g)) : ""}
       <div class="qft"><label for="qwPace">${t2("qwPace")}</label><span class="qpace"><input id="qwPace" inputmode="decimal" autocomplete="off" placeholder="4:30" value="${esc(paceVal)}" aria-describedby="qwPaceHint"> /km</span></div>
       <p class="hint" id="qwPaceHint">${Q.paceErr ? t2("qwPaceBad") : t2("qwPaceHint")}</p>
-      ${Q.ft ? `<button type="button" class="linkbtn" data-qk="ftreset:1">${t2("qwFtReset")}</button>` : ""}</div></details>`;
+      ${Q.ft ? html`<button type="button" class="linkbtn" data-qk="ftreset:1">${t2("qwFtReset")}</button>` : ""}</div></details>`}`;
       }
       let pacesLine;
-      if (planHasPaces()) pacesLine = `<p class="hint qpaces">${t2("qwPacesPlan", { plan: esc(S.name) })}</p>`;
+      if (planHasPaces()) pacesLine = html`<p class="hint qpaces">${t2("qwPacesPlan", { plan: esc(S.name) })}</p>`;
       else {
         const qp = qwLoadPaces(), bad = +qp.recDist > 0 && qp.recTime && raceTimeSec2(qp.recTime, +qp.recDist) == null;
         const opts = [
@@ -3309,34 +3454,37 @@
           ["21.0975", "halfMarathon"],
           ["42.195", "marathon"]
         ];
-        pacesLine = `<div class="qrow"><span class="lbl">${t2("qwPaces")}</span><div class="qpacef">
-      <label>${t2("recDist")}<select id="qwRecDist">${opts.map(([v, k]) => `<option value="${v}" ${qp.recDist === v ? "selected" : ""}>${esc(t2(k))}</option>`).join("")}</select></label>
+        pacesLine = html`<div class="qrow"><span class="lbl">${t2("qwPaces")}</span><div class="qpacef">
+      <label>${t2("recDist")}<select id="qwRecDist">${htmlJoin(opts.map(([v, k]) => html`<option value="${v}" ${qp.recDist === v ? "selected" : ""}>${esc(t2(k))}</option>`))}</select></label>
       <label>${t2("recTime")}<input id="qwRecTime" inputmode="numeric" placeholder="${esc(t2("recTimePh"))}" value="${esc(qp.recTime)}"></label></div>
       <p class="hint qpaces">${bad ? t2("qwPacesBad") : R.P.vdot ? t2("qwPacesOwn") : t2("qwPacesEffort")}</p></div>`;
       }
       const dev = DEVICES.find((d) => d.k === Q.dev) || DEVICES[0];
       const recent = qwLoadRecent();
-      body.innerHTML = `
-    ${recent.length ? `<div class="qrow"><span class="lbl" id="qwRecL">${t2("qwRecent")}</span><div class="qgrp" role="group" aria-labelledby="qwRecL">${recent.map((c, i) => `<button type="button" class="qt qrec" data-qk="recent:${i}">${esc(qwRecentLbl(c))}</button>`).join("")}</div></div>` : ""}
+      setHtml(
+        body,
+        html`
+    ${recent.length ? html`<div class="qrow"><span class="lbl" id="qwRecL">${t2("qwRecent")}</span><div class="qgrp" role="group" aria-labelledby="qwRecL">${htmlJoin(recent.map((c, i) => html`<button type="button" class="qt qrec" data-qk="recent:${i}">${esc(qwRecentLbl(c))}</button>`))}</div></div>` : ""}
     <div class="qrow"><span class="lbl" id="qwTypeL">${t2("qwType")}</span><div class="qtypes" role="radiogroup" aria-labelledby="qwTypeL">
-      <div class="qgrp"><span class="qglbl">${t2("grpEasy")}</span>${easyIds.map(typeBtn).join("")}</div>
-      <div class="qgrp"><span class="qglbl">${t2("grpQuality")}</span>${qIds.map(typeBtn).join("")}</div></div>
-      ${whyOf(Q.type) ? `<p class="hint why" id="qwWhy">${whyHtml(Q.type)}</p>` : ""}</div>
+      <div class="qgrp"><span class="qglbl">${t2("grpEasy")}</span>${htmlJoin(easyIds.map(typeBtn))}</div>
+      <div class="qgrp"><span class="qglbl">${t2("grpQuality")}</span>${htmlJoin(qIds.map(typeBtn))}</div></div>
+      ${whyOf(Q.type) ? html`<p class="hint why" id="qwWhy">${whyHtml(Q.type)}</p>` : ""}</div>
     <div class="qrow"><span class="lbl" id="qwUnitL">${t2("qwUnit")}</span><div class="seg" role="radiogroup" aria-labelledby="qwUnitL">${radio("unit", "d", Q.unit === "d", t2("qwUnitD"))}${radio("unit", "t", Q.unit === "t", t2("qwUnitT"))}</div></div>
     ${shape}
     ${pacesLine}
     ${qwPlanOpen() ? (() => {
-        const [a, b] = qwPlanRange();
-        return `<div class="qrow"><label class="qcheck"><input type="checkbox" id="qwAdd" ${Q.add ? "checked" : ""}> ${t2("qwAdd", { plan: esc(S.name) })}</label>
-      ${Q.add ? `<label class="qadd">${t2("qwAddOn")} <input type="date" id="qwAddDate" min="${iso2(a)}" max="${iso2(b)}" value="${esc(Q.addDate)}"></label><p class="hint qpaces">${t2("qwAddHint")}</p>` : ""}</div>`;
-      })() : ""}
+          const [a, b] = qwPlanRange();
+          return html`<div class="qrow"><label class="qcheck"><input type="checkbox" id="qwAdd" ${Q.add ? "checked" : ""}> ${t2("qwAdd", { plan: esc(S.name) })}</label>
+      ${Q.add ? html`<label class="qadd">${t2("qwAddOn")} <input type="date" id="qwAddDate" min="${iso2(a)}" max="${iso2(b)}" value="${esc(Q.addDate)}"></label><p class="hint qpaces">${t2("qwAddHint")}</p>` : ""}</div>`;
+        })() : ""}
     <div class="qprev" style="--k:${effColor(R.eff)};--kt:${effText(R.eff)}">
       <div class="tses"><div class="tn"><b>${esc(R.name)}</b></div>
       <div class="tbig"><b id="qwKm">${(Math.round(R.km * 10) / 10).toLocaleString(LOC())}<small> km</small></b><span>${t2("tdEst", { d: estDur(R.bar.sec) })}</span></div>${R.bar.html}
       <p id="qwSteps">${esc(watchSummary(R.wp, R.P))}</p></div>
-      <div class="seg qdev" role="radiogroup" aria-label="${esc(t2("device"))}">${DEVICES.map((d) => radio("dev", d.k, Q.dev === d.k, esc(d.name()))).join("")}</div>
+      <div class="seg qdev" role="radiogroup" aria-label="${esc(t2("device"))}">${htmlJoin(DEVICES.map((d) => radio("dev", d.k, Q.dev === d.k, esc(d.name()))))}</div>
       <div class="actions"><button type="button" class="btn" data-qk="cancel">${t2("cancel")}</button><button type="button" class="btn primary" id="qwSend" data-qk="send">${esc(dev.k === "other" ? t2("sendWatch") : t2("sendTo", { dev: dev.name() }))}</button></div>
-    </div>`;
+    </div>`
+      );
       if (focusKey) {
         const f = body.querySelector(`[data-qk="${focusKey}"]`) || body.querySelector("#" + focusKey) || (focusKey === "wucd" ? body.querySelector("#qwWucd") : null);
         f && f.focus();
@@ -3347,7 +3495,7 @@
       const day = iso2(/* @__PURE__ */ new Date());
       const tag = QW_EASY[QW.type] ? `${String(QW.amt).replace(".", "-")}${QW.unit === "t" ? "min" : "km"}` : t2("qwSize_" + QW.size).toLowerCase();
       const file = `quick-${day}-${slug(R.name)}-${slug(tag)}`;
-      const title = `${R.name} \xB7 ${R.main.replace(/<\/?b>/g, "")}`;
+      const title = `${R.name} \xB7 ${String(R.main).replace(/<\/?b>/g, "")}`;
       qwPushRecent(QW);
       if (QW.add && qwPlanOpen()) qwAddToPlan(R, QW.addDate);
       setDevice(QW.dev);
@@ -3377,22 +3525,31 @@
       if (!el) return;
       if (R && R.name && !S.raceEditing) {
         el.className = "racebox set";
-        el.innerHTML = `<div><div style="font-weight:600">${esc(R.name)}</div><div class="hint">${R.city ? esc(R.city) + " \xB7 " : ""}${fmtDate2(parseISO2(S.inputs.raceDate))} \xB7 ${esc(distLabel2(S.inputs))}</div></div>
-      <div class="acts"><button type="button" class="btn sm" data-race="edit">${t2("editRace")}</button><button type="button" class="btn sm ghost" data-race="clear">${t2("removeRace")}</button></div>`;
+        setHtml(
+          el,
+          html`<div><div style="font-weight:600">${esc(R.name)}</div><div class="hint">${R.city ? esc(R.city) + " \xB7 " : ""}${fmtDate2(parseISO2(S.inputs.raceDate))} · ${esc(distLabel2(S.inputs))}</div></div>
+      <div class="acts"><button type="button" class="btn sm" data-race="edit">${t2("editRace")}</button><button type="button" class="btn sm ghost" data-race="clear">${t2("removeRace")}</button></div>`
+        );
         return;
       }
       el.className = "racebox";
       if (!S.raceEditing) {
-        el.innerHTML = `<div class="hint">${t2("raceOptional")}</div>
-      <div class="acts"><a class="btn sm" href="${finishersUrl(S.inputs)}" target="_blank" rel="noopener">${esc(t2("findOn", { lbl: distLabel2(S.inputs).toLowerCase() }))}</a><button type="button" class="btn sm" data-race="edit">${t2("addMyRace")}</button></div>`;
+        setHtml(
+          el,
+          html`<div class="hint">${t2("raceOptional")}</div>
+      <div class="acts"><a class="btn sm" href="${finishersUrl(S.inputs)}" target="_blank" rel="noopener">${esc(t2("findOn", { lbl: distLabel2(S.inputs).toLowerCase() }))}</a><button type="button" class="btn sm" data-race="edit">${t2("addMyRace")}</button></div>`
+        );
         return;
       }
       const r = R || {};
-      el.innerHTML = `<div class="field"><label for="rUrl">${t2("raceUrl")}</label><input id="rUrl" type="url" placeholder="${esc(t2("raceUrlPh"))}" value="${esc(r.url || "")}"></div>
+      setHtml(
+        el,
+        html`<div class="field"><label for="rUrl">${t2("raceUrl")}</label><input id="rUrl" type="url" placeholder="${esc(t2("raceUrlPh"))}" value="${esc(r.url || "")}"></div>
     <div class="field"><label for="rName">${t2("raceName")}</label><input id="rName" value="${esc(r.name || "")}" placeholder="${esc(t2("raceNamePh"))}"></div>
     <div class="field"><label for="rCity">${t2("city")}</label><input id="rCity" value="${esc(r.city || "")}"></div>
     <div class="hint">${t2("raceMatch")}</div>
-    <div class="acts"><button type="button" class="btn sm primary" data-race="save">${t2("useRace")}</button><button type="button" class="btn sm ghost" data-race="cancel">${t2("cancel")}</button><a class="btn sm ghost" href="${finishersUrl(S.inputs)}" target="_blank" rel="noopener">${t2("searchFin")}</a></div>`;
+    <div class="acts"><button type="button" class="btn sm primary" data-race="save">${t2("useRace")}</button><button type="button" class="btn sm ghost" data-race="cancel">${t2("cancel")}</button><a class="btn sm ghost" href="${finishersUrl(S.inputs)}" target="_blank" rel="noopener">${t2("searchFin")}</a></div>`
+      );
       const u = el.querySelector("#rUrl"), n = el.querySelector("#rName");
       u.addEventListener("input", () => {
         const g = nameFromUrl(u.value);
@@ -3467,7 +3624,7 @@
           const tdow = dow2(today);
           const next = w.sessions.find((s) => s.day >= tdow) || P.weeks[wi + 1] && P.weeks[wi + 1].sessions[0];
           const when = next ? next.day === tdow && w.sessions.includes(next) ? t2("today") : DAYS[next.day] : "";
-          line = t2("hFitIn", { n: w.n, t: P.weeks.length, phase: phaseLbl(w.phase), cut: w.cutback ? t2("hCut") : "" }) + (next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), km: next.km }) : "");
+          line = html`${t2("hFitIn", { n: w.n, t: P.weeks.length, phase: phaseLbl(w.phase), cut: w.cutback ? t2("hCut") : "" })}${next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), km: next.km }) : ""}`;
         }
       } else if (days < 0) {
         const wi = P.weeks.findIndex((w2) => {
@@ -3479,7 +3636,7 @@
           const tdow = dow2(today), rw = P.weeks.filter((x) => x.phase === "recovery");
           const next = w.sessions.find((s) => s.day >= tdow) || P.weeks[wi + 1] && P.weeks[wi + 1].sessions[0];
           const when = next ? next.day === tdow && w.sessions.includes(next) ? t2("today") : DAYS[next.day] : "";
-          line = t2("hRecIn", { lbl: esc(lbl), k: rw.indexOf(w) + 1, r: rw.length }) + (next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), km: next.km }) : "");
+          line = html`${t2("hRecIn", { lbl: esc(lbl), k: rw.indexOf(w) + 1, r: rw.length })}${next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), km: next.km }) : ""}`;
         } else line = t2("hPast", { lbl: esc(lbl), d: fmtDate2(race) });
       } else if (days === 0) line = t2("hToday", { lbl: esc(lbl) });
       else {
@@ -3489,27 +3646,27 @@
         });
         const head = t2(days === 1 ? "hDay1" : "hDays", { n: days, lbl: esc(lbl), d: fmtDate2(race) });
         if (wi < 0) {
-          line = head + " " + t2("hStarts", { d: fmtDate2(parseISO2(P.weeks[0].start)) });
+          line = html`${head} ${t2("hStarts", { d: fmtDate2(parseISO2(P.weeks[0].start)) })}`;
         } else {
           const w = P.weeks[wi];
           const tdow = dow2(today);
           const next = w.sessions.find((s) => s.day >= tdow) || P.weeks[wi + 1] && P.weeks[wi + 1].sessions[0];
           const when = next ? next.day === tdow && w.sessions.includes(next) ? t2("today") : DAYS[next.day] : "";
-          line = head + " " + t2("hInWeek", {
+          line = html`${head} ${t2("hInWeek", {
             n: w.n,
             t: P.weeks.filter((x) => x.phase !== "recovery").length,
             phase: phaseLbl(w.phase),
             cut: w.cutback ? t2("hCut") : ""
-          }) + (next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), km: next.km }) : "");
+          })}${next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), km: next.km }) : ""}`;
         }
       }
       const R = I.race;
-      let cd = "";
+      let cd = html``;
       if (I.goal !== "fitness" && R && R.name && days >= 0) {
-        const nm = R.url ? `<a class="rn" href="${esc(R.url)}" target="_blank" rel="noopener">${esc(R.name)}</a>` : `<span class="rn">${esc(R.name)}</span>`;
-        cd = `<div class="countdown"><div class="num">${days}<small>${days === 1 ? t2("dayOne") : t2("dayMany")}</small></div>${nm}<span class="rm">${R.city ? esc(R.city) + " \xB7 " : ""}${fmtDay(race)} \xB7 ${esc(lbl)}</span></div>`;
+        const nm = R.url ? html`<a class="rn" href="${esc(R.url)}" target="_blank" rel="noopener">${esc(R.name)}</a>` : html`<span class="rn">${esc(R.name)}</span>`;
+        cd = html`<div class="countdown"><div class="num">${days}<small>${days === 1 ? t2("dayOne") : t2("dayMany")}</small></div>${nm}<span class="rm">${R.city ? esc(R.city) + " \xB7 " : ""}${fmtDay(race)} · ${esc(lbl)}</span></div>`;
       }
-      el.innerHTML = `<div class="txt"><p class="lead">${line}</p></div>${cd}`;
+      setHtml(el, html`<div class="txt"><p class="lead">${line}</p></div>${cd}`);
     }
     $("#plan").addEventListener("click", (e) => {
       const a = e.target.closest("[data-act]");
@@ -3698,14 +3855,14 @@
       const at = ["data-act", "data-w", "data-s", "data-d"].filter((a) => el.hasAttribute(a));
       return at.length ? at.map((a) => `[${a}="${CSS.escape(el.getAttribute(a))}"]`).join("") : null;
     }
-    function modal(html, onMount) {
+    function modal(body, onMount) {
       const root = $("#modalRoot");
       if (!root.firstChild) {
         const a = document.activeElement;
         const o = a && a !== document.body && !a.closest("#modalRoot") && a.id !== "setup" ? a : lastTrigger;
         modalOpener = o ? { el: o, key: openerKey(o) } : null;
       }
-      root.innerHTML = `<div class="modal-bg"><div class="modal" role="dialog" aria-modal="true">${html}</div></div>`;
+      setHtml(root, html`<div class="modal-bg"><div class="modal" role="dialog" aria-modal="true">${body}</div></div>`);
       const bg = root.firstChild;
       bg.addEventListener("click", (e) => {
         if (e.target === bg) closeModal();
@@ -3722,7 +3879,7 @@
       return m;
     }
     function closeModal() {
-      $("#modalRoot").innerHTML = "";
+      clearHtml($("#modalRoot"));
       const o = modalOpener;
       modalOpener = null;
       if (!o) return;
@@ -3758,7 +3915,7 @@
     });
     function confirmBox(title, text, okLabel, ok) {
       modal(
-        `<h2>${esc(title)}</h2><p style="margin:0">${esc(text)}</p><div class="actions"><button class="btn" id="cNo">${t2("cancel")}</button><button class="btn primary" id="cYes">${esc(okLabel)}</button></div>`,
+        html`<h2>${esc(title)}</h2><p style="margin:0">${esc(text)}</p><div class="actions"><button class="btn" id="cNo">${t2("cancel")}</button><button class="btn primary" id="cYes">${esc(okLabel)}</button></div>`,
         (m) => {
           m.querySelector("#cNo").onclick = closeModal;
           m.querySelector("#cYes").onclick = () => {
@@ -3778,20 +3935,20 @@
     const whyOf = (id) => TYPE_DEFS2.some((d) => d[0] === id) ? t2("why_" + id) : "";
     const whyHtml = (id) => {
       const w = whyOf(id);
-      return w ? `<b>${t2("whyLbl")}</b> ${esc(w)}` : "";
+      return w ? html`<b>${t2("whyLbl")}</b> ${esc(w)}` : "";
     };
     function openEditor(wi, id) {
       const w = S.plan.weeks[wi];
       const s = w.sessions.find((x) => x.id === id);
       if (!s) return;
-      const opts = [
-        ...S.types.filter((t3) => t3.on || t3.id === s.typeId).map((t3) => `<option value="${esc(t3.id)}" ${t3.id === s.typeId ? "selected" : ""}>${esc(t3.name)}</option>`),
-        `<option value="race" ${s.typeId === "race" ? "selected" : ""}>${t2("raceDay")}</option>`
-      ].join("");
+      const opts = htmlJoin([
+        ...S.types.filter((t3) => t3.on || t3.id === s.typeId).map((t3) => html`<option value="${esc(t3.id)}" ${t3.id === s.typeId ? "selected" : ""}>${esc(t3.name)}</option>`),
+        html`<option value="race" ${s.typeId === "race" ? "selected" : ""}>${t2("raceDay")}</option>`
+      ]);
       modal(
-        `<h2>${t2("eTitle", { n: w.n, day: DAYS[s.day] })}</h2>
+        html`<h2>${t2("eTitle", { n: w.n, day: DAYS[s.day] })}</h2>
     <div class="row"><div class="field"><label for="eType">${t2("runType")}</label><select id="eType">${opts}</select></div>
-    <div class="field"><label for="eDay">${t2("dayLbl")}</label><select id="eDay">${DAYS.map((d, i) => `<option value="${i}" ${i === s.day ? "selected" : ""}>${d}</option>`).join("")}</select></div></div>
+    <div class="field"><label for="eDay">${t2("dayLbl")}</label><select id="eDay">${htmlJoin(DAYS.map((d, i) => html`<option value="${i}" ${i === s.day ? "selected" : ""}>${d}</option>`))}</select></div></div>
     <p class="hint why" id="eWhy" ${whyOf(s.typeId) ? "" : "hidden"}>${whyHtml(s.typeId)}</p>
     <div class="row"><div class="field"><label for="eKm">${t2("distKm")}</label><input id="eKm" type="number" min="0" step="0.5" value="${esc(s.km)}"></div><div></div></div>
     <div class="field"><label for="eDesc">${t2("desc")}</label><textarea id="eDesc" rows="4">${esc(s.desc)}</textarea></div>
@@ -3807,7 +3964,7 @@
           };
           m.querySelector("#eType").onchange = (ev) => {
             const wy = m.querySelector("#eWhy");
-            wy.innerHTML = whyHtml(ev.target.value);
+            setHtml(wy, whyHtml(ev.target.value));
             wy.hidden = !whyOf(ev.target.value);
             const ty = S.types.find((x) => x.id === ev.target.value);
             if (ty) {
@@ -4172,8 +4329,8 @@
     function sendToWatch(items, title, zipBase) {
       let cur = getDevice();
       modal(
-        `<h2>${t2("sendTitle")}</h2><p class="hint" style="margin:0">${esc(title)}</p>
-    <div class="devices" role="radiogroup" aria-label="${t2("device")}">${DEVICES.map((d) => `<button type="button" role="radio" class="device" data-dev="${d.k}" aria-checked="${d.k === cur}"><b>${esc(d.name())}</b><span>${t2("devFiles", { ext: d.ext })}</span></button>`).join("")}</div>
+        html`<h2>${t2("sendTitle")}</h2><p class="hint" style="margin:0">${esc(title)}</p>
+    <div class="devices" role="radiogroup" aria-label="${t2("device")}">${htmlJoin(DEVICES.map((d) => html`<button type="button" role="radio" class="device" data-dev="${d.k}" aria-checked="${d.k === cur}"><b>${esc(d.name())}</b><span>${t2("devFiles", { ext: d.ext })}</span></button>`))}</div>
     <p class="hint" id="devHelp" style="margin:0"></p>
     <div class="actions"><button class="btn" id="dCancel">${t2("cancel")}</button><button class="btn primary" id="dGo">${t2("download")}</button></div>`,
         (m) => {
@@ -4854,8 +5011,8 @@ ${s.desc}${s.note ? "\n" + t2("note") + ": " + s.note : ""}`).join("\n\n")
       const list = S.saved;
       const bkAt = bkGet().at;
       modal(
-        `<h2>${t2("myPlans")}</h2><p class="hint" style="margin:0">${t2("localOnly")}</p><p class="hint" id="bkLast" style="margin:0">${bkAt > 0 ? t2("bkLast", { d: new Date(bkAt).toLocaleDateString(LOC(), { day: "numeric", month: "short", year: "numeric" }) }) : t2("bkNever")}</p>
-  <div class="plans-list">${list.length ? list.map((p) => `<div class="pl ${p.id === S.planId ? "cur" : ""}"><div class="info"><b>${esc(p.name)}</b><span>${esc(cap2(t2(p.inputs && p.inputs.goal === "fitness" ? "planMetaFit" : "planMeta", { lbl: p.inputs ? distLabel2(p.inputs) : "", w: p.plan ? p.plan.weeks.length : "?", d: p.inputs ? fmtDate2(parseISO2(p.inputs.goal === "fitness" ? p.plan && p.plan.meta.start || p.inputs.startDate : p.inputs.raceDate)) : "" })))}</span></div><button class="btn sm" data-open="${p.id}">${t2("open")}</button><button class="btn sm ghost" data-delp="${p.id}">${t2("del")}</button></div>`).join("") : `<p class="hint" style="margin:0">${t2("noPlans")}</p>`}</div>
+        html`<h2>${t2("myPlans")}</h2><p class="hint" style="margin:0">${t2("localOnly")}</p><p class="hint" id="bkLast" style="margin:0">${bkAt > 0 ? t2("bkLast", { d: new Date(bkAt).toLocaleDateString(LOC(), { day: "numeric", month: "short", year: "numeric" }) }) : t2("bkNever")}</p>
+  <div class="plans-list">${list.length ? htmlJoin(list.map((p) => html`<div class="pl ${p.id === S.planId ? "cur" : ""}"><div class="info"><b>${esc(p.name)}</b><span>${esc(cap2(t2(p.inputs && p.inputs.goal === "fitness" ? "planMetaFit" : "planMeta", { lbl: p.inputs ? distLabel2(p.inputs) : "", w: p.plan ? p.plan.weeks.length : "?", d: p.inputs ? fmtDate2(parseISO2(p.inputs.goal === "fitness" ? p.plan && p.plan.meta.start || p.inputs.startDate : p.inputs.raceDate)) : "" })))}</span></div><button class="btn sm" data-open="${p.id}">${t2("open")}</button><button class="btn sm ghost" data-delp="${p.id}">${t2("del")}</button></div>`)) : html`<p class="hint" style="margin:0">${t2("noPlans")}</p>`}</div>
   <div class="actions"><button class="btn left" id="pImport">${t2("importPlans")}</button><button class="btn" id="pExport" ${list.length ? "" : "disabled"}>${t2("bkSave")}</button><button class="btn" id="pClose">${t2("close")}</button></div>`,
         (m) => {
           m.querySelector("#pClose").onclick = closeModal;
@@ -4968,16 +5125,19 @@ ${s.desc}${s.note ? "\n" + t2("note") + ": " + s.note : ""}`).join("\n\n")
       else delete A.dataset.step;
       nav.hidden = !n;
       if (!n) {
-        nav.innerHTML = "";
+        clearHtml(nav);
         return;
       }
       const ready = !missingSetup2(S.inputs).length && S.plan;
-      const prev = n >= 3 ? ready ? `<div class="intro-prev"><span class="lbl">${t2("loadProfile")}</span><div class="chart">${profileSVG(S.plan.weeks, Math.max(260, (A.clientWidth || 340) - 8))}</div></div>` : `<p class="hint intro-wait">${t2("introWait")}</p>` : "";
-      nav.innerHTML = `${prev}<p class="intro-err" id="introErr" role="alert">${esc(S.introErr || "")}</p>
+      const prev = n >= 3 ? ready ? html`<div class="intro-prev"><span class="lbl">${t2("loadProfile")}</span><div class="chart">${profileSVG(S.plan.weeks, Math.max(260, (A.clientWidth || 340) - 8))}</div></div>` : html`<p class="hint intro-wait">${t2("introWait")}</p>` : "";
+      setHtml(
+        nav,
+        html`${prev}<p class="intro-err" id="introErr" role="alert">${esc(S.introErr || "")}</p>
     <div class="intro-bar"><button type="button" class="btn" data-intro="back" ${n === 1 ? "hidden" : ""}>${t2("introBack")}</button>
     <span class="intro-step">${t2("introStep", { n, name: t2(STEP_NAMES()[n - 1]) })}</span>
     <button type="button" class="btn primary" data-intro="next">${t2(n === 4 ? "introDone" : "introNext")}</button></div>
-    <button type="button" class="linkbtn intro-skip" data-intro="skip">${t2("introSkip")}</button>`;
+    <button type="button" class="linkbtn intro-skip" data-intro="skip">${t2("introSkip")}</button>`
+      );
     }
     function introGo(n) {
       S.intake = n;
@@ -5137,7 +5297,7 @@ ${s.desc}${s.note ? "\n" + t2("note") + ": " + s.note : ""}`).join("\n\n")
         el.textContent = t2(el.dataset.i18n);
       });
       $$("[data-i18n-html]").forEach((el) => {
-        el.innerHTML = t2(el.dataset.i18nHtml);
+        setHtml(el, html`${t2(el.dataset.i18nHtml)}`);
       });
       $$("[data-i18n-ph]").forEach((el) => {
         el.placeholder = t2(el.dataset.i18nPh);

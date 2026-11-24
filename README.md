@@ -104,6 +104,7 @@ CLAUDE.md             rules for working on this repo with Claude Code
 - [jsPDF](https://github.com/parallax/jsPDF) 4.2.1 and [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable) 5.0.9 from cdnjs, loaded only when exporting a PDF, with integrity hashes: if the CDN serves a different file, the browser refuses it.
 - Vendored [`@bibixx/workoutkit`](https://www.npmjs.com/package/@bibixx/workoutkit) 0.2.0 (MIT) in `vendor/workoutkit-0.2.0/`, loaded only when exporting to Apple Watch.
 - Content Security Policy (in a `<meta>` tag): scripts only from the page itself and cdnjs, styles from the page and Google Fonts, network requests only to Open-Meteo, no plugins, forms or `<base>` changes. No inline script is allowed: the app's code is in its own files, so a script injected into the page would not run. Those files are loaded with the version in the URL (`app.js?v=1.11.1`), so a new release never runs with an older cached copy.
+- Rendering: the screen is built with one small `html` template helper (`src/html.js`) that escapes every value by default, and one function that writes it into the page; a lint rule forbids writing HTML any other way, so text from a plan or an imported file can never run as code.
 - Code style: [Prettier](https://prettier.io) (lines up to 120 characters) and [ESLint](https://eslint.org) (recommended rules) on the page scripts, checked in CI and before each commit: `npm run format`, `npm run lint`.
 - Hosted on GitHub Pages from the `main` branch, root folder.
 
@@ -122,7 +123,7 @@ npm ci && npx playwright install chromium webkit
 npm test
 ```
 
-`npm test` runs the engine unit tests in Node, then the browser tests on six desktop and iPhone setups. CI runs them on every push and pull request, and `main` only accepts changes that pass all six. Setups, what each file covers, CI and known issues: [tests/README.md](tests/README.md).
+`npm test` runs the unit tests in Node (plan engine, safe HTML helper), then the browser tests on six desktop and iPhone setups. CI runs them on every push and pull request, and `main` only accepts changes that pass all six. Setups, what each file covers, CI and known issues: [tests/README.md](tests/README.md).
 
 ## Origin and differences from the claude.ai version
 

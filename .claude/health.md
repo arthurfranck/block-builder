@@ -22,7 +22,7 @@ index_html_lines: cat index.html src/app.js | wc -l
 engine_js_lines: wc -l < src/engine.js
 longest_line_index_html: awk '{ if (length($0)>m) m=length($0) } END { print m }' index.html src/app.js
 lines_over_500_chars: awk 'length($0)>500 { n++ } END { print n+0 }' index.html src/app.js
-html_from_strings: grep -oE "innerHTML|outerHTML|insertAdjacentHTML" src/app.js | wc -l
+html_from_strings: grep -oE "innerHTML|outerHTML|insertAdjacentHTML" src/app.js | wc -l  # 0 since BB-78: only src/html.js writes markup
 esc_calls: grep -o "esc(" src/app.js | wc -l
 i18n_en_keys: awk '/^ *en: \{/{f=1;next} /^ *fr: \{/{f=0} f' src/app.js | grep -oE '^ *[A-Za-z0-9_]+:' | wc -l
 test_skip_lines: grep -c "test.skip" tests/*.ts | awk -F: '{ s+=$2 } END { print s }'
@@ -43,7 +43,7 @@ From CLAUDE.md; check each:
 
 ## Known risks
 - Plans live only in `localStorage` (`bb-plans`): lost when site data is cleared or evicted by the browser; the only backup is manual Export (BB-84; ADR 0003).
-- `src/app.js` is one ~4,700-line module (formatted in BB-79; bundled into app.js since BB-86). About 100 lines are still over 160 characters: prose strings and HTML template literals (BB-78). Split: BB-76.
+- `src/app.js` is one ~4,700-line module (formatted in BB-79; bundled into app.js since BB-86). About 100 lines are still over 160 characters: prose strings and HTML template literals (now `html`-tagged and escaped by default since BB-78; shorter once BB-76 splits the views). Split: BB-76.
 - Type checking is strict for `tests/*.ts` but non-strict for `src/app.js`; `src/engine.js` and `tests/engine/*.mjs` are not checked (BB-70, then BB-81).
 - PDF export needs cdnjs (jsPDF 4.2.1, AutoTable 5.0.9) and fails offline; Google Fonts is another outside request.
 - ICS line folding counts characters, not octets (BB-16).

@@ -9,8 +9,8 @@ Browser tests use [Playwright](https://playwright.dev) and [axe-core](https://gi
 ```sh
 npm ci                 # exact versions from package-lock.json
 npx playwright install chromium webkit
-npm test               # engine unit tests, then all six browser setups
-npm run test:engine    # engine unit tests only (Node, no browser)
+npm test               # unit tests, then all six browser setups
+npm run test:engine    # unit tests only: plan engine and safe HTML helper (Node, no browser)
 npm run test:desktop   # or test:mobile, test:chrome
 npm run test:report    # open the last HTML report
 npm run build          # rebuild app.js from src/ (the browser tests run the built app.js)
@@ -38,6 +38,7 @@ Every iOS browser, Chrome included, runs on WebKit, so the iPhone Chrome setup c
 
 | File | Covers |
 |---|---|
+| `unit/html.unit.mjs` | the safe HTML helper (BB-78): values escaped by default, nested and joined markup kept, booleans as text, `esc()` never escaping twice, `setHtml` refusing plain strings |
 | `engine/engine.unit.mjs` | paces, watch workouts, the five athlete profiles against the plan rules at each experience level, what each level changes (BB-49), recovery weeks after the race (BB-42), week 1 within the stated volume (BB-41), a Personal plan with no start date built without the page (BB-79) |
 | `plan-generation.spec.ts` | distances, weeks, dates, runs per week, fitness goal, load profile (phase bands, race flag, current week and today), summary numbers (weeks to go, units, French labels), recovery weeks after the race, script URLs carry the version (BB-74) |
 | `plan-rules.spec.ts` | phase order, taper length, cutback and taper volume, one race on race day, long-run day, weekly increase, goal readiness, hard runs per week, hard runs back to back or next to the long run and no rest day (on the week and in the banner, also after edits), setup warnings for days in a row, a boxed-in long run and 7 runs at their field (BB-27), days in a row and 7 runs a week (setup warnings), week 1 against the volume run now |
