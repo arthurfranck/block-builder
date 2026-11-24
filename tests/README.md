@@ -51,6 +51,15 @@ Every iOS browser, Chrome included, runs on WebKit, so the iPhone Chrome setup c
 | `security.spec.ts` | Content Security Policy present and allowing no inline script, no inline script or inline handler in the page, policy not broken by the page or either export, WorkoutKit not fetched from a CDN, a tampered jsPDF file refused |
 | `file.spec.ts` | the page opened from disk (file://) loads the engine and builds a plan |
 | `a11y.spec.ts` | WCAG 2.1 A/AA checks on each view and dialog, dark and light |
+| `visual.spec.ts` | screenshots of the main screens (plan view and phone settings in dark and light, run editor, My plans, watch dialog, quick workout, display and language panel), compared with Linux baselines on `desktop-chrome` and `iphone-16-safari` only (BB-85) |
+
+## Visual snapshots
+
+`visual.spec.ts` compares the main screens with images in `visual.spec.ts-snapshots/` (ADR 0009). The committed images are Linux ones made in CI, so the spec is skipped on macOS. Outside requests are blocked (the page falls back to system fonts), the date is frozen and the footer version is replaced, so an image only changes when the page does.
+
+- **A change fails it:** open the HTML report artifact of the failing job; it shows the expected, actual and diff images.
+- **The look changed on purpose:** run the **Visual baselines** workflow on the branch (Actions tab, or push a commit whose message contains `[snapshots]`), download its `visual-baselines` artifact into `tests/visual.spec.ts-snapshots/`, and commit the images in the same pull request.
+- **Check a refactor locally first:** `VISUAL_LOCAL=1 npx playwright test tests/visual.spec.ts --project=desktop-chrome --project=iphone-16-safari` once on the old code (it writes macOS baselines, git-ignored), then again on the new code.
 
 ## Continuous integration
 
@@ -60,7 +69,7 @@ A separate `static checks` job type-checks `tests/*.ts` and `playwright.config.t
 
 ## Test tool versions
 
-The lockfile pins the exact test tool versions, so CI and a local run use the same Playwright and axe-core. Dependabot (`.github/dependabot.yml`) opens a weekly pull request for newer test tools and GitHub Actions. To move to newer versions by hand, run `npm update`, set the Playwright container image in `.github/workflows/tests.yml` to the same version (CI stops with a message if they differ), and commit both in a pull request.
+The lockfile pins the exact test tool versions, so CI and a local run use the same Playwright and axe-core. Dependabot (`.github/dependabot.yml`) opens a weekly pull request for newer test tools and GitHub Actions. To move to newer versions by hand, run `npm update`, set the Playwright container image in `.github/workflows/tests.yml` and `visual-baselines.yml` to the same version, refresh the visual baselines if rendering changed (CI stops with a message if they differ), and commit both in a pull request.
 
 ## Known issues
 

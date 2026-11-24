@@ -21,6 +21,7 @@
 3. **Tests:**
    - Behaviour change → test change. Engine change → Node test in `tests/engine/engine.unit.mjs`; re-check the five athlete profiles when plan building changes.
    - Run `npm test`. Exception: copy, labels or tiny CSS → only the affected spec(s) on desktop Chrome plus the version/changelog test, and say so in the commit; CI runs the rest. No WebKit locally → `npm run test:chrome` and say WebKit wasn't run.
+   - Look changed on purpose → fresh visual baselines from the Visual baselines workflow, committed in the same PR (`tests/README.md`, Visual snapshots). Look changed by accident → fix the page.
    - Never delete or loosen a failing test: fix the page, or ask.
    - Fixing a known issue (`test.fail`, or an id in `KNOWN` in `tests/a11y.spec.ts`) → remove it and its Known issues bullet.
    - Saved-plan format change → `tests/fixtures/plans-v1.json` must still import; add a fixture for the new version.

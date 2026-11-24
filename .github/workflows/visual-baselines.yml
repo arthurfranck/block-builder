@@ -1,0 +1,40 @@
+name: Visual baselines
+
+# BB-85, ADR 0009: makes the Linux images tests/visual.spec.ts compares against, in the same Playwright
+# image as the Tests jobs, and uploads them. It never commits: download the artifact and commit the images
+# in the pull request that changes the look. Runs by hand, or on a branch push whose commit message has [snapshots].
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  baselines:
+    if: ${{ github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[snapshots]') }}
+    runs-on: ubuntu-latest
+    # Must match the image in tests.yml and playwright-core in package-lock.json.
+    container:
+      image: mcr.microsoft.com/playwright:v1.65.1-noble
+      options: --user 1001 --ipc=host
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Check Playwright matches the image
+        run: |
+          want=$(node -p "require('./package-lock.json').packages['node_modules/playwright-core'].version")
+          grep -q "mcr.microsoft.com/playwright:v$want-" .github/workflows/visual-baselines.yml || { echo "::error::package-lock.json has Playwright $want: set the container image in visual-baselines.yml to v$want"; exit 1; }
+      - name: Make the baselines
+        run: rm -rf tests/visual.spec.ts-snapshots && npx playwright test tests/visual.spec.ts --project=desktop-chrome --project=iphone-16-safari --update-snapshots=all
+      - uses: actions/upload-artifact@v7
+        with:
+          name: visual-baselines
+          path: tests/visual.spec.ts-snapshots/
+          retention-days: 14

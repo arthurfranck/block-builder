@@ -10,6 +10,9 @@ const CHROME_IOS_UA =
 
 const PORT = 4173;
 
+/* Visual snapshots (BB-85, ADR 0009) run on one Chromium desktop and one WebKit phone only. */
+const NO_VISUAL = { testIgnore: /visual\.spec\.ts/ };
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -26,11 +29,11 @@ export default defineConfig({
   },
   projects: [
     { name: 'desktop-chrome', use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } } },
-    { name: 'desktop-safari', use: { ...devices['Desktop Safari'], viewport: { width: 1440, height: 900 } } },
+    { name: 'desktop-safari', ...NO_VISUAL, use: { ...devices['Desktop Safari'], viewport: { width: 1440, height: 900 } } },
     { name: 'iphone-16-safari', use: { ...devices['iPhone 16'] } },
-    { name: 'iphone-16-pro-max-safari', use: { ...devices['iPhone 16 Pro Max'] } },
-    { name: 'iphone-16-chrome', use: { ...devices['iPhone 16'], userAgent: CHROME_IOS_UA } },
-    { name: 'iphone-17-pro-max-safari', use: { ...devices['iPhone 17 Pro Max'] } },
+    { name: 'iphone-16-pro-max-safari', ...NO_VISUAL, use: { ...devices['iPhone 16 Pro Max'] } },
+    { name: 'iphone-16-chrome', ...NO_VISUAL, use: { ...devices['iPhone 16'], userAgent: CHROME_IOS_UA } },
+    { name: 'iphone-17-pro-max-safari', ...NO_VISUAL, use: { ...devices['iPhone 17 Pro Max'] } },
   ],
   webServer: {
     command: `node tests/serve.mjs ${PORT}`,

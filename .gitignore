@@ -1,6 +1,8 @@
 node_modules/
 test-results/
 playwright-report/
+# Visual baselines are Linux images made in CI (BB-85); local macOS ones stay here
+tests/*-snapshots/*-darwin.png
 
 # Secrets and local clutter
 .env
