@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.13.2] - 2026-11-24
+
+### Changed
+- Nothing changes on the page. The app now loads as one script instead of two, built from the source code in `src/` (BB-86).
+
 ## [1.13.1] - 2026-11-24
 
 ### Changed

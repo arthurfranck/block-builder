@@ -1,11 +1,9 @@
 /* Plan engine unit tests (BB-7): run with `npm run test:engine` (Node's own test runner, no browser).
    The five athlete profiles come from the 2026-11-09 athlete audit (backlog "Athlete test profiles").
-   Text is not translated here: BBEngine without setLocale returns keys, so warnings start with their key. */
+   Text is not translated here: the engine without setLocale returns keys, so warnings start with their key. */
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { createRequire } from 'node:module';
-
-const E = createRequire(import.meta.url)('../../engine.js');
+import * as E from '../../src/engine.js';
 
 const types = (on) => E.TYPE_DEFS.map(([id, kind, dflt, locked, ph]) => ({
   id, name: id, kind, on: on ? on.includes(id) || locked || id === 'long' : dflt, phases: (ph || E.PHASES).slice(), tpl: '',

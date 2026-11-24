@@ -1,10 +1,20 @@
-// ESLint (BB-79). Flat config, ready for ES modules (ADR 0008): files under src/ will be linted as modules
-// once BB-86 adds the build. Today's page scripts are classic scripts, so they are linted as scripts.
+// ESLint (BB-79). src/ holds ES modules (ADR 0008, BB-86); app.js is the esbuild bundle of them and is not linted.
+// theme.js stays a classic script, loaded in <head> before the page paints.
 import js from "@eslint/js";
 import globals from "globals";
 
 export default [
-  { ignores: ["node_modules/", "vendor/", "test-results/", "playwright-report/", "tests/**/*.ts"] },
+  {
+    ignores: [
+      "node_modules/",
+      "vendor/",
+      "test-results/",
+      "playwright-report/",
+      "tests/**/*.ts",
+      "app.js",
+      "app.js.map",
+    ],
+  },
   js.configs.recommended,
   {
     rules: {
@@ -14,15 +24,15 @@ export default [
     },
   },
   {
-    files: ["app.js", "theme.js", "engine.js"],
-    languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: "script",
-      globals: { ...globals.browser, BBEngine: "readonly", module: "readonly" },
-    },
+    files: ["theme.js"],
+    languageOptions: { ecmaVersion: 2022, sourceType: "script", globals: { ...globals.browser } },
   },
   {
-    files: ["src/**/*.js", "**/*.mjs"],
+    files: ["src/**/*.js"],
+    languageOptions: { ecmaVersion: 2022, sourceType: "module", globals: { ...globals.browser } },
+  },
+  {
+    files: ["**/*.mjs"],
     languageOptions: { ecmaVersion: 2022, sourceType: "module", globals: { ...globals.node } },
   },
 ];

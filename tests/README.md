@@ -1,6 +1,6 @@
 # Block Builder tests
 
-Browser tests use [Playwright](https://playwright.dev) and [axe-core](https://github.com/dequelabs/axe-core-npm) for accessibility, and run on six setups. The plan engine (`engine.js`) also has Node unit tests in `engine/` (no browser): paces, watch workouts, and the five athlete profiles from the November audit checked against the plan rules (taper length, cutbacks, +10% a week, hard runs per week and their spacing, nothing hard near race day, long run share, duration and growth).
+Browser tests use [Playwright](https://playwright.dev) and [axe-core](https://github.com/dequelabs/axe-core-npm) for accessibility, and run on six setups. The plan engine (`src/engine.js`) also has Node unit tests in `engine/` (no browser): paces, watch workouts, and the five athlete profiles from the November audit checked against the plan rules (taper length, cutbacks, +10% a week, hard runs per week and their spacing, nothing hard near race day, long run share, duration and growth).
 
 `package.json`, `package-lock.json`, `playwright.config.ts` and this folder are for the tests only; the page doesn't use them.
 
@@ -13,7 +13,8 @@ npm test               # engine unit tests, then all six browser setups
 npm run test:engine    # engine unit tests only (Node, no browser)
 npm run test:desktop   # or test:mobile, test:chrome
 npm run test:report    # open the last HTML report
-npm run typecheck      # type-check the Playwright tests (strict) and app.js (non-strict)
+npm run build          # rebuild app.js from src/ (the browser tests run the built app.js)
+npm run typecheck      # type-check the Playwright tests (strict) and src/app.js (non-strict)
 npm run lint           # ESLint on the page scripts and engine tests
 npm run format         # Prettier on the page scripts (format:check only checks)
 ```
@@ -51,7 +52,7 @@ Every iOS browser, Chrome included, runs on WebKit, so the iPhone Chrome setup c
 | `mobile.spec.ts` | Edit plan sheet once a plan is complete, Plan/Settings tabs while it is not, gear on the brand row and plan name on its own line, 16px fields, tap targets, week cards with no sideways scroll and folded earlier weeks; side-by-side layout and the week grid kept on desktop; bottom sheets on phones, centred dialogs on desktop |
 | `layout.spec.ts` | nothing sticks out of the page, run colours follow effort (setup chips match the plan grid), gear menu (theme and language hidden until opened, Escape and outside tap close it), theme picker (dark default, light kept after reload, Auto follows the device), volt accent only on today and the main button, no script errors, type (Archivo for the brand and big numbers, Inter elsewhere, capitals only on small labels), cards separated by surface instead of borders with only Today lifted |
 | `security.spec.ts` | Content Security Policy present and allowing no inline script, no inline script or inline handler in the page, policy not broken by the page or either export, WorkoutKit not fetched from a CDN, a tampered jsPDF file refused |
-| `file.spec.ts` | the page opened from disk (file://) loads the engine and builds a plan |
+| `file.spec.ts` | the page opened from disk (file://) runs the bundled app and engine and builds a plan |
 | `a11y.spec.ts` | WCAG 2.1 A/AA checks on each view and dialog, dark and light |
 | `visual.spec.ts` | screenshots of the main screens (plan view and phone settings in dark and light, run editor, My plans, watch dialog, quick workout, display and language panel), compared with Linux baselines on `desktop-chrome` and `iphone-16-safari` only (BB-85) |
 
@@ -67,7 +68,7 @@ Every iOS browser, Chrome included, runs on WebKit, so the iPhone Chrome setup c
 
 GitHub Actions runs every setup on each push and pull request (`.github/workflows/tests.yml`) and keeps each setup's HTML report for 14 days. Jobs run inside Playwright's own Docker image, which already has the browsers and their system libraries, so nothing is installed through apt. `main` is protected: all six setups must pass before a pull request can merge or a push can land, admins included, and force-pushes are blocked. GitHub Pages publishes `main` as soon as it changes, so only tested code goes live.
 
-A separate `static checks` job type-checks `tests/*.ts` and `playwright.config.ts` with `tsc` (strict, `tsconfig.json`, no emit), runs ESLint and the Prettier check on the page scripts (BB-79), and runs `npm audit --audit-level=high`, so a high or critical advisory in a test dependency fails the run. It also checks `app.js` and `theme.js` (`tsconfig.app.json`, non-strict: wrong DOM members, duplicate keys, type mix-ups; `app.js` has `// @ts-check` for editors). `engine.js` and the engine unit tests (`.mjs`) are not type-checked yet.
+A separate `static checks` job type-checks `tests/*.ts` and `playwright.config.ts` with `tsc` (strict, `tsconfig.json`, no emit), runs ESLint and the Prettier check on the page code (BB-79), checks the committed `app.js` matches a fresh build of `src/` (BB-86), and runs `npm audit --audit-level=high`, so a high or critical advisory in a test dependency fails the run. It also checks `src/app.js` and `theme.js` (`tsconfig.app.json`, non-strict: wrong DOM members, duplicate keys, type mix-ups; `src/app.js` has `// @ts-check` for editors). `src/engine.js` and the engine unit tests (`.mjs`) are not type-checked yet (BB-70); the app sees the engine as untyped until then.
 
 ## Test tool versions
 

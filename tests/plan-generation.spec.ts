@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 const read = (f: string) => readFileSync(path.join(__dirname, '..', f), 'utf8');
-const VERSION = read('app.js').match(/const VERSION = "([^"]+)"/)![1];
+const VERSION = read('src/app.js').match(/const VERSION = "([^"]+)"/)![1];
 
 test.describe('default example plan', () => {
   test('opens on a 12-week half marathon plan ending on race day', async ({ app, page }) => {
@@ -25,7 +25,8 @@ test.describe('default example plan', () => {
 
   test('index.html loads every script of its own with ?v= set to the page version (BB-74)', () => {
     const srcs = [...read('index.html').matchAll(/<script src="([^"]+)"/g)].map((m) => m[1]);
-    expect(srcs).toEqual([`theme.js?v=${VERSION}`, `engine.js?v=${VERSION}`, `app.js?v=${VERSION}`]);
+    // BB-86: the engine is bundled into app.js, so two scripts.
+    expect(srcs).toEqual([`theme.js?v=${VERSION}`, `app.js?v=${VERSION}`]);
   });
 
   test('the latest CHANGELOG.md entry is the page version', () => {

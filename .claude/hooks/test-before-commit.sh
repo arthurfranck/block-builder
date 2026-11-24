@@ -1,13 +1,24 @@
 #!/bin/sh
-# Claude Code PreToolUse hook: before a `git commit`, if an app file (index.html, app.js, theme.js, engine.js) differs from HEAD
-# (staged or not), run lint, the format check and the desktop Chrome tests, and block the commit if any fails.
+# Claude Code PreToolUse hook: before a `git commit`, if an app file (index.html, theme.js, src/, or the built app.js) differs
+# from HEAD (staged or not), check the bundle is built from src/, run lint, the format check and the desktop Chrome tests,
+# and block the commit if any fails.
 input=$(cat)
 case "$input" in *"git commit"*) ;; *) exit 0 ;; esac
 cd "${CLAUDE_PROJECT_DIR:-.}" || exit 0
-git diff --quiet HEAD -- index.html app.js theme.js engine.js 2>/dev/null && exit 0
+git diff --quiet HEAD -- index.html theme.js src app.js app.js.map 2>/dev/null && exit 0
 # Node may live outside the default PATH (see CLAUDE.md)
 [ -d "$HOME/.local/node/bin" ] && PATH="$HOME/.local/node/bin:$PATH"
 log=$(mktemp)
+# BB-86: app.js is the esbuild bundle of src/. Rebuild; if that changed it, the commit would ship a stale bundle.
+if ! npm run --silent build >"$log" 2>&1; then
+  { echo "Commit blocked: 'npm run build' failed."; tail -40 "$log"; } >&2
+  rm -f "$log"; exit 2
+fi
+# A fresh build that differs from what is staged means the staged bundle is stale.
+if ! git diff --quiet -- app.js app.js.map; then
+  echo "Commit blocked: app.js was out of date with src/ and has just been rebuilt. Stage app.js and app.js.map, then commit again." >&2
+  rm -f "$log"; exit 2
+fi
 # BB-79: lint and formatting first, they take a second.
 if ! { npm run --silent lint && npm run --silent format:check; } >"$log" 2>&1; then
   { echo "Commit blocked: 'npm run lint' or 'npm run format:check' failed. Run 'npm run format', fix the lint errors, then commit again."; tail -40 "$log"; } >&2
