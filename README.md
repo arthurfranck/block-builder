@@ -103,6 +103,7 @@ CLAUDE.md             rules for working on this repo with Claude Code
 - [jsPDF](https://github.com/parallax/jsPDF) 4.2.1 and [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable) 5.0.9 from cdnjs, loaded only when exporting a PDF, with integrity hashes: if the CDN serves a different file, the browser refuses it.
 - Vendored [`@bibixx/workoutkit`](https://www.npmjs.com/package/@bibixx/workoutkit) 0.2.0 (MIT) in `vendor/workoutkit-0.2.0/`, loaded only when exporting to Apple Watch.
 - Content Security Policy (in a `<meta>` tag): scripts only from the page itself and cdnjs, styles from the page and Google Fonts, network requests only to Open-Meteo, no plugins, forms or `<base>` changes. No inline script is allowed: the app's code is in its own files, so a script injected into the page would not run. Those files are loaded with the version in the URL (`app.js?v=1.11.1`), so a new release never runs with an older cached copy.
+- Code style: [Prettier](https://prettier.io) (lines up to 120 characters) and [ESLint](https://eslint.org) (recommended rules) on the page scripts, checked in CI and before each commit: `npm run format`, `npm run lint`.
 - Hosted on GitHub Pages from the `main` branch, root folder.
 
 ### Run locally

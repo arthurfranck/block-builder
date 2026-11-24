@@ -5,7 +5,8 @@ import path from 'node:path';
 /* The I18N object is read straight from app.js, so these checks need no browser. */
 function loadI18N(): Record<'en' | 'fr', Record<string, string>> {
   const html = readFileSync(path.join(__dirname, '..', 'app.js'), 'utf8');
-  const m = /const I18N=(\{[\s\S]*?\n\}\});/.exec(html);
+  // Prettier layout (BB-79): `const I18N = {` ... `\n  };` inside the app's wrapper function.
+  const m = /const I18N = (\{[\s\S]*?\n\s*\});/.exec(html);
   if (!m) throw new Error('I18N object not found in app.js');
   return new Function(`return (${m[1].replace(/;$/, '')})`)();
 }

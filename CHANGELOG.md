@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.13.1] - 2026-11-24
+
+### Changed
+- Nothing changes on the page. The code is now formatted and checked automatically, which makes the coming clean-up of the app's code safer (BB-79).
+
 ## [1.13.0] - 2026-11-23
 
 ### Changed
