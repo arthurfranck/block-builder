@@ -11,8 +11,8 @@
     "test:report": "playwright show-report",
     "typecheck": "tsc -p . && tsc -p tsconfig.app.json",
     "lint": "eslint .",
-    "format": "prettier --write app.js engine.js theme.js eslint.config.mjs",
-    "format:check": "prettier --check app.js engine.js theme.js eslint.config.mjs"
+    "format": "prettier --write src/app.js src/engine.js theme.js eslint.config.mjs",
+    "format:check": "prettier --check src/app.js src/engine.js theme.js eslint.config.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.0",

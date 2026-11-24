@@ -3216,8 +3216,8 @@
   function loadWK() {
     if (!WK)
       WK = Promise.all([
-        import("./vendor/workoutkit-0.2.0/index.js"),
-        import("./vendor/workoutkit-0.2.0/encode.js"),
+        import("../vendor/workoutkit-0.2.0/index.js"),
+        import("../vendor/workoutkit-0.2.0/encode.js"),
       ]).catch((e) => {
         WK = null;
         throw e;

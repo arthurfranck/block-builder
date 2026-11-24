@@ -14,7 +14,7 @@ export default [
     },
   },
   {
-    files: ["app.js", "theme.js", "engine.js"],
+    files: ["src/app.js", "theme.js", "src/engine.js"],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: "script",
@@ -22,7 +22,7 @@ export default [
     },
   },
   {
-    files: ["src/**/*.js", "**/*.mjs"],
+    files: ["**/*.mjs"],
     languageOptions: { ecmaVersion: 2022, sourceType: "module", globals: { ...globals.node } },
   },
 ];

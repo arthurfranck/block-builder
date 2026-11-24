@@ -10,5 +10,5 @@
     "skipLibCheck": true,
     "strict": false
   },
-  "files": ["types/globals.d.ts", "theme.js", "app.js"]
+  "files": ["types/globals.d.ts", "theme.js", "src/app.js"]
 }

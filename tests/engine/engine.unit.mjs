@@ -5,7 +5,7 @@ import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
 
-const E = createRequire(import.meta.url)('../../engine.js');
+const E = createRequire(import.meta.url)('../../src/engine.js');
 
 const types = (on) => E.TYPE_DEFS.map(([id, kind, dflt, locked, ph]) => ({
   id, name: id, kind, on: on ? on.includes(id) || locked || id === 'long' : dflt, phases: (ph || E.PHASES).slice(), tpl: '',

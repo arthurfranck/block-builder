@@ -4,7 +4,7 @@
 input=$(cat)
 case "$input" in *"git commit"*) ;; *) exit 0 ;; esac
 cd "${CLAUDE_PROJECT_DIR:-.}" || exit 0
-git diff --quiet HEAD -- index.html app.js theme.js engine.js 2>/dev/null && exit 0
+git diff --quiet HEAD -- index.html theme.js src 2>/dev/null && exit 0
 # Node may live outside the default PATH (see CLAUDE.md)
 [ -d "$HOME/.local/node/bin" ] && PATH="$HOME/.local/node/bin:$PATH"
 log=$(mktemp)
