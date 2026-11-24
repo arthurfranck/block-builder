@@ -30,7 +30,22 @@ export default [
   {
     files: ["src/**/*.js"],
     languageOptions: { ecmaVersion: 2022, sourceType: "module", globals: { ...globals.browser } },
+    rules: {
+      // BB-78: markup goes through html`` and setHtml (src/html.js), which escape by default.
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "AssignmentExpression > MemberExpression.left[property.name=/^(innerHTML|outerHTML)$/]",
+          message: "Use setHtml(el, html`...`) from src/html.js: it escapes values by default (BB-78).",
+        },
+        {
+          selector: "CallExpression[callee.property.name=/^(insertAdjacentHTML|write|writeln)$/]",
+          message: "Use setHtml(el, html`...`) from src/html.js: it escapes values by default (BB-78).",
+        },
+      ],
+    },
   },
+  { files: ["src/html.js"], rules: { "no-restricted-syntax": "off" } },
   {
     files: ["**/*.mjs"],
     languageOptions: { ecmaVersion: 2022, sourceType: "module", globals: { ...globals.node } },

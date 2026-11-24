@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.13.3] - 2026-11-24
+
+### Security
+- Text from your plans, races, notes and imported files is now always shown as text: the page escapes it by default wherever it builds the screen, instead of relying on each place to remember. Nothing changes on screen (BB-78).
+
 ## [1.13.2] - 2026-11-24
 
 ### Changed
