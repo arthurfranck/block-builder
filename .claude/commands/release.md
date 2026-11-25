@@ -1,5 +1,5 @@
 ---
-description: Ship one backlog item - branch, version bump, CHANGELOG, README, tests, commit, PR
+description: Ship one backlog item - branch, version bump, CHANGELOG, README, tests, commit, review, PR
 argument-hint: <backlog id, e.g. BB-25> [patch|minor|major]
 ---
 
@@ -11,5 +11,6 @@ Release the change for backlog item `$1` (version bump: `$2`, default `patch`). 
 4. **Docs:** reread them against `index.html` and `src/` and update what is no longer true: `docs/features.md` (rules and details), `README.md` (one line per feature, How to use it, Privacy and storage, tech) and `tests/README.md` (test table, known issues). No changelog line in the README.
 5. **Tests:** a behaviour change needs a test change. Run the targeted tests that CLAUDE.md sets out (Every change, 3. Tests), never the full `npm test` locally. Never loosen a failing test. Node is in `~/.local/node/bin` if `npm` is not on PATH.
 6. **Commit:** `feat|fix|chore: <what> (vX.Y.Z, $1)`, body with what changed, the specs and setups run locally with their counts, and that CI runs the rest. The project hook re-runs the Chrome tests if an app file changed and blocks the commit on failure.
-7. **PR:** push the branch and open a PR with `gh pr create` (GitHub CLI may be at `~/.local/bin/gh`). Title ends with `($1)`; body says what changed, how it was checked, and the version.
-8. **Report:** PR link, version, tests run. After the merge, the item's row is removed from `../backlog-block-builder.md` (Active) and added at the top of the Done log in `../backlog-block-builder-done.md`, with what it brought; both files' dates bumped.
+7. **Review:** before the PR, run the review that `~/.claude/CLAUDE.md` sets out (Pull requests): the `code-review` skill at `medium` on the branch. Fix the findings that hold up (tests again, per step 5), commit, and keep the list of findings and what was done for the PR body.
+8. **PR:** push the branch and open a PR with `gh pr create` (GitHub CLI may be at `~/.local/bin/gh`). Title ends with `($1)`; body says what changed, how it was checked, the review findings and what was done with each, and the version.
+9. **Report:** PR link, version, tests run, review findings. After the merge, the item's row is removed from `../backlog-block-builder.md` (Active) and added at the top of the Done log in `../backlog-block-builder-done.md`, with what it brought; both files' dates bumped.
