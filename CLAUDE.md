@@ -9,7 +9,7 @@
 - Backlog: `../backlog-block-builder.md`, ids `BB-<n>`, edited with the `tool-backlog` skill. Open items only; Done log and Dropped live in `../backlog-block-builder-done.md`.
 - Completing or dropping an item = move it, in the same edit: remove its row from the Active table, add it at the top of the Done log or Dropped table in the done file, bump "Last updated" in both. Never leave a done/dropped item in Active or an open item in the done file; an ID exists in exactly one file. Next ID = highest across both files + 1. Whenever you touch the backlog, check the two files are in sync (no shared IDs, no Done/Dropped status in Active) and fix any drift.
 - Rank by dependencies, not score alone: never put an item above the one that would kill, absorb or rework it ("I don't want to implement a feature if it is going to be killed 3 versions later").
-- Report briefly: PR link, version, tests run, review findings, what was not checked.
+- Report briefly: PR link, version, tests run, review findings (when a review ran), what was not checked.
 
 ## Every change to `index.html`, `theme.js` or `src/`, in the same commit
 1. **Version:** bump `const VERSION` in `src/app.js` (semver) and the matching `?v=` on the two script tags in `index.html` (a test checks) and add `## [x.y.z] - YYYY-MM-DD` at the top of `CHANGELOG.md` (Keep a Changelog headings, written for the runner, ending `(BB-n)`). Tests check footer and changelog match; no test edit needed.
