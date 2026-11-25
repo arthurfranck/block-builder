@@ -1,4 +1,4 @@
-import { test, expect, zipNames } from './helpers';
+import { test, expect, zipNames, settled } from './helpers';
 
 /* BB-58 quick workout: one workout from the run types, sent to a watch without touching the plan. */
 const sheet = (page: import('@playwright/test').Page) => page.locator('#modalRoot .modal');
@@ -239,7 +239,7 @@ test('a typed target pace works without any race time', async ({ app, page }) =>
 test('the sheet fits inside the visible screen', async ({ app, page }) => {
   await openQuick(app);
   // measure the sheet at rest, once it has finished sliding up on phones (BB-33)
-  await sheet(page).evaluate((e) => Promise.all(e.getAnimations().map((a) => a.finished)));
+  await settled(sheet(page));
   const box = await sheet(page).boundingBox();
   const h = await page.evaluate(() => window.innerHeight);
   expect(box!.y).toBeGreaterThanOrEqual(0);

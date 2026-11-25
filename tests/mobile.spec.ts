@@ -1,4 +1,4 @@
-import { test, expect, mobileOnly, desktopOnly } from './helpers';
+import { test, expect, mobileOnly, desktopOnly, settled } from './helpers';
 
 test.describe('phone layout', () => {
   test.beforeEach(({ mobile }) => mobileOnly(mobile));
@@ -33,7 +33,7 @@ test.describe('phone layout', () => {
     await expect(sheet).toHaveAttribute('aria-modal', 'true');
     await expect(sheet.locator('#sheetTitle')).toHaveText('Edit plan');
     await expect(sheet.locator('.sec h3')).toHaveText(['Goal', 'Race', 'Your running now', 'Week shape', 'Run types']);
-    await sheet.evaluate((e) => Promise.all(e.getAnimations().map((a) => a.finished)));
+    await settled(sheet);
     const b = (await sheet.boundingBox())!, v = page.viewportSize()!;
     expect(Math.abs(b.y + b.height - v.height)).toBeLessThanOrEqual(1);
     expect(Math.round(b.width)).toBe(v.width);
@@ -160,7 +160,7 @@ test.describe('phone layout', () => {
     for (const open of [() => app.session(0, 0).tap(), () => page.locator('#btnPlans').tap()]) {
       await open();
       const m = app.modal();
-      await m.evaluate((e) => Promise.all(e.getAnimations().map((a) => a.finished)));
+      await settled(m);
       const b = (await m.boundingBox())!;
       expect(b.x).toBe(0);
       expect(Math.round(b.width)).toBe(width);

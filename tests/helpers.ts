@@ -27,6 +27,22 @@ export { expect };
 export const desktopOnly = (mobile: boolean) => test.skip(mobile, 'desktop-only behaviour');
 export const mobileOnly = (mobile: boolean) => test.skip(!mobile, 'phone-only behaviour');
 
+/** Wait until an element is at rest (BB-73): the animations running on it or on any element it sits in (e.g. a sheet
+    sliding up, BB-33) have finished. Endless animations are ignored, and a cancelled one counts as finished. */
+export async function settled(l: Locator) {
+  await l.evaluate((e) =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => {
+          const t = (a.effect as KeyframeEffect | null)?.target;
+          return t instanceof Element && t.contains(e) && Number.isFinite(a.effect!.getComputedTiming().endTime);
+        })
+        .map((a) => a.finished.catch(() => {})),
+    ),
+  );
+}
+
 export class App {
   constructor(readonly page: Page, readonly mobile: boolean) {}
 
@@ -46,6 +62,8 @@ export class App {
       else if (await this.page.locator('#mtabs').isVisible()) await this.page.locator('#mtabs [data-tab="setup"]').click();
     }
     await expect(this.page.locator('#setup')).toBeVisible();
+    /* BB-73: the sheet slides up for 0.26 s; let it come to rest so a test never measures it mid-animation */
+    await settled(this.page.locator('#setup'));
   }
   async showPlan() {
     if (this.mobile) {
