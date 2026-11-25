@@ -31,7 +31,7 @@ For runners. Every rule and number is in [Features in detail](docs/features.md).
 - **Quick workout:** one run, built and sent in seconds, optionally added to the plan.
 - **Race countdown:** optional, with a link to the race page.
 - **Exports:** Apple Watch (`.workout`), Garmin and other devices (`.fit`), calendar (`.ics`), spreadsheet (`.csv`) and printable PDF.
-- **Your way:** English or French, dark, light or auto theme, phone layout with a card per week, keyboard and screen reader support.
+- **Your way:** English or French, dark, light or auto theme, runs shown in km or in minutes, phone layout with a card per week, keyboard and screen reader support.
 
 ## Privacy and storage
 
@@ -41,6 +41,7 @@ There are no accounts, no server and no tracking. Everything stays in your brows
 |---|---|
 | `bb-plans` | your saved plans |
 | `bb-theme`, `bb-lang` | theme and language |
+| `bb-run-unit` | runs shown in km or in minutes |
 | `bb-device` | the last watch you sent to |
 | `bb-export-fmt` | the last plan export format |
 | `bb-wx`, `bb-wx-open` | the weather city, and whether the forecast is open |

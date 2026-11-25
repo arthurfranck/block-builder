@@ -1050,7 +1050,12 @@
   var BBEngine = engine_exports;
   (() => {
     "use strict";
-    const VERSION = "1.13.3";
+    const VERSION = "1.14.0";
+    let RUN_UNIT = "d";
+    try {
+      if (localStorage.getItem("bb-run-unit") === "t") RUN_UNIT = "t";
+    } catch (_) {
+    }
     const $ = (s) => document.querySelector(s);
     const $$ = (s) => document.querySelectorAll(s);
     const cardDetails = (s) => document.querySelector(s);
@@ -1099,6 +1104,10 @@
         thLight: "Light",
         thAuto: "Auto",
         thHint: "Auto follows your device.",
+        runUnit: "Runs shown in",
+        ruKm: "km",
+        ruMin: "minutes",
+        ruHint: "Minutes are estimated from your paces. The plan is still built in km.",
         prefs: "Display and language",
         distance: "Distance",
         customKm: "Custom distance (km)",
@@ -1345,7 +1354,7 @@
         hStarts: "Week 1 starts Monday {d}.",
         hInWeek: "You're in week {n} of {t}, {phase} phase{cut}.",
         hCut: ", a cutback week",
-        hNext: " Next up {when}: <b>{name}, {km} km</b>.",
+        hNext: " Next up {when}: <b>{name}, {amt}</b>.",
         today: "today",
         dayOne: "day",
         dayMany: "days",
@@ -1360,7 +1369,7 @@
         notePhOwn: "Your own note",
         deleteRun: "Delete run",
         saveChanges: "Save changes",
-        sendTitleRun: "Week {n}, {day}: {name}, {km} km",
+        sendTitleRun: "Week {n}, {day}: {name}, {amt}",
         sendTitleWeek: "Week {n}: {c} runs",
         sendTitleAll: "Whole plan: {c} runs",
         rebuildQ: "Rebuild the plan?",
@@ -1433,9 +1442,9 @@
         tdWeek: "Week {n} \xB7 {phase}",
         tdRest: "Rest day",
         tdRestT: "No run planned today.",
-        tdNext: "Next: <b>{when}</b>, {name} {km} km",
+        tdNext: "Next: <b>{when}</b>, {name} {amt}",
         tdBefore: "Plan starts {d}",
-        tdBeforeT: "First run: <b>{when}</b>, {name} {km} km",
+        tdBeforeT: "First run: <b>{when}</b>, {name} {amt}",
         tdDone: "Plan finished",
         tdDoneT: "The last week ended on {d}.",
         tdEdit: "Edit",
@@ -1567,6 +1576,10 @@
         thLight: "Clair",
         thAuto: "Auto",
         thHint: "Auto suit le r\xE9glage de l'appareil.",
+        runUnit: "Sorties affich\xE9es en",
+        ruKm: "km",
+        ruMin: "minutes",
+        ruHint: "Les minutes sont estim\xE9es d'apr\xE8s vos allures. Le plan reste construit en km.",
         prefs: "Affichage et langue",
         distance: "Distance",
         customKm: "Distance personnalis\xE9e (km)",
@@ -1813,7 +1826,7 @@
         hStarts: "La semaine 1 commence le lundi {d}.",
         hInWeek: "Vous \xEAtes en semaine {n} sur {t}, phase {phase}{cut}.",
         hCut: ", semaine all\xE9g\xE9e",
-        hNext: " Prochaine s\xE9ance {when} : <b>{name}, {km} km</b>.",
+        hNext: " Prochaine s\xE9ance {when} : <b>{name}, {amt}</b>.",
         today: "aujourd'hui",
         dayOne: "jour",
         dayMany: "jours",
@@ -1828,7 +1841,7 @@
         notePhOwn: "Votre note",
         deleteRun: "Supprimer la sortie",
         saveChanges: "Enregistrer",
-        sendTitleRun: "Semaine {n}, {day} : {name}, {km} km",
+        sendTitleRun: "Semaine {n}, {day} : {name}, {amt}",
         sendTitleWeek: "Semaine {n} : {c} sorties",
         sendTitleAll: "Plan complet : {c} sorties",
         rebuildQ: "Recalculer le plan ?",
@@ -1901,9 +1914,9 @@
         tdWeek: "Semaine {n} \xB7 {phase}",
         tdRest: "Repos",
         tdRestT: "Pas de sortie pr\xE9vue aujourd'hui.",
-        tdNext: "Prochaine : <b>{when}</b>, {name} {km} km",
+        tdNext: "Prochaine : <b>{when}</b>, {name} {amt}",
         tdBefore: "Le plan commence le {d}",
-        tdBeforeT: "Premi\xE8re sortie : <b>{when}</b>, {name} {km} km",
+        tdBeforeT: "Premi\xE8re sortie : <b>{when}</b>, {name} {amt}",
         tdDone: "Plan termin\xE9",
         tdDoneT: "La derni\xE8re semaine s'est termin\xE9e le {d}.",
         tdEdit: "Modifier",
@@ -2636,6 +2649,7 @@
       const weeks = P.weeks;
       const totals = weeks.map((w) => w.sessions.reduce((a, s) => a + s.km, 0));
       const longest = Math.max(...weeks.flatMap((w) => w.sessions.filter((s) => s.kind === "long").map((s) => s.km)), 0);
+      const Pg = paces2(I);
       const items = warningItems2(I, S.types, P, S.edited);
       renderFieldWarns(items);
       const warns = items.filter((x) => !x.f).map((x) => x.m);
@@ -2703,12 +2717,12 @@
         const st = parseISO2(w.start), en = addDays2(st, 6);
         const rc = (wi < pastN ? " past" : "") + (wi === nowI ? " now" : "");
         h.push(html`<tr class="wrow${w.cutback ? " cutback" : ""}${rc}"><td class="wk"><div class="wkcell"><span class="bar" style="background:${phaseColor(w.phase)}"></span><div>
-      <div class="n">${t2("wAbbr")}${esc(w.n)}</div><div class="meta"><span>${fmtShort(st)} – ${fmtShort(en)}</span><span class="ph" data-cut="${t2("cutback")}" style="color:${phaseText(w.phase)}">${phaseLbl(w.phase)}</span><span class="km">${totals[wi].toFixed(1)} km</span></div>
+      <div class="n">${t2("wAbbr")}${esc(w.n)}</div><div class="meta"><span>${fmtShort(st)} – ${fmtShort(en)}</span><span class="ph" data-cut="${t2("cutback")}" style="color:${phaseText(w.phase)}">${phaseLbl(w.phase)}</span><span class="km">${RUN_UNIT === "t" ? estDur(w.sessions.reduce((a, s) => a + sesSec(s, Pg), 0)) : totals[wi].toFixed(1) + " km"}</span></div>
       <button class="btn sm ghost wbtn" data-act="wwatch" data-w="${wi}" aria-label="${esc(t2("sendWatchWeek", { n: w.n }))}" title="${esc(t2("sendWatchWeek", { n: w.n }))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3M12 10v2l1.5 1"/></svg>${t2("watchShort")}</button></div></div></td>`);
         for (let d = 0; d < 7; d++) {
           const ss = w.sessions.filter((s) => s.day === d);
           h.push(
-            html`<td class="day" data-w="${wi}" data-d="${d}" data-dl="${esc(DAYS[d])}">${ss.length ? htmlJoin(ss.map((s) => html`<button type="button" class="ses ${s.kind === "race" ? "race" : ""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${effColor(sesEffort(s))};--kt:${effText(sesEffort(s))}"><span class="t">${esc(s.name)}</span><span class="k">${esc(s.km)} km</span><span class="d">${esc(s.desc)}</span>${s.note ? html`<span class="nb">${t2("noteBadge")}</span>` : ""}</button>`)) : html`<div class="empty" tabindex="0" role="button" aria-label="${esc(t2("rest") + " " + t2("addRun") + " \xB7 " + t2("eTitle", { n: w.n, day: DAYS[d] }))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t2("rest")}</span><span class="plus">${t2("addRun")}</span></div>`}</td>`
+            html`<td class="day" data-w="${wi}" data-d="${d}" data-dl="${esc(DAYS[d])}">${ss.length ? htmlJoin(ss.map((s) => html`<button type="button" class="ses ${s.kind === "race" ? "race" : ""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${effColor(sesEffort(s))};--kt:${effText(sesEffort(s))}"><span class="t">${esc(s.name)}</span><span class="k">${sesAmt(s, Pg)}</span><span class="d">${esc(s.desc)}</span>${s.note ? html`<span class="nb">${t2("noteBadge")}</span>` : ""}</button>`)) : html`<div class="empty" tabindex="0" role="button" aria-label="${esc(t2("rest") + " " + t2("addRun") + " \xB7 " + t2("eTitle", { n: w.n, day: DAYS[d] }))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t2("rest")}</span><span class="plus">${t2("addRun")}</span></div>`}</td>`
           );
         }
         h.push(html`</tr>`);
@@ -2976,6 +2990,13 @@
       const r = Math.round(m / 5) * 5;
       return t2("durHM", { h: Math.floor(r / 60), m: String(r % 60).padStart(2, "0") });
     }
+    const sesWp = (s) => s.watch || watchPlan2(s.kind, s.km);
+    function sesSec(s, P) {
+      return workoutSegs(sesWp(s), sesEffort(s), P || paces2(S.inputs)).reduce((a, g) => a + g.sec, 0);
+    }
+    function sesAmt(s, P) {
+      return RUN_UNIT === "t" ? estDur(sesSec(s, P)) : `${s.km} km`;
+    }
     function mainSetHtml(wp) {
       return htmlJoin(
         wp.blocks.map((b) => {
@@ -3047,7 +3068,7 @@
       let eb = [html`<b>${t2("tdToday")}</b><span>${cap2(fmtDay(today))}</span>`], body, cta = html``;
       if (today < st0) {
         const n = nextAfter(0, -1);
-        body = html`<div class="rest"><b>${t2("tdBefore", { d: fmtDate2(st0) })}</b>${n ? html`<p class="tnext">${t2("tdBeforeT", { when: whenOf(n.w, n.s), name: esc(n.s.name.toLowerCase()), km: n.s.km })}</p>` : ""}</div>`;
+        body = html`<div class="rest"><b>${t2("tdBefore", { d: fmtDate2(st0) })}</b>${n ? html`<p class="tnext">${t2("tdBeforeT", { when: whenOf(n.w, n.s), name: esc(n.s.name.toLowerCase()), amt: sesAmt(n.s) })}</p>` : ""}</div>`;
       } else if (wi < 0 || today > end) {
         body = html`<div class="rest"><b>${t2("tdDone")}</b><p>${t2("tdDoneT", { d: fmtDate2(end) })}</p></div>`;
       } else {
@@ -3071,14 +3092,14 @@
                   (g.pace === "easy" ? easy : hard).push(g.pace);
                 }
               return html`<div class="tses" style="--k:${effColor(e)};--kt:${effText(e)}"><div class="tn"><b>${esc(s.name)}</b></div>
-        <div class="tbig"><b>${esc(s.km)}<small> km</small></b><span>${t2("tdEst", { d: estDur(wb.sec) })}</span></div>${wb.html}${s.desc ? html`<p>${esc(s.desc)}</p>` : ""}</div>`;
+        <div class="tbig">${RUN_UNIT === "t" ? html`<b>${estDur(wb.sec)}</b><span>${esc(s.km)} km</span>` : html`<b>${esc(s.km)}<small> km</small></b><span>${t2("tdEst", { d: estDur(wb.sec) })}</span>`}</div>${wb.html}${s.desc ? html`<p>${esc(s.desc)}</p>` : ""}</div>`;
             })
           );
           TD.keys = [...hard, ...easy];
           cta = html`<div class="tcta">${htmlJoin(ss.map((s) => html`<button type="button" class="btn primary" data-act="twatch" data-w="${wi}" data-s="${s.id}" data-n="${ss.length > 1 ? esc(s.name) : ""}">${esc(sendLbl(ss.length > 1 ? s.name : ""))}</button><button type="button" class="btn" data-act="tedit" data-w="${wi}" data-s="${s.id}">${t2("tdEdit")}${ss.length > 1 ? html`<span class="sr"> ${esc(s.name)}</span>` : ""}</button>`))}</div>`;
         } else {
           const n = nextAfter(wi, td);
-          body = html`<div class="rest"><b>${t2("tdRest")}</b><p>${t2("tdRestT")}</p></div>${n ? html`<p class="tnext">${t2("tdNext", { when: whenOf(n.w, n.s), name: esc(n.s.name.toLowerCase()), km: n.s.km })}</p>` : ""}<p class="tnext"><button type="button" class="linkbtn" data-act="quick" data-type="easy">${t2("qwAnyway")}</button></p>`;
+          body = html`<div class="rest"><b>${t2("tdRest")}</b><p>${t2("tdRestT")}</p></div>${n ? html`<p class="tnext">${t2("tdNext", { when: whenOf(n.w, n.s), name: esc(n.s.name.toLowerCase()), amt: sesAmt(n.s) })}</p>` : ""}<p class="tnext"><button type="button" class="linkbtn" data-act="quick" data-type="easy">${t2("qwAnyway")}</button></p>`;
         }
       }
       return html`<section class="today" aria-label="${esc(t2("tdToday"))}"><div class="tmain"><div class="eyebrow">${eb}</div>${body}</div><div class="tside"><div><div class="tpaces" id="tdPaces"></div><div class="theat" id="tdHeat" role="note"></div><div class="wxp" id="wx" aria-live="polite"></div></div>${cta}</div></section>`;
@@ -3178,7 +3199,7 @@
       const st = x < 1 ? 0.05 : x < 5 ? 0.1 : 0.5;
       return Math.max(0.05, +(Math.round(x / st) * st).toFixed(2));
     }
-    function wpInUnit(wp, unit, eff, P) {
+    function wpInUnit(wp, unit, eff, P, wucdByPace) {
       const conv = (x, e) => {
         if (x.p === "recovery") return x;
         const spk = stepSecKm(x, e, P);
@@ -3187,7 +3208,7 @@
         return x;
       };
       const out = { blocks: wp.blocks.map((b) => ({ n: b.n, steps: b.steps.map((x) => conv(x, stepEffort(x, eff))) })) };
-      const wc = (g) => unit === "t" ? g[0] === "t" ? g : ["t", 600] : g[0] === "d" ? g : ["d", 2];
+      const wc = (g) => wucdByPace ? conv({ p: "work", g, pace: "easy" }, "easy").g : unit === "t" ? g[0] === "t" ? g : ["t", 600] : g[0] === "d" ? g : ["d", 2];
       if (wp.wu) out.wu = wc(wp.wu);
       if (wp.cd) out.cd = wc(wp.cd);
       return out;
@@ -3624,7 +3645,7 @@
           const tdow = dow2(today);
           const next = w.sessions.find((s) => s.day >= tdow) || P.weeks[wi + 1] && P.weeks[wi + 1].sessions[0];
           const when = next ? next.day === tdow && w.sessions.includes(next) ? t2("today") : DAYS[next.day] : "";
-          line = html`${t2("hFitIn", { n: w.n, t: P.weeks.length, phase: phaseLbl(w.phase), cut: w.cutback ? t2("hCut") : "" })}${next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), km: next.km }) : ""}`;
+          line = html`${t2("hFitIn", { n: w.n, t: P.weeks.length, phase: phaseLbl(w.phase), cut: w.cutback ? t2("hCut") : "" })}${next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), amt: sesAmt(next) }) : ""}`;
         }
       } else if (days < 0) {
         const wi = P.weeks.findIndex((w2) => {
@@ -3636,7 +3657,7 @@
           const tdow = dow2(today), rw = P.weeks.filter((x) => x.phase === "recovery");
           const next = w.sessions.find((s) => s.day >= tdow) || P.weeks[wi + 1] && P.weeks[wi + 1].sessions[0];
           const when = next ? next.day === tdow && w.sessions.includes(next) ? t2("today") : DAYS[next.day] : "";
-          line = html`${t2("hRecIn", { lbl: esc(lbl), k: rw.indexOf(w) + 1, r: rw.length })}${next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), km: next.km }) : ""}`;
+          line = html`${t2("hRecIn", { lbl: esc(lbl), k: rw.indexOf(w) + 1, r: rw.length })}${next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), amt: sesAmt(next) }) : ""}`;
         } else line = t2("hPast", { lbl: esc(lbl), d: fmtDate2(race) });
       } else if (days === 0) line = t2("hToday", { lbl: esc(lbl) });
       else {
@@ -3657,7 +3678,7 @@
             t: P.weeks.filter((x) => x.phase !== "recovery").length,
             phase: phaseLbl(w.phase),
             cut: w.cutback ? t2("hCut") : ""
-          })}${next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), km: next.km }) : ""}`;
+          })}${next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), amt: sesAmt(next) }) : ""}`;
         }
       }
       const R = I.race;
@@ -3985,7 +4006,7 @@
             closeModal();
             sendToWatch(
               planWorkouts([{ w, s }]),
-              t2("sendTitleRun", { n: w.n, day: DAYS[s.day], name: s.name, km: s.km })
+              t2("sendTitleRun", { n: w.n, day: DAYS[s.day], name: s.name, amt: sesAmt(s) })
             );
           };
           m.querySelector("#eOk").onclick = () => {
@@ -4068,11 +4089,12 @@
       return WK;
     }
     function planWorkout(w, s) {
+      const P = paces2(S.inputs), tm = RUN_UNIT === "t";
       return {
-        title: `W${w.n} ${s.name} ${s.km} km`,
-        fitTitle: `W${w.n} ${s.name} ${s.km}k`,
+        title: `W${w.n} ${s.name} ${sesAmt(s, P)}`,
+        fitTitle: `W${w.n} ${s.name} ${tm ? Math.round(sesSec(s, P) / 60) + "m" : s.km + "k"}`,
         file: `w${String(w.n).padStart(2, "0")}-${DAYS[s.day].toLowerCase()}-${slug(s.name)}`,
-        wp: s.watch || watchPlan2(s.kind, s.km)
+        wp: tm ? wpInUnit(sesWp(s), "t", sesEffort(s), P, true) : sesWp(s)
       };
     }
     const planWorkouts = (list) => list.map(({ w, s }) => planWorkout(w, s));
@@ -4443,7 +4465,7 @@
             "DTSTAMP:" + stamp,
             "DTSTART;VALUE=DATE:" + ymd(d),
             "DTEND;VALUE=DATE:" + ymd(addDays2(d, 1)),
-            fold("SUMMARY:" + e(`${s.name} \xB7 ${s.km} km`)),
+            fold("SUMMARY:" + e(`${s.name} \xB7 ${sesAmt(s)}`)),
             fold(
               "DESCRIPTION:" + e(
                 t2("icsDesc", { n: w.n, phase: phaseLbl(w.phase), desc: s.desc }) + (s.note ? "\n\n" + t2("icsNote") + s.note : "")
@@ -4581,7 +4603,7 @@ ${totals[wi].toFixed(1)} km`
           for (let d = 0; d < 7; d++) {
             const ss = w.sessions.filter((s) => s.day === d);
             row.push(
-              ss.map((s) => `${s.name} \xB7 ${s.km} km
+              ss.map((s) => `${s.name} \xB7 ${sesAmt(s)}
 ${s.desc}${s.note ? "\n" + t2("note") + ": " + s.note : ""}`).join("\n\n")
             );
             kinds.push(ss.length ? sesEffort(ss[0]) : null);
@@ -5307,6 +5329,12 @@ ${s.desc}${s.note ? "\n" + t2("note") + ": " + s.note : ""}`).join("\n\n")
       });
       $("#langSel").value = LANG;
       syncTheme();
+      syncRunUnit();
+    }
+    function syncRunUnit() {
+      $$("#runUnitSeg [data-run-unit]").forEach(
+        (b) => b.setAttribute("aria-pressed", String(b.dataset.runUnit === RUN_UNIT))
+      );
     }
     function syncTheme() {
       const v = document.documentElement.dataset.theme || "dark";
@@ -5353,6 +5381,21 @@ ${s.desc}${s.note ? "\n" + t2("note") + ": " + s.note : ""}`).join("\n\n")
       } catch (_) {
       }
       syncTheme();
+    });
+    $("#runUnitSeg").addEventListener("click", (e) => {
+      const b = (
+        /** @type {HTMLElement | null} */
+        /** @type {HTMLElement} */
+        e.target.closest("[data-run-unit]")
+      );
+      if (!b || b.dataset.runUnit === RUN_UNIT) return;
+      RUN_UNIT = b.dataset.runUnit === "t" ? "t" : "d";
+      try {
+        localStorage.setItem("bb-run-unit", RUN_UNIT);
+      } catch (_) {
+      }
+      syncRunUnit();
+      renderPlan();
     });
     function setPrefs(open, focusBack) {
       const P = $("#prefsPanel"), B = $("#btnPrefs");

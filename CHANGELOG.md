@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.14.0] - 2026-11-25
+
+### Added
+- Runs can be shown in minutes instead of km: pick "Runs shown in" in the gear menu. Each run's time comes from its steps at your paces, in the plan, the Today card, calendar events, the PDF and watch workouts, which then run on time instead of distance. Your plan is still built in km (BB-54).
+
 ## [1.13.3] - 2026-11-24
 
 ### Security
