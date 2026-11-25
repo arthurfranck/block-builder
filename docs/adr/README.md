@@ -15,6 +15,7 @@ ADRs 0001 to 0007 were written on 2026-11-23, after the fact, to record choices 
 | [0007](0007-ai-team-working-model.md) | A team lead with an AI team, and the guardrails around it | Accepted |
 | [0008](0008-es-modules-bundled-with-esbuild.md) | ES modules bundled with esbuild, deployed from a CI build | Accepted |
 | [0009](0009-visual-snapshots-linux-baselines.md) | Visual snapshots on two setups, with Linux baselines made in CI | Accepted |
+| [0010](0010-git-pre-commit-hook.md) | Commit checks in a git pre-commit hook, not a Claude hook | Accepted |
 
 
 ## Template
