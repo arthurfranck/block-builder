@@ -27,6 +27,11 @@ export { expect };
 export const desktopOnly = (mobile: boolean) => test.skip(mobile, 'desktop-only behaviour');
 export const mobileOnly = (mobile: boolean) => test.skip(!mobile, 'phone-only behaviour');
 
+/** Wait until an element's own animations have finished (BB-73), e.g. a sheet sliding up (BB-33), so it is measured at rest. */
+export async function settled(l: Locator) {
+  await l.evaluate((e) => Promise.all(e.getAnimations().map((a) => a.finished)));
+}
+
 export class App {
   constructor(readonly page: Page, readonly mobile: boolean) {}
 
@@ -46,6 +51,8 @@ export class App {
       else if (await this.page.locator('#mtabs').isVisible()) await this.page.locator('#mtabs [data-tab="setup"]').click();
     }
     await expect(this.page.locator('#setup')).toBeVisible();
+    /* BB-73: the sheet slides up for 0.26 s; let it come to rest so a test never measures it mid-animation */
+    await settled(this.page.locator('#setup'));
   }
   async showPlan() {
     if (this.mobile) {
