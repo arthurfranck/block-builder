@@ -27,9 +27,20 @@ export { expect };
 export const desktopOnly = (mobile: boolean) => test.skip(mobile, 'desktop-only behaviour');
 export const mobileOnly = (mobile: boolean) => test.skip(!mobile, 'phone-only behaviour');
 
-/** Wait until an element's own animations have finished (BB-73), e.g. a sheet sliding up (BB-33), so it is measured at rest. */
+/** Wait until an element is at rest (BB-73): the animations running on it or on any element it sits in (e.g. a sheet
+    sliding up, BB-33) have finished. Endless animations are ignored, and a cancelled one counts as finished. */
 export async function settled(l: Locator) {
-  await l.evaluate((e) => Promise.all(e.getAnimations().map((a) => a.finished)));
+  await l.evaluate((e) =>
+    Promise.all(
+      document
+        .getAnimations()
+        .filter((a) => {
+          const t = (a.effect as KeyframeEffect | null)?.target;
+          return t instanceof Element && t.contains(e) && Number.isFinite(a.effect!.getComputedTiming().endTime);
+        })
+        .map((a) => a.finished.catch(() => {})),
+    ),
+  );
 }
 
 export class App {

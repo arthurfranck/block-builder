@@ -21,7 +21,7 @@ npm run format         # Prettier on the page scripts (format:check only checks)
 
 Every test starts on a frozen date (Friday 6 November 2026, Paris time) with empty storage, so generated plans are the same on every run. Tests that load jsPDF from cdnjs are skipped when `OFFLINE=1` is set. The page is served by a small Node server, `serve.mjs` (`node tests/serve.mjs 8765`).
 
-Sheets and dialogs slide up on phones (0.26 s). Measure them only once they are at rest: `settled(locator)` in `helpers.ts` waits for the element's animations to finish, and `app.showSetup()` already does it for the settings sheet (BB-73; before, the Done button measured 43.99998 px instead of 44 in about 1 run in 9).
+Sheets and dialogs slide up on phones (0.26 s). Measure them only once they are at rest: `settled(locator)` in `helpers.ts` waits for the animations on the element and on everything it sits in (so `settled(page.locator('#btnSheetDone'))` waits for the sheet too), and `app.showSetup()` already does it for the settings sheet (BB-73; before, the Done button measured 43.99998 px instead of 44 in about 1 run in 9).
 
 ## Browser setups
 
