@@ -18,7 +18,10 @@ test.describe('runs shown in minutes', () => {
     await app.showPlan();
     const min = await cellAmounts(page);
     expect(min).toHaveLength(km.length);
-    expect(min.every((x) => /^(\d+ min|\d+ h \d\d)$/.test(x))).toBe(true);
+    const train = await page.locator('table.grid .ses:not(.race) .k').allTextContents();
+    expect(train.every((x) => /^(\d+ min|\d+ h \d\d)$/.test(x))).toBe(true);
+    /* the race stays in km: its finish is a distance */
+    await expect(page.locator('table.grid .ses.race .k')).toHaveText(/^\d+(\.\d+)? km$/);
     await expect(page.locator('.wkcell .km').first()).toHaveText(/^(\d+ min|\d+ h \d\d)$/);
     /* frozen today is before the plan starts: the first-run line names the run in minutes */
     await expect(page.locator('.tnext').first()).toContainText(/\d+ min/);
@@ -50,7 +53,7 @@ test.describe('runs shown in minutes', () => {
     await app.setRunUnit('t');
     await app.showPlan();
     const card = page.locator('#plan .today .tses').first();
-    await expect(card.locator('.tbig b')).toHaveText(/^(\d+ min|\d+ h \d\d)$/);
+    await expect(card.locator('.tbig b')).toHaveText(/^≈ (\d+ min|\d+ h \d\d)$/);
     await expect(card.locator('.tbig span')).toHaveText(`${fri.km} km`);
   });
 
@@ -64,19 +67,23 @@ test.describe('runs shown in minutes', () => {
   });
 
   test('calendar events and watch workouts are named in minutes', async ({ app, page }) => {
+    const race = (await app.plan()).flatMap((w) => w.sessions).find((s) => s.kind === 'race')!;
     await app.setRunUnit('t');
     await app.showPlan();
     const { buf } = await app.download(() => page.locator('[data-act="ics"]').click());
     const summaries = buf.toString('utf8').match(/^SUMMARY:.*$/gm) || [];
     expect(summaries.length).toBeGreaterThan(0);
-    expect(summaries.every((x) => /· (\d+ min|\d+ h \d\d)\r?$/.test(x))).toBe(true);
+    /* training runs in minutes; the race stays in km (its finish is a distance) */
+    expect(summaries.every((x) => /· (\d+ min|\d+ h \d\d|\d+(\.\d+)? km)\r?$/.test(x))).toBe(true);
+    expect(summaries.filter((x) => /min\r?$/.test(x)).length).toBeGreaterThan(summaries.length / 2);
+    expect(summaries.filter((x) => /km\r?$/.test(x))).toEqual([expect.stringContaining(race.name)]);
 
     await page.locator('[data-act="wwatch"][data-w="0"]').click();
     await app.modal().locator('[data-dev="garmin"]').click();
     const zip = await app.download(() => page.locator('#dGo').click());
     expect(zipNames(zip.buf).length).toBeGreaterThan(0);
     const fit = zip.buf.toString('latin1');
-    expect(fit).toMatch(/W1 [^\0]+ \d+m\0/);
+    expect(fit).toMatch(/W1 [^\0]+ (\d+min|\d+h\d\d)\0/);
     expect(fit).not.toMatch(/W1 [^\0]+ \d+(\.\d+)?k\0/);
   });
 

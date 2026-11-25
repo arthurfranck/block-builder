@@ -2130,11 +2130,14 @@ const BBEngine = engine;
   }
   /* a run's length for display (BB-54): its km, or its estimated time from its watch steps at the plan's paces, as on the Today card */
   const sesWp = (s) => s.watch || watchPlan(s.kind, s.km);
+  /* races stay in km (the finish line is a distance); a 0 km run with no steps has no time */
+  const inTime = (s) => RUN_UNIT === "t" && s.kind !== "race" && (s.km > 0 || !!s.watch);
   function sesSec(s, P) {
+    if (!(s.km > 0) && !s.watch) return 0;
     return workoutSegs(sesWp(s), sesEffort(s), P || paces(S.inputs)).reduce((a, g) => a + g.sec, 0);
   }
   function sesAmt(s, P) {
-    return RUN_UNIT === "t" ? estDur(sesSec(s, P)) : `${s.km} km`;
+    return inTime(s) ? estDur(sesSec(s, P)) : `${s.km} km`;
   }
   /* the main set in words ("<b>5 × 1 km</b> · 2 min jog"): Today bar labels and quick workout sizes */
   function mainSetHtml(wp) {
@@ -2248,7 +2251,7 @@ const BBEngine = engine;
                 (g.pace === "easy" ? easy : hard).push(g.pace);
               }
             return html`<div class="tses" style="--k:${effColor(e)};--kt:${effText(e)}"><div class="tn"><b>${esc(s.name)}</b></div>
-        <div class="tbig">${RUN_UNIT === "t" ? html`<b>${estDur(wb.sec)}</b><span>${esc(s.km)} km</span>` : html`<b>${esc(s.km)}<small> km</small></b><span>${t("tdEst", { d: estDur(wb.sec) })}</span>`}</div>${wb.html}${s.desc ? html`<p>${esc(s.desc)}</p>` : ""}</div>`;
+        <div class="tbig">${inTime(s) ? html`<b>${t("tdEst", { d: estDur(wb.sec) })}</b><span>${esc(s.km)} km</span>` : html`<b>${esc(s.km)}<small> km</small></b><span>${t("tdEst", { d: estDur(wb.sec) })}</span>`}</div>${wb.html}${s.desc ? html`<p>${esc(s.desc)}</p>` : ""}</div>`;
           }),
         );
         TD.keys = [...hard, ...easy];
@@ -3356,10 +3359,10 @@ const BBEngine = engine;
   /* a workout to export: {title, fitTitle, file, wp, paces?}. Plan runs and BB-58 quick workouts share it, so export needs no plan week. */
   function planWorkout(w, s) {
     const P = paces(S.inputs),
-      tm = RUN_UNIT === "t"; /* BB-54: in minutes, distance steps become time steps at the plan's paces */
+      tm = inTime(s); /* BB-54: in minutes, distance steps become time steps at the plan's paces (races stay in km) */
     return {
       title: `W${w.n} ${s.name} ${sesAmt(s, P)}`,
-      fitTitle: `W${w.n} ${s.name} ${tm ? Math.round(sesSec(s, P) / 60) + "m" : s.km + "k"}`,
+      fitTitle: `W${w.n} ${s.name} ${tm ? sesAmt(s, P).replace(/ /g, "") : s.km + "k"}`,
       file: `w${String(w.n).padStart(2, "0")}-${DAYS[s.day].toLowerCase()}-${slug(s.name)}`,
       wp: tm ? wpInUnit(sesWp(s), "t", sesEffort(s), P, true) : sesWp(s),
     };
@@ -3736,6 +3739,7 @@ const BBEngine = engine;
     return addDays(parseISO(w.start), s.day);
   }
   function exportICS() {
+    const Pe = paces(S.inputs);
     const e = (v) =>
       String(v).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
     const fold = (l) => {
@@ -3764,7 +3768,7 @@ const BBEngine = engine;
           "DTSTAMP:" + stamp,
           "DTSTART;VALUE=DATE:" + ymd(d),
           "DTEND;VALUE=DATE:" + ymd(addDays(d, 1)),
-          fold("SUMMARY:" + e(`${s.name} · ${sesAmt(s)}`)),
+          fold("SUMMARY:" + e(`${s.name} · ${sesAmt(s, Pe)}`)),
           fold(
             "DESCRIPTION:" +
               e(
@@ -3893,6 +3897,7 @@ const BBEngine = engine;
         ph = doc.internal.pageSize.getHeight(),
         M = 10;
       const totals = W.map((w) => w.sessions.reduce((a, s) => a + s.km, 0));
+      const Pe = paces(S.inputs);
       const longest = Math.max(0, ...W.flatMap((w) => w.sessions.filter((s) => s.kind === "long").map((s) => s.km)));
       const start = parseISO(W[0].start),
         end = addDays(start, 7 * W.length - 1);
@@ -3925,14 +3930,14 @@ const BBEngine = engine;
       W.forEach((w, wi) => {
         const st = parseISO(w.start);
         const row = [
-          `${t("wAbbr")}${w.n}\n${fmtShort(st)} - ${fmtShort(addDays(st, 6))}\n${phaseLbl(w.phase)}${w.cutback ? " · " + t("cutback") : ""}\n${totals[wi].toFixed(1)} km`,
+          `${t("wAbbr")}${w.n}\n${fmtShort(st)} - ${fmtShort(addDays(st, 6))}\n${phaseLbl(w.phase)}${w.cutback ? " · " + t("cutback") : ""}\n${RUN_UNIT === "t" ? estDur(w.sessions.reduce((a, s) => a + sesSec(s, Pe), 0)) : totals[wi].toFixed(1) + " km"}`,
         ];
         const kinds = [w.phase];
         for (let d = 0; d < 7; d++) {
           const ss = w.sessions.filter((s) => s.day === d);
           row.push(
             ss
-              .map((s) => `${s.name} · ${sesAmt(s)}\n${s.desc}${s.note ? "\n" + t("note") + ": " + s.note : ""}`)
+              .map((s) => `${s.name} · ${sesAmt(s, Pe)}\n${s.desc}${s.note ? "\n" + t("note") + ": " + s.note : ""}`)
               .join("\n\n"),
           );
           kinds.push(ss.length ? sesEffort(ss[0]) : null);
