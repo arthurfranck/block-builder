@@ -75,6 +75,12 @@ export class App {
     await this.openPrefs();
     await this.page.locator(`#themeSeg [data-theme-v="${v}"]`).click();
   }
+  /** Runs shown in km ('d') or minutes ('t') (BB-54); closes the panel after. */
+  async setRunUnit(v: 'd' | 't') {
+    await this.openPrefs();
+    await this.page.locator(`#runUnitSeg [data-run-unit="${v}"]`).click();
+    await this.closePrefs();
+  }
 
   /* ---------- setup form ---------- */
   async setField(id: string, value: string | number) {

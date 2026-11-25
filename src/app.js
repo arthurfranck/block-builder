@@ -9,7 +9,12 @@ const BBEngine = engine;
 
 (() => {
   "use strict";
-  const VERSION = "1.13.3";
+  const VERSION = "1.14.0";
+  /* runs shown in km or minutes (BB-54): a display preference on this device; plans are still built and saved in km */
+  let RUN_UNIT = "d";
+  try {
+    if (localStorage.getItem("bb-run-unit") === "t") RUN_UNIT = "t";
+  } catch (_) {}
   const $ = (s) => document.querySelector(s);
   /** @type {(s: string) => NodeListOf<HTMLElement>} */
   const $$ = (s) => document.querySelectorAll(s);
@@ -61,6 +66,10 @@ const BBEngine = engine;
       thLight: "Light",
       thAuto: "Auto",
       thHint: "Auto follows your device.",
+      runUnit: "Runs shown in",
+      ruKm: "km",
+      ruMin: "minutes",
+      ruHint: "Minutes are estimated from your paces. The plan is still built in km.",
       prefs: "Display and language",
       distance: "Distance",
       customKm: "Custom distance (km)",
@@ -332,7 +341,7 @@ const BBEngine = engine;
       hStarts: "Week 1 starts Monday {d}.",
       hInWeek: "You're in week {n} of {t}, {phase} phase{cut}.",
       hCut: ", a cutback week",
-      hNext: " Next up {when}: <b>{name}, {km} km</b>.",
+      hNext: " Next up {when}: <b>{name}, {amt}</b>.",
       today: "today",
       dayOne: "day",
       dayMany: "days",
@@ -348,7 +357,7 @@ const BBEngine = engine;
       notePhOwn: "Your own note",
       deleteRun: "Delete run",
       saveChanges: "Save changes",
-      sendTitleRun: "Week {n}, {day}: {name}, {km} km",
+      sendTitleRun: "Week {n}, {day}: {name}, {amt}",
       sendTitleWeek: "Week {n}: {c} runs",
       sendTitleAll: "Whole plan: {c} runs",
       rebuildQ: "Rebuild the plan?",
@@ -426,9 +435,9 @@ const BBEngine = engine;
       tdWeek: "Week {n} · {phase}",
       tdRest: "Rest day",
       tdRestT: "No run planned today.",
-      tdNext: "Next: <b>{when}</b>, {name} {km} km",
+      tdNext: "Next: <b>{when}</b>, {name} {amt}",
       tdBefore: "Plan starts {d}",
-      tdBeforeT: "First run: <b>{when}</b>, {name} {km} km",
+      tdBeforeT: "First run: <b>{when}</b>, {name} {amt}",
       tdDone: "Plan finished",
       tdDoneT: "The last week ended on {d}.",
       tdEdit: "Edit",
@@ -562,6 +571,10 @@ const BBEngine = engine;
       thLight: "Clair",
       thAuto: "Auto",
       thHint: "Auto suit le réglage de l'appareil.",
+      runUnit: "Sorties affichées en",
+      ruKm: "km",
+      ruMin: "minutes",
+      ruHint: "Les minutes sont estimées d'après vos allures. Le plan reste construit en km.",
       prefs: "Affichage et langue",
       distance: "Distance",
       customKm: "Distance personnalisée (km)",
@@ -847,7 +860,7 @@ const BBEngine = engine;
       hStarts: "La semaine 1 commence le lundi {d}.",
       hInWeek: "Vous êtes en semaine {n} sur {t}, phase {phase}{cut}.",
       hCut: ", semaine allégée",
-      hNext: " Prochaine séance {when} : <b>{name}, {km} km</b>.",
+      hNext: " Prochaine séance {when} : <b>{name}, {amt}</b>.",
       today: "aujourd'hui",
       dayOne: "jour",
       dayMany: "jours",
@@ -863,7 +876,7 @@ const BBEngine = engine;
       notePhOwn: "Votre note",
       deleteRun: "Supprimer la sortie",
       saveChanges: "Enregistrer",
-      sendTitleRun: "Semaine {n}, {day} : {name}, {km} km",
+      sendTitleRun: "Semaine {n}, {day} : {name}, {amt}",
       sendTitleWeek: "Semaine {n} : {c} sorties",
       sendTitleAll: "Plan complet : {c} sorties",
       rebuildQ: "Recalculer le plan ?",
@@ -943,9 +956,9 @@ const BBEngine = engine;
       tdWeek: "Semaine {n} · {phase}",
       tdRest: "Repos",
       tdRestT: "Pas de sortie prévue aujourd'hui.",
-      tdNext: "Prochaine : <b>{when}</b>, {name} {km} km",
+      tdNext: "Prochaine : <b>{when}</b>, {name} {amt}",
       tdBefore: "Le plan commence le {d}",
-      tdBeforeT: "Première sortie : <b>{when}</b>, {name} {km} km",
+      tdBeforeT: "Première sortie : <b>{when}</b>, {name} {amt}",
       tdDone: "Plan terminé",
       tdDoneT: "La dernière semaine s'est terminée le {d}.",
       tdEdit: "Modifier",
@@ -1739,6 +1752,7 @@ const BBEngine = engine;
     const weeks = P.weeks;
     const totals = weeks.map((w) => w.sessions.reduce((a, s) => a + s.km, 0));
     const longest = Math.max(...weeks.flatMap((w) => w.sessions.filter((s) => s.kind === "long").map((s) => s.km)), 0);
+    const Pg = paces(I); /* BB-54: run times in the grid */
     /* BB-27: setup problems at their field (pace: the pace hint already says it), plan problems in the banner */
     const items = warningItems(I, S.types, P, S.edited);
     renderFieldWarns(items);
@@ -1812,12 +1826,12 @@ const BBEngine = engine;
         en = addDays(st, 6);
       const rc = (wi < pastN ? " past" : "") + (wi === nowI ? " now" : "");
       h.push(html`<tr class="wrow${w.cutback ? " cutback" : ""}${rc}"><td class="wk"><div class="wkcell"><span class="bar" style="background:${phaseColor(w.phase)}"></span><div>
-      <div class="n">${t("wAbbr")}${esc(w.n)}</div><div class="meta"><span>${fmtShort(st)} – ${fmtShort(en)}</span><span class="ph" data-cut="${t("cutback")}" style="color:${phaseText(w.phase)}">${phaseLbl(w.phase)}</span><span class="km">${totals[wi].toFixed(1)} km</span></div>
+      <div class="n">${t("wAbbr")}${esc(w.n)}</div><div class="meta"><span>${fmtShort(st)} – ${fmtShort(en)}</span><span class="ph" data-cut="${t("cutback")}" style="color:${phaseText(w.phase)}">${phaseLbl(w.phase)}</span><span class="km">${RUN_UNIT === "t" ? estDur(w.sessions.reduce((a, s) => a + sesSec(s, Pg), 0)) : totals[wi].toFixed(1) + " km"}</span></div>
       <button class="btn sm ghost wbtn" data-act="wwatch" data-w="${wi}" aria-label="${esc(t("sendWatchWeek", { n: w.n }))}" title="${esc(t("sendWatchWeek", { n: w.n }))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3M12 10v2l1.5 1"/></svg>${t("watchShort")}</button></div></div></td>`);
       for (let d = 0; d < 7; d++) {
         const ss = w.sessions.filter((s) => s.day === d);
         h.push(
-          html`<td class="day" data-w="${wi}" data-d="${d}" data-dl="${esc(DAYS[d])}">${ss.length ? htmlJoin(ss.map((s) => html`<button type="button" class="ses ${s.kind === "race" ? "race" : ""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${effColor(sesEffort(s))};--kt:${effText(sesEffort(s))}"><span class="t">${esc(s.name)}</span><span class="k">${esc(s.km)} km</span><span class="d">${esc(s.desc)}</span>${s.note ? html`<span class="nb">${t("noteBadge")}</span>` : ""}</button>`)) : html`<div class="empty" tabindex="0" role="button" aria-label="${esc(t("rest") + " " + t("addRun") + " · " + t("eTitle", { n: w.n, day: DAYS[d] }))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t("rest")}</span><span class="plus">${t("addRun")}</span></div>`}</td>`,
+          html`<td class="day" data-w="${wi}" data-d="${d}" data-dl="${esc(DAYS[d])}">${ss.length ? htmlJoin(ss.map((s) => html`<button type="button" class="ses ${s.kind === "race" ? "race" : ""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${effColor(sesEffort(s))};--kt:${effText(sesEffort(s))}"><span class="t">${esc(s.name)}</span><span class="k">${sesAmt(s, Pg)}</span><span class="d">${esc(s.desc)}</span>${s.note ? html`<span class="nb">${t("noteBadge")}</span>` : ""}</button>`)) : html`<div class="empty" tabindex="0" role="button" aria-label="${esc(t("rest") + " " + t("addRun") + " · " + t("eTitle", { n: w.n, day: DAYS[d] }))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t("rest")}</span><span class="plus">${t("addRun")}</span></div>`}</td>`,
         );
       }
       h.push(html`</tr>`);
@@ -2114,6 +2128,17 @@ const BBEngine = engine;
     const r = Math.round(m / 5) * 5;
     return t("durHM", { h: Math.floor(r / 60), m: String(r % 60).padStart(2, "0") });
   }
+  /* a run's length for display (BB-54): its km, or its estimated time from its watch steps at the plan's paces, as on the Today card */
+  const sesWp = (s) => s.watch || watchPlan(s.kind, s.km);
+  /* races stay in km (the finish line is a distance); a 0 km run with no steps has no time */
+  const inTime = (s) => RUN_UNIT === "t" && s.kind !== "race" && (s.km > 0 || !!s.watch);
+  function sesSec(s, P) {
+    if (!(s.km > 0) && !s.watch) return 0;
+    return workoutSegs(sesWp(s), sesEffort(s), P || paces(S.inputs)).reduce((a, g) => a + g.sec, 0);
+  }
+  function sesAmt(s, P) {
+    return inTime(s) ? estDur(sesSec(s, P)) : `${s.km} km`;
+  }
   /* the main set in words ("<b>5 × 1 km</b> · 2 min jog"): Today bar labels and quick workout sizes */
   function mainSetHtml(wp) {
     return htmlJoin(
@@ -2199,7 +2224,7 @@ const BBEngine = engine;
       cta = html``;
     if (today < st0) {
       const n = nextAfter(0, -1);
-      body = html`<div class="rest"><b>${t("tdBefore", { d: fmtDate(st0) })}</b>${n ? html`<p class="tnext">${t("tdBeforeT", { when: whenOf(n.w, n.s), name: esc(n.s.name.toLowerCase()), km: n.s.km })}</p>` : ""}</div>`;
+      body = html`<div class="rest"><b>${t("tdBefore", { d: fmtDate(st0) })}</b>${n ? html`<p class="tnext">${t("tdBeforeT", { when: whenOf(n.w, n.s), name: esc(n.s.name.toLowerCase()), amt: sesAmt(n.s) })}</p>` : ""}</div>`;
     } else if (wi < 0 || today > end) {
       body = html`<div class="rest"><b>${t("tdDone")}</b><p>${t("tdDoneT", { d: fmtDate(end) })}</p></div>`;
     } else {
@@ -2226,14 +2251,14 @@ const BBEngine = engine;
                 (g.pace === "easy" ? easy : hard).push(g.pace);
               }
             return html`<div class="tses" style="--k:${effColor(e)};--kt:${effText(e)}"><div class="tn"><b>${esc(s.name)}</b></div>
-        <div class="tbig"><b>${esc(s.km)}<small> km</small></b><span>${t("tdEst", { d: estDur(wb.sec) })}</span></div>${wb.html}${s.desc ? html`<p>${esc(s.desc)}</p>` : ""}</div>`;
+        <div class="tbig">${inTime(s) ? html`<b>${t("tdEst", { d: estDur(wb.sec) })}</b><span>${esc(s.km)} km</span>` : html`<b>${esc(s.km)}<small> km</small></b><span>${t("tdEst", { d: estDur(wb.sec) })}</span>`}</div>${wb.html}${s.desc ? html`<p>${esc(s.desc)}</p>` : ""}</div>`;
           }),
         );
         TD.keys = [...hard, ...easy];
         cta = html`<div class="tcta">${htmlJoin(ss.map((s) => html`<button type="button" class="btn primary" data-act="twatch" data-w="${wi}" data-s="${s.id}" data-n="${ss.length > 1 ? esc(s.name) : ""}">${esc(sendLbl(ss.length > 1 ? s.name : ""))}</button><button type="button" class="btn" data-act="tedit" data-w="${wi}" data-s="${s.id}">${t("tdEdit")}${ss.length > 1 ? html`<span class="sr"> ${esc(s.name)}</span>` : ""}</button>`))}</div>`;
       } else {
         const n = nextAfter(wi, td);
-        body = html`<div class="rest"><b>${t("tdRest")}</b><p>${t("tdRestT")}</p></div>${n ? html`<p class="tnext">${t("tdNext", { when: whenOf(n.w, n.s), name: esc(n.s.name.toLowerCase()), km: n.s.km })}</p>` : ""}<p class="tnext"><button type="button" class="linkbtn" data-act="quick" data-type="easy">${t("qwAnyway")}</button></p>`;
+        body = html`<div class="rest"><b>${t("tdRest")}</b><p>${t("tdRestT")}</p></div>${n ? html`<p class="tnext">${t("tdNext", { when: whenOf(n.w, n.s), name: esc(n.s.name.toLowerCase()), amt: sesAmt(n.s) })}</p>` : ""}<p class="tnext"><button type="button" class="linkbtn" data-act="quick" data-type="easy">${t("qwAnyway")}</button></p>`;
       }
     }
     return html`<section class="today" aria-label="${esc(t("tdToday"))}"><div class="tmain"><div class="eyebrow">${eb}</div>${body}</div><div class="tside"><div><div class="tpaces" id="tdPaces"></div><div class="theat" id="tdHeat" role="note"></div><div class="wxp" id="wx" aria-live="polite"></div></div>${cta}</div></section>`;
@@ -2342,7 +2367,8 @@ const BBEngine = engine;
     const st = x < 1 ? 0.05 : x < 5 ? 0.1 : 0.5;
     return Math.max(0.05, +(Math.round(x / st) * st).toFixed(2));
   }
-  function wpInUnit(wp, unit, eff, P) {
+  /* wucdByPace (BB-54, plan runs): convert warm-up and cool-down at easy pace instead of the quick workout's defaults (10 min, 2 km) */
+  function wpInUnit(wp, unit, eff, P, wucdByPace) {
     const conv = (x, e) => {
       if (x.p === "recovery") return x; /* jog recoveries stay in time, whatever the unit */
       const spk = stepSecKm(x, e, P);
@@ -2351,7 +2377,16 @@ const BBEngine = engine;
       return x;
     };
     const out = { blocks: wp.blocks.map((b) => ({ n: b.n, steps: b.steps.map((x) => conv(x, stepEffort(x, eff))) })) };
-    const wc = (g) => (unit === "t" ? (g[0] === "t" ? g : ["t", 600]) : g[0] === "d" ? g : ["d", 2]);
+    const wc = (g) =>
+      wucdByPace
+        ? conv({ p: "work", g, pace: "easy" }, "easy").g
+        : unit === "t"
+          ? g[0] === "t"
+            ? g
+            : ["t", 600]
+          : g[0] === "d"
+            ? g
+            : ["d", 2];
     if (wp.wu) out.wu = wc(wp.wu);
     if (wp.cd) out.cd = wc(wp.cd);
     return out;
@@ -2845,7 +2880,7 @@ const BBEngine = engine;
         const next = w.sessions.find((s) => s.day >= tdow) || (P.weeks[wi + 1] && P.weeks[wi + 1].sessions[0]);
         const when = next ? (next.day === tdow && w.sessions.includes(next) ? t("today") : DAYS[next.day]) : "";
         line = html`${t("hFitIn", { n: w.n, t: P.weeks.length, phase: phaseLbl(w.phase), cut: w.cutback ? t("hCut") : "" })}${
-          next ? t("hNext", { when, name: esc(next.name.toLowerCase()), km: next.km }) : ""
+          next ? t("hNext", { when, name: esc(next.name.toLowerCase()), amt: sesAmt(next) }) : ""
         }`;
       }
     } else if (days < 0) {
@@ -2861,7 +2896,7 @@ const BBEngine = engine;
         const next = w.sessions.find((s) => s.day >= tdow) || (P.weeks[wi + 1] && P.weeks[wi + 1].sessions[0]);
         const when = next ? (next.day === tdow && w.sessions.includes(next) ? t("today") : DAYS[next.day]) : "";
         line = html`${t("hRecIn", { lbl: esc(lbl), k: rw.indexOf(w) + 1, r: rw.length })}${
-          next ? t("hNext", { when, name: esc(next.name.toLowerCase()), km: next.km }) : ""
+          next ? t("hNext", { when, name: esc(next.name.toLowerCase()), amt: sesAmt(next) }) : ""
         }`;
       } else line = t("hPast", { lbl: esc(lbl), d: fmtDate(race) });
     } else if (days === 0) line = t("hToday", { lbl: esc(lbl) });
@@ -2883,7 +2918,7 @@ const BBEngine = engine;
           t: P.weeks.filter((x) => x.phase !== "recovery").length,
           phase: phaseLbl(w.phase),
           cut: w.cutback ? t("hCut") : "",
-        })}${next ? t("hNext", { when, name: esc(next.name.toLowerCase()), km: next.km }) : ""}`;
+        })}${next ? t("hNext", { when, name: esc(next.name.toLowerCase()), amt: sesAmt(next) }) : ""}`;
       }
     }
     const R = I.race;
@@ -3222,7 +3257,7 @@ const BBEngine = engine;
           closeModal();
           sendToWatch(
             planWorkouts([{ w, s }]),
-            t("sendTitleRun", { n: w.n, day: DAYS[s.day], name: s.name, km: s.km }),
+            t("sendTitleRun", { n: w.n, day: DAYS[s.day], name: s.name, amt: sesAmt(s) }),
           );
         };
         m.querySelector("#eOk").onclick = () => {
@@ -3323,11 +3358,13 @@ const BBEngine = engine;
   }
   /* a workout to export: {title, fitTitle, file, wp, paces?}. Plan runs and BB-58 quick workouts share it, so export needs no plan week. */
   function planWorkout(w, s) {
+    const P = paces(S.inputs),
+      tm = inTime(s); /* BB-54: in minutes, distance steps become time steps at the plan's paces (races stay in km) */
     return {
-      title: `W${w.n} ${s.name} ${s.km} km`,
-      fitTitle: `W${w.n} ${s.name} ${s.km}k`,
+      title: `W${w.n} ${s.name} ${sesAmt(s, P)}`,
+      fitTitle: `W${w.n} ${s.name} ${tm ? sesAmt(s, P).replace(/ /g, "") : s.km + "k"}`,
       file: `w${String(w.n).padStart(2, "0")}-${DAYS[s.day].toLowerCase()}-${slug(s.name)}`,
-      wp: s.watch || watchPlan(s.kind, s.km),
+      wp: tm ? wpInUnit(sesWp(s), "t", sesEffort(s), P, true) : sesWp(s),
     };
   }
   const planWorkouts = (list) => list.map(({ w, s }) => planWorkout(w, s));
@@ -3702,6 +3739,7 @@ const BBEngine = engine;
     return addDays(parseISO(w.start), s.day);
   }
   function exportICS() {
+    const Pe = paces(S.inputs);
     const e = (v) =>
       String(v).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
     const fold = (l) => {
@@ -3730,7 +3768,7 @@ const BBEngine = engine;
           "DTSTAMP:" + stamp,
           "DTSTART;VALUE=DATE:" + ymd(d),
           "DTEND;VALUE=DATE:" + ymd(addDays(d, 1)),
-          fold("SUMMARY:" + e(`${s.name} · ${s.km} km`)),
+          fold("SUMMARY:" + e(`${s.name} · ${sesAmt(s, Pe)}`)),
           fold(
             "DESCRIPTION:" +
               e(
@@ -3859,6 +3897,7 @@ const BBEngine = engine;
         ph = doc.internal.pageSize.getHeight(),
         M = 10;
       const totals = W.map((w) => w.sessions.reduce((a, s) => a + s.km, 0));
+      const Pe = paces(S.inputs);
       const longest = Math.max(0, ...W.flatMap((w) => w.sessions.filter((s) => s.kind === "long").map((s) => s.km)));
       const start = parseISO(W[0].start),
         end = addDays(start, 7 * W.length - 1);
@@ -3891,14 +3930,14 @@ const BBEngine = engine;
       W.forEach((w, wi) => {
         const st = parseISO(w.start);
         const row = [
-          `${t("wAbbr")}${w.n}\n${fmtShort(st)} - ${fmtShort(addDays(st, 6))}\n${phaseLbl(w.phase)}${w.cutback ? " · " + t("cutback") : ""}\n${totals[wi].toFixed(1)} km`,
+          `${t("wAbbr")}${w.n}\n${fmtShort(st)} - ${fmtShort(addDays(st, 6))}\n${phaseLbl(w.phase)}${w.cutback ? " · " + t("cutback") : ""}\n${RUN_UNIT === "t" ? estDur(w.sessions.reduce((a, s) => a + sesSec(s, Pe), 0)) : totals[wi].toFixed(1) + " km"}`,
         ];
         const kinds = [w.phase];
         for (let d = 0; d < 7; d++) {
           const ss = w.sessions.filter((s) => s.day === d);
           row.push(
             ss
-              .map((s) => `${s.name} · ${s.km} km\n${s.desc}${s.note ? "\n" + t("note") + ": " + s.note : ""}`)
+              .map((s) => `${s.name} · ${sesAmt(s, Pe)}\n${s.desc}${s.note ? "\n" + t("note") + ": " + s.note : ""}`)
               .join("\n\n"),
           );
           kinds.push(ss.length ? sesEffort(ss[0]) : null);
@@ -4688,6 +4727,12 @@ const BBEngine = engine;
     });
     $("#langSel").value = LANG;
     syncTheme();
+    syncRunUnit();
+  }
+  function syncRunUnit() {
+    $$("#runUnitSeg [data-run-unit]").forEach((b) =>
+      b.setAttribute("aria-pressed", String(b.dataset.runUnit === RUN_UNIT)),
+    );
   }
   function syncTheme() {
     const v = document.documentElement.dataset.theme || "dark";
@@ -4732,6 +4777,16 @@ const BBEngine = engine;
       localStorage.setItem("bb-theme", v);
     } catch (_) {}
     syncTheme();
+  });
+  $("#runUnitSeg").addEventListener("click", (e) => {
+    const b = /** @type {HTMLElement | null} */ (/** @type {HTMLElement} */ (e.target).closest("[data-run-unit]"));
+    if (!b || b.dataset.runUnit === RUN_UNIT) return;
+    RUN_UNIT = b.dataset.runUnit === "t" ? "t" : "d";
+    try {
+      localStorage.setItem("bb-run-unit", RUN_UNIT);
+    } catch (_) {}
+    syncRunUnit();
+    renderPlan();
   });
   /* Display and language panel: opens from the gear, closes on Escape (focus back to the gear) or a tap outside */
   function setPrefs(open, focusBack) {
