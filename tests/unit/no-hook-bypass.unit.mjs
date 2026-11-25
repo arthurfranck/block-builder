@@ -18,6 +18,19 @@ const blocked = [
   'git -c core.hooksPath=/dev/null commit -m x',
   'git -c core.hooksPath= commit -m x',
   'git --config-env=core.hooksPath=X commit -m x',
+  // found by the fresh-context review of cbdfc1c
+  'git commit -m "say \\"hi\\"" -n',
+  'git commit -m x &>/dev/null -n',
+  'git commit -m x 2>&1 --no-verify',
+  '(git commit -n -m x)',
+  '/usr/bin/git commit -n -m x',
+  'bash -c "git commit -n -m x"',
+  'sh -lc "cd x && git commit --no-verify -m y"',
+  'eval git commit -n -m x',
+  'git --config-env core.hooksPath=X commit -m x',
+  'GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git commit -m x',
+  'git commit -mm -n',
+  'npm run build 2>&1 || git commit -n -m x',
 ];
 
 const allowed = [
@@ -33,6 +46,12 @@ const allowed = [
   'echo "git commit --no-verify"',
   'git -C ~/Claude/block-builder commit -m x',
   'git commit -m x -- -n',
+  'git commit -uno -m x',
+  'git commit -S -m x',
+  'git commit -m x 2>&1',
+  'git commit -m "$(echo -n hi)"',
+  'git commit -m x && echo -n done',
+  'bash -c "git commit -m x"',
 ];
 
 describe('findBypass', () => {
@@ -41,6 +60,17 @@ describe('findBypass', () => {
 });
 
 describe('hook process', () => {
+  test('runs from a path with a space in it', async () => {
+    const { mkdtempSync, copyFileSync, mkdirSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const { tmpdir } = await import('node:os');
+    const dir = join(mkdtempSync(join(tmpdir(), 'bb hook ')), 'with space');
+    mkdirSync(dir);
+    const copy = join(dir, 'no-hook-bypass.mjs');
+    copyFileSync(fileURLToPath(new URL('../../.claude/hooks/no-hook-bypass.mjs', import.meta.url)), copy);
+    const r = spawnSync(process.execPath, [copy], { input: JSON.stringify({ tool_input: { command: 'git commit -n -m x' } }) });
+    assert.equal(r.status, 2);
+  });
   const hook = fileURLToPath(new URL('../../.claude/hooks/no-hook-bypass.mjs', import.meta.url));
   const run = (input) => spawnSync(process.execPath, [hook], { input });
   test('exits 2 with a message for a bypass', () => {

@@ -23,6 +23,9 @@ ADR 0007 makes guardrails automatic: "a pre-commit hook runs tests". Until now t
 - Cost: `git commit --no-verify` still skips the hook for Arthur. For Claude, the bypass check refuses it; ways it doesn't catch (deleting the hook file, setting `core.hooksPath` with `git config`) are left to CLAUDE.md, and CI (ADR 0006) still blocks the merge.
 - Cost: a fresh clone has no hook until `npm install` runs.
 
+## What the bypass check does not catch
+It is meant to stop an accidental bypass, not a determined one. Not caught: deleting or emptying `.githooks/pre-commit`; `git config core.hooksPath …` run before the commit; a commit made by a script or alias (an npm script, a git alias, a file run with `sh script.sh`); variables expanded at run time (`$FLAG`); deeper shell nesting than three levels. CLAUDE.md forbids skipping the hook, and CI (ADR 0006) still blocks the merge.
+
 ## Revisit when
 - The local checks grow well past a minute (then move more of them to CI only).
 - A commit reaches CI with problems the hook would have caught, because it was skipped.
