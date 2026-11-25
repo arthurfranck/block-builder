@@ -40,6 +40,7 @@
 - **Pre-commit hook (ADR 0010):** `.githooks/pre-commit`, enabled by `npm install` / `npm ci` (`prepare` sets `core.hooksPath`). When an app, test or tooling file is staged it refuses unstaged edits in those files, rebuilds the bundle (blocks if it was stale), runs `lint` + `format:check`, then `test:engine` + `test:chrome`, blocking on failure. It runs for every commit, Claude's included; never skip it with `--no-verify`.
 
 ## `.claude/`
+- `settings.json`: a `PreToolUse` hook, `hooks/no-hook-bypass.mjs`, refuses commands that would commit without the git pre-commit hook (ADR 0010).
 - `launch.json`: preview via `node tests/serve.mjs 8765` (same server as tests and CI).
 - `commands/release.md`: `/release <id> [patch|minor|major]`.
 - `health.md`: profile for the weekly `codebase-health` check. Update it when a measured file is renamed or a known risk is fixed or added.

@@ -9,16 +9,18 @@ ADR 0007 makes guardrails automatic: "a pre-commit hook runs tests". Until now t
 ## Decision
 - The checks live in `.githooks/pre-commit`: when an app, test or tooling file is staged, refuse unstaged edits in those files (the checks run on the working tree), rebuild and refuse a stale bundle, then lint, the format check, the engine tests and the desktop Chrome tests. A failure blocks the commit.
 - `npm install` and `npm ci` enable it: the `prepare` script sets `core.hooksPath` to `.githooks` when it is unset, leaves another value alone with a message, and does nothing if git isn't there. The weekly health check confirms it is set.
-- The Claude hook and `.claude/settings.json` are removed: Claude's `git commit` runs the same git hook.
+- The old Claude test hook is removed: Claude's `git commit` runs the same git hook.
+- A small Claude `PreToolUse` hook, `.claude/hooks/no-hook-bypass.mjs`, refuses any Bash command that would commit without it: `--no-verify` (and its abbreviations), `-n` alone or bundled, `git -c core.hooksPath=…`, `--config-env=core.hooksPath`, anywhere in a `&&`, `;` or `|` chain. It only reads the command, so it takes milliseconds (timeout 10 s). Unit test: `tests/unit/no-hook-bypass.unit.mjs`.
 
 ## Alternatives considered
 - **Keep the Claude hook as well.** Claude can't skip its own hook, but each Claude commit would run the checks twice.
 - **Keep only the Claude hook with a shorter timeout.** Hand commits stay unchecked until CI.
+- **A permissions deny rule for `git commit --no-verify` instead of the bypass check.** Simpler, but rules match the start of the command, so `git commit -m x --no-verify` and bundled `-nm` would slip through.
 
 ## Consequences
 - Good: every commit on a machine that ran `npm install` gets the same checks, whoever makes it.
 - Good: no Claude-specific timeout to tune; the run stays inside the Bash tool's default 120 s.
-- Cost: `git commit --no-verify` skips the hook, for Arthur and for Claude. CI (ADR 0006) still blocks the merge, and CLAUDE.md's rule against loosening checks covers Claude.
+- Cost: `git commit --no-verify` still skips the hook for Arthur. For Claude, the bypass check refuses it; ways it doesn't catch (deleting the hook file, setting `core.hooksPath` with `git config`) are left to CLAUDE.md, and CI (ADR 0006) still blocks the merge.
 - Cost: a fresh clone has no hook until `npm install` runs.
 
 ## Revisit when

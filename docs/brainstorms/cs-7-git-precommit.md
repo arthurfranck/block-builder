@@ -17,3 +17,5 @@ Item CS-7 of the Claude setup backlog (`~/Claude/backlog-claude-setup.md`), from
 
 ## Chosen
 Option 1 (Arthur, 2026-11-25). Recorded in ADR 0010.
+
+Follow-up (Arthur, 2026-11-25): add a Claude hook that only inspects the command and refuses `--no-verify`, `-n` and `-c core.hooksPath` wherever they appear (option 2 of three: deny rule, command check, or CLAUDE.md alone). A deny rule was rejected because prefix matching misses flags at the end.
