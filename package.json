@@ -3,7 +3,7 @@
   "private": true,
   "description": "Automated tests for Block Builder. The app itself is index.html and needs no install.",
   "scripts": {
-    "prepare": "git config core.hooksPath .githooks || true",
+    "prepare": "h=$(git config core.hooksPath 2>/dev/null); if [ -z \"$h\" ] || [ \"$h\" = .githooks ]; then git config core.hooksPath .githooks 2>/dev/null || true; else echo \"core.hooksPath is $h: not changed, so .githooks/pre-commit is off (ADR 0010)\"; fi",
     "test": "node --test tests/engine/*.unit.mjs tests/unit/*.unit.mjs && playwright test",
     "test:engine": "node --test tests/engine/*.unit.mjs tests/unit/*.unit.mjs",
     "test:desktop": "playwright test --project=desktop-*",

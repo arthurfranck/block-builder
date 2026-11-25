@@ -38,6 +38,7 @@ From CLAUDE.md; check each:
 - Docs current: README Features, `docs/features.md` and the `tests/README.md` table were touched in the same commits as index.html / src/ changes since the last report (`git log --since=<last report date> --name-only`).
 - Every user-facing string exists in both `I18N.en` and `I18N.fr` (the i18n test checks this; confirm it ran in CI).
 - `tests/fixtures/plans-v1.json` still exists (import backward compatibility).
+- `git config core.hooksPath` is `.githooks` in this checkout, so the pre-commit hook runs (ADR 0010); if not, run `npm ci`.
 - Playwright in package-lock.json matches the container tag in `.github/workflows/tests.yml`.
 - The Known issues section of `tests/README.md` agrees with `test.fail` lines and `KNOWN` in `tests/a11y.spec.ts`.
 

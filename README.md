@@ -73,7 +73,7 @@ I run Block Builder as a team lead. I make the product, design and technical dec
 
 **Guardrails that make delegating safe**
 - `main` is protected: type checks, a dependency audit and the tests on six desktop and iPhone setups must all pass.
-- A git pre-commit hook (`.githooks/pre-commit`, enabled by `npm install`) runs the build check, lint, format check, engine and Chrome tests before any commit that touches the app.
+- A git pre-commit hook (`.githooks/pre-commit`, enabled by `npm install`) runs the build check, lint, format check, engine and Chrome tests before any commit that touches the app, its tests or its tooling.
 - A behaviour change comes with a test change, and a failing test is never deleted or loosened: the page gets fixed.
 - The plan engine has no DOM and no storage, so every training rule is unit-tested in Node.
 - Each release bumps the version, adds a changelog entry and updates the docs in the same commit.

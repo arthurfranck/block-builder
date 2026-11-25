@@ -37,7 +37,7 @@
 - Plans live in `localStorage` key `bb-plans`; export is `{app:"block-builder", version:1, plans:{…}}`. Keep import backward compatible.
 - GitHub Pages serves `main` (https://arthurfranck.github.io/block-builder/). `main` is protected by the six Tests jobs: never push to it, always a PR.
 - Node: `~/.local/node/bin`; `gh`: `~/.local/bin/gh` if not on PATH.
-- **Pre-commit hook (ADR 0010):** `.githooks/pre-commit`, enabled by `npm install` / `npm ci` (`prepare` sets `core.hooksPath`). When `index.html`/`theme.js`/`src/`/`app.js` is staged it rebuilds the bundle (blocks if it was stale), runs `lint` + `format:check`, then `test:engine` + `test:chrome`, blocking on failure. It runs for every commit, Claude's included; never skip it with `--no-verify`.
+- **Pre-commit hook (ADR 0010):** `.githooks/pre-commit`, enabled by `npm install` / `npm ci` (`prepare` sets `core.hooksPath`). When an app, test or tooling file is staged it refuses unstaged edits in those files, rebuilds the bundle (blocks if it was stale), runs `lint` + `format:check`, then `test:engine` + `test:chrome`, blocking on failure. It runs for every commit, Claude's included; never skip it with `--no-verify`.
 
 ## `.claude/`
 - `launch.json`: preview via `node tests/serve.mjs 8765` (same server as tests and CI).

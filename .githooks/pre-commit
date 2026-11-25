@@ -1,12 +1,28 @@
 #!/bin/sh
 # Git pre-commit hook (ADR 0010): runs for every commit, Arthur's and Claude's.
-# If an app file (index.html, theme.js, src/, or the built app.js) is staged, check the bundle is built from src/,
-# run lint, the format check, the engine tests and the desktop Chrome tests, and block the commit if any fails.
+# If an app, test or tooling file is staged: refuse unstaged changes in those files (the checks run on the working
+# tree, so they must match what is committed), check the bundle is built from src/, then run lint, the format check,
+# the engine tests and the desktop Chrome tests. Any failure blocks the commit.
 # Enabled by `npm install` / `npm ci` (the "prepare" script sets core.hooksPath to .githooks).
 cd "$(git rev-parse --show-toplevel)" || exit 1
-git diff --cached --quiet -- index.html theme.js src app.js app.js.map && exit 0
+CHECKED="index.html theme.js src app.js app.js.map tests package.json package-lock.json playwright.config.ts eslint.config.mjs tsconfig.json tsconfig.app.json .prettierrc.json"
+# shellcheck disable=SC2086
+git diff --cached --quiet -- $CHECKED && exit 0
 # Node may live outside the default PATH (see CLAUDE.md)
 [ -d "$HOME/.local/node/bin" ] && PATH="$HOME/.local/node/bin:$PATH"
+if ! command -v npm >/dev/null 2>&1 || [ ! -d node_modules ]; then
+  echo "Commit blocked: npm or node_modules is missing here. Run 'npm ci' in $(pwd), then commit again." >&2
+  exit 1
+fi
+# The checks run on the working tree: unstaged edits in these files would be tested but not committed.
+# shellcheck disable=SC2086
+if ! git diff --quiet -- $CHECKED; then
+  echo "Commit blocked: these files have unstaged changes, so the checks would not test what you commit:" >&2
+  # shellcheck disable=SC2086
+  git diff --name-only -- $CHECKED | sed 's/^/  /' >&2
+  echo "Stage them (git add) or set them aside (git stash push --keep-index), then commit again." >&2
+  exit 1
+fi
 log=$(mktemp)
 trap 'rm -f "$log"' EXIT
 # BB-86: app.js is the esbuild bundle of src/. Rebuild; if that changed it, the commit would ship a stale bundle.
@@ -14,9 +30,8 @@ if ! npm run --silent build >"$log" 2>&1; then
   { echo "Commit blocked: 'npm run build' failed."; tail -40 "$log"; } >&2
   exit 1
 fi
-# A fresh build that differs from what is staged means the staged bundle is stale.
 if ! git diff --quiet -- app.js app.js.map; then
-  echo "Commit blocked: app.js was out of date with src/ and has just been rebuilt. Stage app.js and app.js.map, then commit again." >&2
+  echo "Commit blocked: app.js was out of date with src/ and has just been rebuilt. Add app.js and app.js.map to this commit ('git add app.js app.js.map', or list them in 'git commit <files>'), then commit again." >&2
   exit 1
 fi
 # BB-79: lint and formatting first, they take a second.
@@ -28,7 +43,7 @@ if npm run --silent test:engine >"$log" 2>&1 && npm run --silent test:chrome >"$
   exit 0
 fi
 {
-  echo "Commit blocked: an app file changed and 'npm run test:engine' or 'npm run test:chrome' failed. Fix the page (don't loosen tests), then commit again."
+  echo "Commit blocked: 'npm run test:engine' or 'npm run test:chrome' failed. Fix the page (don't loosen tests), then commit again."
   tail -40 "$log"
 } >&2
 exit 1

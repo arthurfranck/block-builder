@@ -7,8 +7,8 @@
 ADR 0007 makes guardrails automatic: "a pre-commit hook runs tests". Until now that hook was a Claude Code `PreToolUse` hook, so it ran only on commits Claude made; Arthur's own commits skipped it. Its 300 s timeout was nine times the measured run (about 33 s, nearly all of it `test:chrome`).
 
 ## Decision
-- The checks live in `.githooks/pre-commit`: when an app file is staged, rebuild and refuse a stale bundle, then lint, the format check, the engine tests and the desktop Chrome tests. A failure blocks the commit.
-- `npm install` and `npm ci` enable it: the `prepare` script sets `core.hooksPath` to `.githooks` (and does nothing if git isn't there).
+- The checks live in `.githooks/pre-commit`: when an app, test or tooling file is staged, refuse unstaged edits in those files (the checks run on the working tree), rebuild and refuse a stale bundle, then lint, the format check, the engine tests and the desktop Chrome tests. A failure blocks the commit.
+- `npm install` and `npm ci` enable it: the `prepare` script sets `core.hooksPath` to `.githooks` when it is unset, leaves another value alone with a message, and does nothing if git isn't there. The weekly health check confirms it is set.
 - The Claude hook and `.claude/settings.json` are removed: Claude's `git commit` runs the same git hook.
 
 ## Alternatives considered
