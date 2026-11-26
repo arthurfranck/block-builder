@@ -3,6 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
 import { analyze, resolveAll, moveLines, rangeOf } from '../../scripts/split-module.mjs';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
@@ -74,6 +75,40 @@ test('moving into a module that imported the moved names drops those imports', (
   out = split(out, 'app.js', 'f', 'f', 'two.js');
   assert.doesNotMatch(out['two.js'], /^import/m);
   assert.equal(out['app.js'].trim(), '');
+});
+
+test('review fixes: side-effect imports kept, own namespace/default imports refused, export lists and exports kept', () => {
+  const read = (m) => (f) => m[f.slice(3)];
+  // a side-effect import survives, an unused named one goes
+  let m = { 'a.js': 'import "./polyfill.js";\nimport { h } from "./lib.js";\nconsole.log(1);\n', 'lib.js': lib };
+  assert.equal(resolveAll(['/m/a.js', '/m/lib.js'], new Set(['lib.js']), read(m))['/m/a.js'], 'import "./polyfill.js";\nconsole.log(1);\n');
+  // namespace or default import of a module in the folder: refused, not silently dropped
+  m = { 'a.js': 'import * as ns from "./b.js";\nconsole.log(ns.x);\n', 'b.js': 'export const x = 1;\n' };
+  assert.throws(() => resolveAll(['/m/a.js', '/m/b.js'], new Set(), read(m)), /namespace or default import.*\n {2}a\.js: \* as ns from \.\/b\.js/);
+  // a name already exported by an `export { … }` list gets no second export; an export nobody imports stays
+  m = { 'a.js': 'console.log(uid());\n', 'b.js': 'function uid() {}\nexport const kept = 1;\nexport { uid };\n' };
+  const out = resolveAll(['/m/a.js', '/m/b.js'], new Set(), read(m));
+  assert.equal(out['/m/b.js'], m['b.js']);
+  assert.match(out['/m/a.js'], /^import \{ uid \} from "\.\/b\.js";/);
+  // assigning a binding imported from an external module is refused too
+  m = { 'a.js': 'import { h } from "./lib.js";\nh = 2;\n', 'lib.js': lib };
+  assert.throws(() => resolveAll(['/m/a.js', '/m/lib.js'], new Set(['lib.js']), read(m)), /a\.js assigns h, imported from \.\/lib\.js/);
+});
+
+test('review fixes: a target keeps its default import when a named one is dropped; --init warns on a changed read', () => {
+  const to = 'import lib, { fmt } from "./lib.js";\nconsole.log(lib, fmt);\n';
+  const r = moveLines('function fmt() {}\n', 1, 1, to, '');
+  assert.match(r.to, /^import lib from "\.\/lib\.js";$/m);
+  const warnings = [];
+  moveLines('const T = {};\nObject.assign(T, { a: 1 });\nconst X = T.a;\n', 1, 3, null, '', 'initT', (w) => warnings.push(w));
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /line 3: its initializer reads T/);
+});
+
+test('this repo: npm run split -- resolve uses the package.json externals and changes nothing', () => {
+  const r = spawnSync(process.execPath, ['scripts/split-module.mjs', 'resolve', 'src'], { cwd: root, encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout, '');
 });
 
 test('this repo: resolve finds nothing to change in src/', async () => {

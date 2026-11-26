@@ -10,11 +10,16 @@
 //     For every module in dir (default: the folder of the files given, or src): each name it uses but does not
 //     declare is imported from the one module that declares it at top level, else kept from an existing import
 //     elsewhere (so `html` from html.js follows the code that uses it), else left as a global. Unused imports are
-//     dropped. A top-level declaration gets `export` exactly when another module imports it. External modules
-//     (default: none) are never rewritten and only provide names through existing imports.
+//     dropped; side-effect imports (`import "./x.js"`) are kept. A top-level declaration gets `export` when another
+//     module imports it; `export` is never removed (tests and other folders may import it). External modules are
+//     never rewritten and only provide names through existing imports. --external defaults to the
+//     "splitModule": { "external": [...] } list in package.json (here engine.js and html.js), so
+//     `npm run split -- move …` needs no flag.
 //
 // Refuses, and changes nothing, when a module would assign to an imported binding (ES modules forbid it: add a
-// setter in the declaring module first) or when a name is declared at top level in two modules.
+// setter in the declaring module first), when a name is declared at top level in two modules, or when a module
+// imports another one of the folder as a namespace or by default (not modelled). `move --init` warns when a
+// declaration left at load time reads a name that a statement deferred into init() changes.
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { dirname, basename, join, resolve as resolvePath } from 'node:path';
 import { createRequire } from 'node:module';
@@ -39,8 +44,15 @@ export function analyze(code, file = 'module') {
   const mod = sm.globalScope.childScopes.find((s) => s.type === 'module');
   const declared = new Map(); // name -> top-level statement node (the ExportNamedDeclaration when exported)
   const imports = []; // {source, imported ('*' for namespace, 'default'), local, node}
+  const sideEffects = []; // sources of `import "./x.js"`
+  const listed = new Set(); // names exported by an `export { a, b }` list
   for (const st of ast.body) {
+    if (st.type === 'ExportNamedDeclaration' && !st.declaration) {
+      if (!st.source) for (const sp of st.specifiers) listed.add(sp.local.name);
+      continue;
+    }
     if (st.type === 'ImportDeclaration') {
+      if (!st.specifiers.length) sideEffects.push(st.source.value);
       for (const sp of st.specifiers)
         imports.push({
           source: st.source.value,
@@ -64,7 +76,7 @@ export function analyze(code, file = 'module') {
   const unresolvedWrites = sm.globalScope.through.filter((r) => r.isWrite()).map((r) => r.identifier.name);
   const importUsed = new Set();
   for (const v of mod.variables) if (v.defs.some((df) => df.type === 'ImportBinding') && v.references.length) importUsed.add(v.name);
-  return { ast, declared, imports, used, importWrites, unresolvedWrites, importUsed };
+  return { ast, declared, imports, sideEffects, listed, used, importWrites, unresolvedWrites, importUsed };
 }
 
 const rel = (fromFile, toFile) => {
@@ -87,6 +99,13 @@ export function resolveAll(files, external = new Set(), read = (f) => readFileSy
       owner.set(n, f);
     }
   if (clash.length) throw new Error('declared in two modules:\n  ' + clash.join('\n  '));
+  const unsupported = [];
+  for (const f of own)
+    for (const im of info[f].imports)
+      if ((im.imported === '*' || im.imported === 'default') && own.some((o) => rel(f, o) === im.source))
+        unsupported.push(`${basename(f)}: ${im.imported === '*' ? '* as ' : ''}${im.local} from ${im.source}`);
+  if (unsupported.length)
+    throw new Error('namespace or default import of a module in the folder (not handled; use named imports):\n  ' + unsupported.join('\n  '));
   // names known through existing imports of non-own modules: local -> spec
   const known = new Map();
   for (const f of own) for (const im of info[f].imports) if (!own.some((o) => rel(f, o) === im.source)) known.set(im.local, im);
@@ -112,7 +131,11 @@ export function resolveAll(files, external = new Set(), read = (f) => readFileSy
         add(k.source, k.imported, n);
       } // else a global
     }
-    for (const n of [...I.importWrites, ...I.unresolvedWrites]) if (owner.has(n) && owner.get(n) !== f) errors.push(`${basename(f)} assigns ${n}, declared in ${basename(owner.get(n))}`);
+    for (const n of I.importWrites) {
+      const src = I.imports.find((im) => im.local === n)?.source;
+      errors.push(`${basename(f)} assigns ${n}, imported from ${owner.has(n) ? basename(owner.get(n)) : src}`);
+    }
+    for (const n of I.unresolvedWrites) if (owner.has(n) && owner.get(n) !== f) errors.push(`${basename(f)} assigns ${n}, declared in ${basename(owner.get(n))}`);
   }
   if (errors.length) throw new Error('assignment to an imported binding (add a setter in the declaring module):\n  ' + errors.join('\n  '));
   const out = {};
@@ -120,20 +143,21 @@ export function resolveAll(files, external = new Set(), read = (f) => readFileSy
     const I = info[f];
     let src = code[f];
     const edits = []; // [start, end, text]
-    // exports: add or remove the keyword, once per statement (a destructuring declares several names)
+    // exports: add the keyword where another module needs it, once per statement (a destructuring declares several
+    // names), unless an `export { … }` list already exports it; never removed
     const stmts = new Map();
-    for (const [n, st] of I.declared) stmts.set(st, (stmts.get(st) || false) || exportsNeeded.get(f).has(n));
-    for (const [st, want] of stmts) {
-      if (st.type === 'ExportNamedDeclaration' && !want) edits.push([st.range[0], st.declaration.range[0], '']);
-      else if (st.type !== 'ExportNamedDeclaration' && want) edits.push([st.range[0], st.range[0], 'export ']);
-    }
+    for (const [n, st] of I.declared) stmts.set(st, stmts.get(st) || (exportsNeeded.get(f).has(n) && !I.listed.has(n)));
+    for (const [st, want] of stmts) if (st.type !== 'ExportNamedDeclaration' && want) edits.push([st.range[0], st.range[0], 'export ']);
     // imports: replace the whole import block
     const imps = I.ast.body.filter((s) => s.type === 'ImportDeclaration');
     const lines = [];
-    const order = [...new Set([...I.imports.map((i) => i.source), ...needs.get(f).keys()])];
+    const order = [...new Set([...I.ast.body.filter((x) => x.type === 'ImportDeclaration').map((x) => x.source.value), ...needs.get(f).keys()])];
     for (const source of order) {
       const m = needs.get(f).get(source);
-      if (!m) continue;
+      if (!m) {
+        if (I.sideEffects.includes(source)) lines.push(`import "${source}";`);
+        continue;
+      }
       const ns = [...m].filter(([imp]) => imp === '*');
       const named = [...m].filter(([imp]) => imp !== '*' && imp !== 'default');
       const def = [...m].find(([imp]) => imp === 'default');
@@ -172,7 +196,7 @@ const DECL = /^(FunctionDeclaration|ClassDeclaration|VariableDeclaration|ExportN
  * order and with their comments, into `export function <init>() {…}` in `to`, and `<init>();` takes their place
  * in `from`, so they still run at the same point of the entry module.
  */
-export function moveLines(fromCode, start, end, toCode, title, init) {
+export function moveLines(fromCode, start, end, toCode, title, init, warn = () => {}) {
   const L = fromCode.split('\n');
   if (start < 1 || end > L.length || start > end) throw new Error(`lines ${start}-${end} out of range`);
   const ast = parse(fromCode, 'from');
@@ -188,6 +212,38 @@ export function moveLines(fromCode, start, end, toCode, title, init) {
   let call = [];
   if (init) {
     const inRange = ast.body.filter((st) => st.range[0] >= a && st.range[1] <= b);
+    // names a statement changes: assigned, or the base of an assigned member (S.x = …), or passed first to a call
+    // that mutates (Object.assign(X…)); a later declaration whose initializer reads one would now see it unchanged
+    const changed = new Set();
+    const readsOf = (node) => {
+      const out = new Set();
+      JSON.stringify(node, (k, v) => {
+        if (v && v.type === 'Identifier' && k !== 'property' && k !== 'key') out.add(v.name);
+        return v;
+      });
+      return out;
+    };
+    const baseName = (n) => (n.type === 'Identifier' ? n.name : n.type === 'MemberExpression' ? baseName(n.object) : null);
+    const changesOf = (node) => {
+      const out = new Set();
+      JSON.stringify(node, (k, v) => {
+        if (v && v.type === 'AssignmentExpression') out.add(baseName(v.left));
+        if (v && v.type === 'UpdateExpression') out.add(baseName(v.argument));
+        if (v && v.type === 'CallExpression' && v.arguments[0] && /assign|push|set|splice/.test(v.callee.property?.name || '')) out.add(baseName(v.arguments[0]));
+        return v;
+      });
+      out.delete(null);
+      return out;
+    };
+    for (const st of inRange) {
+      if (!DECL.test(st.type)) for (const n of changesOf(st)) changed.add(n);
+      else if (st.type === 'VariableDeclaration' && changed.size)
+        for (const d of st.declarations) {
+          if (!d.init || /Function|Arrow/.test(d.init.type)) continue;
+          const hit = [...readsOf(d.init)].filter((n) => changed.has(n));
+          if (hit.length) warn(`line ${st.loc.start.line}: its initializer reads ${hit.join(', ')}, changed by a statement above that --init defers; it will now run before that change`);
+        }
+    }
     const decl = [];
     const run = [];
     let from = a;
@@ -211,8 +267,15 @@ export function moveLines(fromCode, start, end, toCode, title, init) {
     for (const st of t.body.filter((x) => x.type === 'ImportDeclaration').reverse()) {
       const keep = st.specifiers.filter((sp) => !movedNames.has(sp.local.name));
       if (keep.length === st.specifiers.length) continue;
-      const names = keep.map((sp) => (sp.imported && sp.imported.name !== sp.local.name ? `${sp.imported.name} as ${sp.local.name}` : sp.local.name));
-      const text = keep.length ? `import { ${names.join(', ')} } from "${st.source.value}";` : '';
+      const def = keep.find((sp) => sp.type === 'ImportDefaultSpecifier');
+      const ns = keep.find((sp) => sp.type === 'ImportNamespaceSpecifier');
+      const named = keep.filter((sp) => sp.type === 'ImportSpecifier');
+      const parts = [
+        ...(def ? [def.local.name] : []),
+        ...(ns ? [`* as ${ns.local.name}`] : []),
+        ...(named.length ? [`{ ${named.map((sp) => (sp.imported.name !== sp.local.name ? `${sp.imported.name} as ${sp.local.name}` : sp.local.name)).join(', ')} }`] : []),
+      ];
+      const text = keep.length ? `import ${parts.join(', ')} from "${st.source.value}";` : '';
       head = head.slice(0, st.range[0]) + text + head.slice(st.range[1]);
     }
   }
@@ -243,8 +306,8 @@ export function rangeOf(code, first, last) {
   return [prev ? prev.loc.end.line + 1 : 1, b.loc.end.line];
 }
 
-function main(argv) {
-  const [cmd, ...rest] = argv;
+async function main(argv) {
+  const rest = [...argv];
   const opt = (name) => {
     const i = rest.indexOf(name);
     if (i < 0) return undefined;
@@ -254,14 +317,20 @@ function main(argv) {
   };
   const title = opt('--title');
   const init = opt('--init');
-  const external = new Set((opt('--external') || '').split(',').filter(Boolean));
+  const ext = opt('--external');
+  let pkgExternal = [];
+  try {
+    pkgExternal = JSON.parse(readFileSync(join(process.cwd(), 'package.json'), 'utf8')).splitModule?.external || [];
+  } catch (_) {}
+  const external = new Set(ext !== undefined ? ext.split(',').filter(Boolean) : pkgExternal);
+  const cmd = rest.shift();
   let dir;
   const writes = {};
   if (cmd === 'move') {
     const [from, s0, e0, to] = rest;
     if (!to) throw new Error('usage: move <from.js> <startLine|firstName> <endLine|lastName> <to.js> [--title "…"] [--init name]');
     const [s, e] = /^\d+$/.test(s0) && /^\d+$/.test(e0) ? [+s0, +e0] : rangeOf(readFileSync(from, 'utf8'), s0, e0);
-    const r = moveLines(readFileSync(from, 'utf8'), +s, +e, existsSync(to) ? readFileSync(to, 'utf8') : null, title, init);
+    const r = moveLines(readFileSync(from, 'utf8'), +s, +e, existsSync(to) ? readFileSync(to, 'utf8') : null, title, init, (m) => console.warn('warning:', m));
     writes[resolvePath(from)] = r.from;
     writes[resolvePath(to)] = r.to;
     dir = dirname(resolvePath(from));
@@ -269,8 +338,15 @@ function main(argv) {
   else throw new Error('usage: split-module.mjs move|resolve … (see the header)');
   const files = [...new Set([...readdirSync(dir).filter((f) => f.endsWith('.js')).map((f) => join(dir, f)), ...Object.keys(writes)])];
   const out = resolveAll(files, external, (f) => writes[f] ?? readFileSync(f, 'utf8'));
+  // format with the project's Prettier when it has one, so an unchanged module is left as it is
+  let format = async (code) => code;
+  try {
+    const prettier = require('prettier');
+    format = async (code, f) => prettier.format(code, { ...(await prettier.resolveConfig(f)), filepath: f });
+  } catch (_) {}
   for (const f of files) {
-    const code = out[f] ?? writes[f];
+    let code = out[f] ?? writes[f];
+    if (code !== undefined) code = await format(code, f);
     if (code !== undefined && (!existsSync(f) || code !== readFileSync(f, 'utf8'))) {
       writeFileSync(f, code);
       console.log('wrote', f);
@@ -280,7 +356,7 @@ function main(argv) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
-    main(process.argv.slice(2));
+    await main(process.argv.slice(2));
   } catch (e) {
     console.error(e.message);
     process.exit(1);
