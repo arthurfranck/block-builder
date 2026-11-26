@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.14.1] - 2026-11-26
+
+### Fixed
+- The gear menu (theme, runs in km or minutes, language) now always opens fully on screen. On windows about 860 to 1060 pixels wide it used to hang off the left edge (BB-92).
+
 ## [1.14.0] - 2026-11-25
 
 ### Added

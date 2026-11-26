@@ -9,7 +9,7 @@ const BBEngine = engine;
 
 (() => {
   "use strict";
-  const VERSION = "1.14.0";
+  const VERSION = "1.14.1";
   /* runs shown in km or minutes (BB-54): a display preference on this device; plans are still built and saved in km */
   let RUN_UNIT = "d";
   try {
@@ -4794,9 +4794,31 @@ const BBEngine = engine;
       B = $("#btnPrefs");
     P.hidden = !open;
     B.setAttribute("aria-expanded", String(open));
-    if (open)
+    if (open) {
+      placePrefs();
       (P.querySelector('[aria-pressed="true"]') || P.querySelector("button,select")).focus({ preventScroll: true });
-    else if (focusBack) B.focus({ preventScroll: true });
+    } else if (focusBack) B.focus({ preventScroll: true });
+  }
+  /* BB-92: the header wraps, so the gear can sit at the left of a line, where the right-aligned panel would hang off
+     the screen (864-1056 px wide). Measure it once open and shift it to stay 8 px inside the viewport. */
+  function placePrefs() {
+    const P = $("#prefsPanel");
+    P.style.right = "";
+    const r = P.getBoundingClientRect(),
+      vw = document.documentElement.clientWidth,
+      m = 8;
+    const dx = r.left < m ? m - r.left : r.right > vw - m ? vw - m - r.right : 0;
+    if (dx) P.style.right = `${-dx}px`;
+  }
+  /* and again whenever the gear may have moved while it is open: a window resize, or anything in the header changing
+     size (language switch, save status text, plan name), which re-wraps the header without a resize event */
+  const replacePrefs = () => {
+    if (!$("#prefsPanel").hidden) placePrefs();
+  };
+  window.addEventListener("resize", replacePrefs);
+  if (typeof ResizeObserver === "function") {
+    const ro = new ResizeObserver(replacePrefs);
+    for (const el of $("header.top").children) if (el.id !== "prefs") ro.observe(el);
   }
   /* Quick workout from the Goal row (BB-58): an action next to the goal, not a third goal; the plan is left as it is */
   $("#btnQuickGoal").addEventListener("click", () => openQuick());
