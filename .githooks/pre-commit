@@ -5,11 +5,28 @@
 # the engine tests and the desktop Chrome tests. Any failure blocks the commit.
 # Enabled by `npm install` / `npm ci` (the "prepare" script sets core.hooksPath to .githooks).
 cd "$(git rev-parse --show-toplevel)" || exit 1
-CHECKED="index.html theme.js src app.js app.js.map tests package.json package-lock.json playwright.config.ts eslint.config.mjs tsconfig.json tsconfig.app.json .prettierrc.json"
-# shellcheck disable=SC2086
-git diff --cached --quiet -- $CHECKED && exit 0
 # Node may live outside the default PATH (see CLAUDE.md)
 [ -d "$HOME/.local/node/bin" ] && PATH="$HOME/.local/node/bin:$PATH"
+# BB-91: GitHub runs no checks at all for a workflow it can't read, so a broken one makes a PR look green.
+# When a workflow file is staged, check the staged copies (not the working tree) first; this takes under a second.
+if ! git diff --cached --quiet -- .github/workflows; then
+  if ! command -v node >/dev/null 2>&1 || [ ! -d node_modules/yaml ]; then
+    echo "Commit blocked: node or node_modules is missing here, so the workflow files can't be checked. Run 'npm ci' in $(pwd), then commit again." >&2
+    exit 1
+  fi
+  wf=$(mktemp -d)
+  git ls-files -z -- .github/workflows | xargs -0 git checkout-index --prefix="$wf/" --
+  if ! out=$(node scripts/check-workflows.mjs "$wf/.github/workflows" 2>&1); then
+    rm -rf "$wf"
+    printf '%s\n' "$out" | sed "s|$wf/||" >&2
+    echo "Commit blocked: fix the staged workflow file(s) above (a name containing ': ' needs quotes)." >&2
+    exit 1
+  fi
+  rm -rf "$wf"
+fi
+CHECKED="index.html theme.js src app.js app.js.map tests scripts package.json package-lock.json playwright.config.ts eslint.config.mjs tsconfig.json tsconfig.app.json .prettierrc.json"
+# shellcheck disable=SC2086
+git diff --cached --quiet -- $CHECKED && exit 0
 if ! command -v npm >/dev/null 2>&1 || [ ! -d node_modules ]; then
   echo "Commit blocked: npm or node_modules is missing here. Run 'npm ci' in $(pwd), then commit again." >&2
   exit 1

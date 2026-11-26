@@ -11,7 +11,7 @@
     "test:chrome": "playwright test --project=desktop-chrome",
     "test:report": "playwright show-report",
     "typecheck": "tsc -p . && tsc -p tsconfig.app.json",
-    "lint": "eslint .",
+    "lint": "eslint . && node scripts/check-workflows.mjs",
     "format": "prettier --write src/*.js theme.js eslint.config.mjs",
     "format:check": "prettier --check src/*.js theme.js eslint.config.mjs",
     "build": "esbuild src/app.js --bundle --format=iife --target=es2022 --sourcemap --external:./vendor/* --legal-comments=none --banner:js=\"/* Block Builder: built from src/ by esbuild (npm run build). Edit src/, not this file. */\" --outfile=app.js"
@@ -25,6 +25,7 @@
     "eslint": "10.15.0",
     "globals": "17.14.0",
     "prettier": "3.10.1",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "yaml": "2.9.1"
   }
 }

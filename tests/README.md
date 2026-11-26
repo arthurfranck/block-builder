@@ -41,6 +41,7 @@ Every iOS browser, Chrome included, runs on WebKit, so the iPhone Chrome setup c
 | File | Covers |
 |---|---|
 | `unit/html.unit.mjs` | the safe HTML helper (BB-78): values escaped by default, nested and joined markup kept, booleans as text, `esc()` never escaping twice, `setHtml` refusing plain strings |
+| `unit/check-workflows.unit.mjs` | the workflow file check (BB-91): the BB-78 unquoted step name with ": " fails at its line, duplicate keys, missing `on` or `jobs`, jobs with no `runs-on` or no steps, steps without exactly one of `run` / `uses`, two documents in a file; this repo's own workflows pass; the command exits 1 naming the file |
 | `unit/no-hook-bypass.unit.mjs` | the Claude hook that refuses commits skipping the git pre-commit hook (ADR 0010): `--no-verify` anywhere and abbreviated, `-n` alone or bundled, `-c core.hooksPath`, chains with `&&` and `;`; and no false alarm on `-n` inside a message, `git log -n`, `echo`, or after `--` |
 | `engine/engine.unit.mjs` | paces, watch workouts, the five athlete profiles against the plan rules at each experience level, what each level changes (BB-49), recovery weeks after the race (BB-42), week 1 within the stated volume (BB-41), a Personal plan with no start date built without the page (BB-79) |
 | `plan-generation.spec.ts` | distances, weeks, dates, runs per week, fitness goal, load profile (phase bands, race flag, current week and today), summary numbers (weeks to go, units, French labels), recovery weeks after the race, script URLs carry the version (BB-74) |

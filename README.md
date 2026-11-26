@@ -74,7 +74,7 @@ I run Block Builder as a team lead. I make the product, design and technical dec
 
 **Guardrails that make delegating safe**
 - `main` is protected: type checks, a dependency audit and the tests on six desktop and iPhone setups must all pass.
-- A git pre-commit hook (`.githooks/pre-commit`, enabled by `npm install`) runs the build check, lint, format check, engine and Chrome tests before any commit that touches the app, its tests or its tooling.
+- A git pre-commit hook (`.githooks/pre-commit`, enabled by `npm install`) runs the build check, lint, format check, engine and Chrome tests before any commit that touches the app, its tests or its tooling, and checks staged GitHub workflow files (`scripts/check-workflows.mjs`), since GitHub runs no checks at all for a workflow it can't read.
 - A behaviour change comes with a test change, and a failing test is never deleted or loosened: the page gets fixed.
 - The plan engine has no DOM and no storage, so every training rule is unit-tested in Node.
 - Each release bumps the version, adds a changelog entry and updates the docs in the same commit.
@@ -93,6 +93,8 @@ vendor/               third-party code served from this repo (see vendor/README.
 docs/                 features in detail, architecture decisions (adr/), brainstorms per backlog item, README screenshot
 tests/                Playwright browser tests, Node engine tests, test server (see tests/README.md)
 .github/              CI workflow and Dependabot
+.githooks/            the git pre-commit hook (ADR 0010)
+scripts/              repo tooling: check-workflows.mjs checks the GitHub workflow files (BB-91)
 .claude/              Claude Code setup (see CLAUDE.md)
 CHANGELOG.md          what changed in each version
 CLAUDE.md             rules for working on this repo with Claude Code
