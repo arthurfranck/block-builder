@@ -1,9 +1,11 @@
 // Split ES modules by moving top-level code between files, with imports and exports worked out from scope analysis
 // (BB-76). Works on any folder of ES modules; nothing in it is specific to Block Builder.
 //
-//   node scripts/split-module.mjs move <from.js> <startLine> <endLine> <to.js> [--title "one-line purpose"]
-//     Moves lines start..end of <from.js> (whole top-level statements and their comments) to the end of <to.js>
-//     (created if missing), then runs `resolve`.
+//   node scripts/split-module.mjs move <from.js> <startLine|firstName> <endLine|lastName> <to.js> [--title "…"] [--init initName]
+//     Names pick the statements declaring them (with the comments above the first; `@<line>` for a statement that
+//     declares nothing). Moves lines start..end of <from.js> (whole top-level statements and their comments) to the end of <to.js>
+//     (created if missing), then runs `resolve`. --init wraps the non-declaration statements (wiring, calls) into
+//     an exported function called from <from.js> where the code was, so load order stays the same.
 //   node scripts/split-module.mjs resolve [dir] [--external a.js,b.js]
 //     For every module in dir (default: the folder of the files given, or src): each name it uses but does not
 //     declare is imported from the one module that declares it at top level, else kept from an existing import
@@ -118,13 +120,12 @@ export function resolveAll(files, external = new Set(), read = (f) => readFileSy
     const I = info[f];
     let src = code[f];
     const edits = []; // [start, end, text]
-    // exports: add or remove the keyword
-    for (const [n, st] of I.declared) {
-      const want = exportsNeeded.get(f).has(n);
-      if (st.type === 'ExportNamedDeclaration' && !want) {
-        const others = [...I.declared].filter(([m, s]) => s === st && m !== n).some(([m]) => exportsNeeded.get(f).has(m));
-        if (!others) edits.push([st.range[0], st.declaration.range[0], '']);
-      } else if (st.type !== 'ExportNamedDeclaration' && want) edits.push([st.range[0], st.range[0], 'export ']);
+    // exports: add or remove the keyword, once per statement (a destructuring declares several names)
+    const stmts = new Map();
+    for (const [n, st] of I.declared) stmts.set(st, (stmts.get(st) || false) || exportsNeeded.get(f).has(n));
+    for (const [st, want] of stmts) {
+      if (st.type === 'ExportNamedDeclaration' && !want) edits.push([st.range[0], st.declaration.range[0], '']);
+      else if (st.type !== 'ExportNamedDeclaration' && want) edits.push([st.range[0], st.range[0], 'export ']);
     }
     // imports: replace the whole import block
     const imps = I.ast.body.filter((s) => s.type === 'ImportDeclaration');
@@ -148,9 +149,12 @@ export function resolveAll(files, external = new Set(), read = (f) => readFileSy
       for (const s of imps.slice(1)) edits.push([s.range[0], src.indexOf('\n', s.range[1]) + 1 || s.range[1], '']);
       edits.push([imps[0].range[0], imps[0].range[1], block]);
     } else if (block) {
+      // before the first statement and the comments right above it (no blank line between), after the file header
       const first = I.ast.body[0];
-      // after the leading comments
-      const at = first ? first.range[0] - (src.slice(0, first.range[0]).match(/[^\n]*$/)?.[0].length || 0) : src.length;
+      let at = first ? first.range[0] : src.length;
+      for (const c of [...I.ast.comments].reverse())
+        if (c.range[1] <= at && /^[ \t]*\n?[ \t]*$/.test(src.slice(c.range[1], at))) at = c.range[0];
+      at -= src.slice(0, at).match(/[^\n]*$/)?.[0].length || 0;
       edits.push([at, at, block + '\n\n']);
     }
     edits.sort((a, b) => b[0] - a[0] || b[1] - a[1]);
@@ -160,8 +164,15 @@ export function resolveAll(files, external = new Set(), read = (f) => readFileSy
   return out;
 }
 
-/** Move lines start..end (1-based, inclusive) of `from` to the end of `to`. Returns {from, to} code. */
-export function moveLines(fromCode, start, end, toCode, title) {
+const DECL = /^(FunctionDeclaration|ClassDeclaration|VariableDeclaration|ExportNamedDeclaration|EmptyStatement)$/;
+
+/**
+ * Move lines start..end (1-based, inclusive) of `from` to the end of `to`. Returns {from, to} code.
+ * With `init`, the statements in the range that are not declarations (event wiring, calls) are wrapped, in their
+ * order and with their comments, into `export function <init>() {…}` in `to`, and `<init>();` takes their place
+ * in `from`, so they still run at the same point of the entry module.
+ */
+export function moveLines(fromCode, start, end, toCode, title, init) {
   const L = fromCode.split('\n');
   if (start < 1 || end > L.length || start > end) throw new Error(`lines ${start}-${end} out of range`);
   const ast = parse(fromCode, 'from');
@@ -173,10 +184,51 @@ export function moveLines(fromCode, start, end, toCode, title) {
     if (s < b && e > a && (s < a || e > b)) throw new Error(`a statement at line ${st.loc.start.line}-${st.loc.end.line} crosses the range edge`);
     if (st.type === 'ImportDeclaration' && s >= a && e <= b) throw new Error(`line ${st.loc.start.line}: import statements are not moved`);
   }
-  const moved = L.slice(start - 1, end).join('\n');
-  const rest = [...L.slice(0, start - 1), ...L.slice(end)].join('\n');
+  let moved = L.slice(start - 1, end).join('\n');
+  let call = [];
+  if (init) {
+    const inRange = ast.body.filter((st) => st.range[0] >= a && st.range[1] <= b);
+    const decl = [];
+    const run = [];
+    let from = a;
+    inRange.forEach((st, i) => {
+      const to = i === inRange.length - 1 ? b : st.range[1];
+      // a chunk is the statement with the comments and blank lines above it
+      (DECL.test(st.type) ? decl : run).push(fromCode.slice(from, to).replace(/^\n/, ''));
+      from = to;
+    });
+    if (run.length) {
+      moved = decl.join('\n') + `\nexport function ${init}() {\n` + run.join('\n') + '\n}';
+      call = [`${init}();`];
+    }
+  }
+  const rest = [...L.slice(0, start - 1), ...call, ...L.slice(end)].join('\n');
   const head = toCode ?? `// @ts-check\n${title ? `/* ${title} */\n` : ''}`;
   return { from: rest, to: head.replace(/\n*$/, '\n\n') + moved + '\n' };
+}
+
+/**
+ * Lines of the top-level statements from the one declaring `first` to the one declaring `last`, with the comments
+ * and blank lines just above `first` (back to the end of the statement before it). A name may also be `@<line>`.
+ */
+export function rangeOf(code, first, last) {
+  const { ast, declared } = analyze(code);
+  const find = (n) => {
+    if (/^@\d+$/.test(n)) {
+      const ln = +n.slice(1);
+      const st = ast.body.find((s) => s.loc.start.line <= ln && s.loc.end.line >= ln);
+      if (!st) throw new Error(`no statement at line ${ln}`);
+      return st;
+    }
+    const st = declared.get(n);
+    if (!st) throw new Error(`${n} is not declared at top level`);
+    return st;
+  };
+  const a = find(first);
+  const b = find(last);
+  if (b.range[0] < a.range[0]) throw new Error(`${last} comes before ${first}`);
+  const prev = ast.body.filter((s) => s.range[1] <= a.range[0]).pop();
+  return [prev ? prev.loc.end.line + 1 : 1, b.loc.end.line];
 }
 
 function main(argv) {
@@ -189,13 +241,15 @@ function main(argv) {
     return v;
   };
   const title = opt('--title');
+  const init = opt('--init');
   const external = new Set((opt('--external') || '').split(',').filter(Boolean));
   let dir;
   const writes = {};
   if (cmd === 'move') {
-    const [from, s, e, to] = rest;
-    if (!to) throw new Error('usage: move <from.js> <startLine> <endLine> <to.js> [--title "…"]');
-    const r = moveLines(readFileSync(from, 'utf8'), +s, +e, existsSync(to) ? readFileSync(to, 'utf8') : null, title);
+    const [from, s0, e0, to] = rest;
+    if (!to) throw new Error('usage: move <from.js> <startLine|firstName> <endLine|lastName> <to.js> [--title "…"] [--init name]');
+    const [s, e] = /^\d+$/.test(s0) && /^\d+$/.test(e0) ? [+s0, +e0] : rangeOf(readFileSync(from, 'utf8'), s0, e0);
+    const r = moveLines(readFileSync(from, 'utf8'), +s, +e, existsSync(to) ? readFileSync(to, 'utf8') : null, title, init);
     writes[resolvePath(from)] = r.from;
     writes[resolvePath(to)] = r.to;
     dir = dirname(resolvePath(from));

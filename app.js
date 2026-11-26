@@ -34,6 +34,46 @@
     mod
   ));
 
+  // src/html.js
+  var ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" };
+  var escapeText = (s) => String(s).replace(/[&<>"]/g, (c) => ESC[c]);
+  var SafeHtml = class {
+    /** @param {string} s markup that is safe to insert  @param {string} [text] the plain text it came from, if any */
+    constructor(s, text) {
+      this.s = s;
+      this.text = text;
+    }
+    toString() {
+      return this.s;
+    }
+  };
+  function part(v) {
+    if (v instanceof SafeHtml) return v.s;
+    if (Array.isArray(v)) return v.map(part).join("");
+    if (v === null || v === void 0) return "";
+    return escapeText(v);
+  }
+  function html(strings, ...values) {
+    let out = strings[0];
+    for (let i = 0; i < values.length; i++) out += part(values[i]) + strings[i + 1];
+    return new SafeHtml(out);
+  }
+  function esc(s) {
+    if (s instanceof SafeHtml) return s;
+    const text = String(s ?? "");
+    return new SafeHtml(escapeText(text), text);
+  }
+  var htmlJoin = (list, sep = "") => new SafeHtml(list.map(part).join(part(sep)));
+  var trustedHtml = (s) => new SafeHtml(String(s));
+  var plainText = (v) => v instanceof SafeHtml ? v.text ?? v.s : String(v);
+  function setHtml(el, value) {
+    if (value === "") return clearHtml(el);
+    if (!(value instanceof SafeHtml) && !Array.isArray(value))
+      throw new TypeError("setHtml needs html`` output, not a plain string (BB-78)");
+    el.innerHTML = part(value);
+  }
+  var clearHtml = (el) => el.replaceChildren();
+
   // src/engine.js
   var engine_exports = {};
   __export(engine_exports, {
@@ -1006,54 +1046,58 @@
     Object.assign(LOCALE, o);
   }
 
-  // src/html.js
-  var ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" };
-  var escapeText = (s) => String(s).replace(/[&<>"]/g, (c) => ESC[c]);
-  var SafeHtml = class {
-    /** @param {string} s markup that is safe to insert  @param {string} [text] the plain text it came from, if any */
-    constructor(s, text) {
-      this.s = s;
-      this.text = text;
-    }
-    toString() {
-      return this.s;
-    }
-  };
-  function part(v) {
-    if (v instanceof SafeHtml) return v.s;
-    if (Array.isArray(v)) return v.map(part).join("");
-    if (v === null || v === void 0) return "";
-    return escapeText(v);
-  }
-  function html(strings, ...values) {
-    let out = strings[0];
-    for (let i = 0; i < values.length; i++) out += part(values[i]) + strings[i + 1];
-    return new SafeHtml(out);
-  }
-  function esc(s) {
-    if (s instanceof SafeHtml) return s;
-    const text = String(s ?? "");
-    return new SafeHtml(escapeText(text), text);
-  }
-  var htmlJoin = (list, sep = "") => new SafeHtml(list.map(part).join(part(sep)));
-  var trustedHtml = (s) => new SafeHtml(String(s));
-  var plainText = (v) => v instanceof SafeHtml ? v.text ?? v.s : String(v);
-  function setHtml(el, value) {
-    if (value === "") return clearHtml(el);
-    if (!(value instanceof SafeHtml) && !Array.isArray(value))
-      throw new TypeError("setHtml needs html`` output, not a plain string (BB-78)");
-    el.innerHTML = part(value);
-  }
-  var clearHtml = (el) => el.replaceChildren();
-
-  // src/app.js
+  // src/engine-api.js
   var BBEngine = engine_exports;
-  var VERSION = "1.14.3";
-  var RUN_UNIT = "d";
-  try {
-    if (localStorage.getItem("bb-run-unit") === "t") RUN_UNIT = "t";
-  } catch (_) {
-  }
+  var {
+    SETUP_FIELDS: SETUP_FIELDS2,
+    warningItems: warningItems2,
+    SETUP_STEP: SETUP_STEP2,
+    WEEK_PHASES: WEEK_PHASES2,
+    recWeeksOf: recWeeksOf2,
+    LEVELS: LEVELS2,
+    levelOf: levelOf2,
+    suggestVol: suggestVol2,
+    longOf: longOf2,
+    durSec: durSec2,
+    kmIn: kmIn2,
+    DISTS: DISTS2,
+    PHASES: PHASES2,
+    DEFAULT_DAYS: DEFAULT_DAYS2,
+    TYPE_DEFS: TYPE_DEFS2,
+    uid: uid2,
+    clamp: clamp2,
+    r05: r052,
+    iso: iso2,
+    parseISO: parseISO2,
+    addDays: addDays2,
+    dow: dow2,
+    raceTimeSec: raceTimeSec2,
+    badRaceTime: badRaceTime2,
+    badTimeMsg: badTimeMsg2,
+    fmtPace: fmtPace2,
+    fmtDur: fmtDur2,
+    distKm: distKm2,
+    missingSetup: missingSetup2,
+    genInputs: genInputs2,
+    distLabel: distLabel2,
+    cat: cat2,
+    paces: paces2,
+    workFor: workFor2,
+    fill: fill2,
+    watchPlan: watchPlan2,
+    generate: generate2,
+    weekChecks: weekChecks2,
+    nextMonday: nextMonday2
+  } = BBEngine;
+
+  // src/prefs.js
+  var RUN_UNIT = (() => {
+    try {
+      if (localStorage.getItem("bb-run-unit") === "t") return "t";
+    } catch (_) {
+    }
+    return "d";
+  })();
   function useRunUnit(u) {
     RUN_UNIT = u;
     try {
@@ -1061,10 +1105,13 @@
     } catch (_) {
     }
   }
+
+  // src/dom.js
   var $ = (s) => document.querySelector(s);
   var $$ = (s) => document.querySelectorAll(s);
   var cardDetails = (s) => document.querySelector(s);
-  $("#appVersion").textContent = "Block Builder v" + VERSION;
+
+  // src/strings.js
   var I18N = {
     en: {
       planNameLabel: "Plan name",
@@ -2023,6 +2070,8 @@
     needRuns: "Choisissez le nombre de sorties par semaine.",
     needVol: "Indiquez votre volume hebdo actuel."
   });
+
+  // src/i18n.js
   var LANG = (() => {
     try {
       const s = localStorage.getItem("bb-lang");
@@ -2089,10 +2138,8 @@
     LOC(),
     LANG === "fr" ? { weekday: "long", day: "numeric", month: "long" } : { weekday: "short", day: "numeric", month: "short" }
   );
-  function defaultName() {
-    const I = S.inputs;
-    return I.goal === "fitness" ? cap2(t2("fitBlock", { n: I.weeks })) : cap2(t2("blockName", { lbl: distLabel2(I) }));
-  }
+
+  // src/state.js
   var DEFAULT_INPUTS = () => ({
     goal: "race",
     startDate: nextMonday2(),
@@ -2126,48 +2173,6 @@
     race: null
   });
   var BLANK_TYPES = () => DEFAULT_TYPES().map((x) => ({ ...x, on: x.id === "easy" }));
-  BBEngine.setLocale({ t: t2, days: () => DAYS, fmtDate: fmtDate2 });
-  var {
-    SETUP_FIELDS: SETUP_FIELDS2,
-    warningItems: warningItems2,
-    SETUP_STEP: SETUP_STEP2,
-    WEEK_PHASES: WEEK_PHASES2,
-    recWeeksOf: recWeeksOf2,
-    LEVELS: LEVELS2,
-    levelOf: levelOf2,
-    suggestVol: suggestVol2,
-    longOf: longOf2,
-    durSec: durSec2,
-    kmIn: kmIn2,
-    DISTS: DISTS2,
-    PHASES: PHASES2,
-    DEFAULT_DAYS: DEFAULT_DAYS2,
-    TYPE_DEFS: TYPE_DEFS2,
-    uid: uid2,
-    clamp: clamp2,
-    r05: r052,
-    iso: iso2,
-    parseISO: parseISO2,
-    addDays: addDays2,
-    dow: dow2,
-    raceTimeSec: raceTimeSec2,
-    badRaceTime: badRaceTime2,
-    badTimeMsg: badTimeMsg2,
-    fmtPace: fmtPace2,
-    fmtDur: fmtDur2,
-    distKm: distKm2,
-    missingSetup: missingSetup2,
-    genInputs: genInputs2,
-    distLabel: distLabel2,
-    cat: cat2,
-    paces: paces2,
-    workFor: workFor2,
-    fill: fill2,
-    watchPlan: watchPlan2,
-    generate: generate2,
-    weekChecks: weekChecks2,
-    nextMonday: nextMonday2
-  } = BBEngine;
   var S = {
     nameAuto: true,
     inputs: (
@@ -2196,17 +2201,26 @@
     I.curVol = v;
     S.volSug = v;
   }
+  function regen() {
+    const g = generate2(genInputs2(S.inputs), S.types);
+    S.plan = g;
+    S.edited = false;
+  }
+  function defaultName() {
+    const I = S.inputs;
+    return I.goal === "fitness" ? cap2(t2("fitBlock", { n: I.weeks })) : cap2(t2("blockName", { lbl: distLabel2(I) }));
+  }
+
+  // src/app.js
+  var VERSION = "1.14.3";
+  $("#appVersion").textContent = "Block Builder v" + VERSION;
+  BBEngine.setLocale({ t: t2, days: () => DAYS, fmtDate: fmtDate2 });
   function renderVolHint() {
     $("#volHint").hidden = !volIsSuggested();
   }
   function renderLongPh() {
     const I = S.inputs;
     $("#curLong").placeholder = +I.curVol > 0 ? "\u2248 " + longOf2(I) : "";
-  }
-  function regen() {
-    const g = generate2(genInputs2(S.inputs), S.types);
-    S.plan = g;
-    S.edited = false;
   }
   function renderSetup() {
     const I = S.inputs;

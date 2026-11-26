@@ -1,14 +1,10 @@
 import { test, expect } from './helpers';
-import { readFileSync } from 'node:fs';
-import path from 'node:path';
+import { I18N } from '../src/strings.js';
 
-/* The I18N object is read straight from src/app.js, so these checks need no browser. */
+/* The strings module is imported as is (BB-76: it was parsed out of src/app.js), so these checks need no browser
+   and also cover the strings added by Object.assign at its end. */
 function loadI18N(): Record<'en' | 'fr', Record<string, string>> {
-  const html = readFileSync(path.join(__dirname, '..', 'src', 'app.js'), 'utf8');
-  // Prettier layout (BB-79): `const I18N = {` ... `\n  };` inside the app's wrapper function.
-  const m = /const I18N = (\{[\s\S]*?\n\s*\});/.exec(html);
-  if (!m) throw new Error('I18N object not found in src/app.js');
-  return new Function(`return (${m[1].replace(/;$/, '')})`)();
+  return I18N;
 }
 const tokens = (s: string) => [...s.matchAll(/\{(\w+)\}/g)].map((x) => x[1]).sort();
 
