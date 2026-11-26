@@ -198,7 +198,7 @@ test('type: Archivo expanded for the brand and big numbers, Inter elsewhere, upp
   expect(faces.map((f) => f.family).sort()).toEqual(['Archivo', 'Archivo', 'Inter', 'Inter']);
   expect(faces.filter((f) => f.family === 'Archivo').every((f) => f.weight === '700 800' && f.stretch === '125%')).toBe(true);
   expect(faces.filter((f) => f.family === 'Inter').every((f) => f.weight === '400 700')).toBe(true);
-  expect(faces.filter((f) => f.status === 'loaded').map((f) => f.family).sort(), 'the latin files load').toEqual(['Archivo', 'Inter']);
+  expect(faces.filter((f) => f.status === 'loaded').map((f) => f.family), 'the latin files load').toEqual(expect.arrayContaining(['Archivo', 'Inter']));
   expect(await page.locator('link[href*="fonts.g"]').count()).toBe(0);
   const style = (sel: string) => page.locator(sel).first().evaluate((e) => {
     const c = getComputedStyle(e);

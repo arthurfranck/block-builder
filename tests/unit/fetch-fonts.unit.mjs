@@ -25,7 +25,7 @@ test('reads each face from the Google css2 answer', () => {
   const faces = parseCss(css);
   assert.equal(faces.length, 4);
   assert.deepEqual(faces[3], {
-    subset: 'latin', family: 'Archivo', style: 'normal', weight: 800, stretch: '125%',
+    subset: 'latin', family: 'Archivo', style: 'normal', weight: '800', stretch: '125%',
     url: 'https://fonts.gstatic.com/s/archivo/lat.woff2', range: 'U+0000-00FF, U+0131',
   });
 });
@@ -37,6 +37,13 @@ test('keeps only the asked subsets and merges weights that share a file into a r
   assert.match(out, /font-family:"Inter";font-style:normal;font-weight:400 700;font-display:swap;src:url\("fonts\/inter-latin.woff2"\)/);
   assert.match(out, /font-weight:800;font-stretch:125%;/);
   assert.doesNotMatch(out, /gstatic|cyr/);
+});
+
+test('reads a weight range and refuses two files that would get the same name', () => {
+  const ranged = parseCss(face('latin', 'Inter', '100 900', 'inter/var'));
+  assert.deepEqual(groupFaces(ranged, ['latin']).map((g) => [g.min, g.max]), [[100, 900]]);
+  const twoFiles = parseCss(face('latin', 'Archivo', 700, 'archivo/a') + face('latin', 'Archivo', 800, 'archivo/b'));
+  assert.throws(() => groupFaces(twoFiles, ['latin']), /archivo-latin.woff2: Google serves several files/);
 });
 
 test('index.html loads every font from fonts/ and names only files that exist', () => {
