@@ -1050,7 +1050,7 @@
   var BBEngine = engine_exports;
   (() => {
     "use strict";
-    const VERSION = "1.14.0";
+    const VERSION = "1.14.1";
     let RUN_UNIT = "d";
     try {
       if (localStorage.getItem("bb-run-unit") === "t") RUN_UNIT = "t";
@@ -5405,10 +5405,21 @@ ${s.desc}${s.note ? "\n" + t2("note") + ": " + s.note : ""}`).join("\n\n")
       const P = $("#prefsPanel"), B = $("#btnPrefs");
       P.hidden = !open;
       B.setAttribute("aria-expanded", String(open));
-      if (open)
+      if (open) {
+        placePrefs();
         (P.querySelector('[aria-pressed="true"]') || P.querySelector("button,select")).focus({ preventScroll: true });
-      else if (focusBack) B.focus({ preventScroll: true });
+      } else if (focusBack) B.focus({ preventScroll: true });
     }
+    function placePrefs() {
+      const P = $("#prefsPanel");
+      P.style.right = "";
+      const r = P.getBoundingClientRect(), vw = document.documentElement.clientWidth, m = 8;
+      const dx = r.left < m ? m - r.left : r.right > vw - m ? vw - m - r.right : 0;
+      if (dx) P.style.right = `${-dx}px`;
+    }
+    window.addEventListener("resize", () => {
+      if (!$("#prefsPanel").hidden) placePrefs();
+    });
     $("#btnQuickGoal").addEventListener("click", () => openQuick());
     $("#btnPrefs").addEventListener("click", () => setPrefs($("#prefsPanel").hidden));
     $("#prefs").addEventListener("keydown", (e) => {

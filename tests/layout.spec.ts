@@ -100,6 +100,36 @@ test.describe('display and language panel', () => {
     await page.locator('.brand').click();
     await expect(page.locator('#prefsPanel')).toBeHidden();
   });
+
+  /** The open panel's edges against the viewport. */
+  const panelBox = (page: import('@playwright/test').Page) =>
+    page.locator('#prefsPanel').evaluate((e) => {
+      const r = e.getBoundingClientRect();
+      return { left: r.left, right: r.right, vw: document.documentElement.clientWidth };
+    });
+
+  test('the panel opens fully on screen, also where the header wraps the gear to the left (BB-92)', async ({ app, page, mobile }) => {
+    /* 864-1056 px: the widths where it hung off the left edge (sweep in docs/brainstorms/bb-92-prefs-panel-onscreen.md);
+       phones keep their own size */
+    const widths = mobile ? [page.viewportSize()!.width] : [864, 960, 1024, 1056, 1440];
+    for (const width of widths) {
+      if (!mobile) await page.setViewportSize({ width, height: 800 });
+      await app.openPrefs();
+      const b = await panelBox(page);
+      expect(b.left, `left edge at ${width}px`).toBeGreaterThanOrEqual(0);
+      expect(b.right, `right edge at ${width}px`).toBeLessThanOrEqual(b.vw);
+      await app.closePrefs();
+    }
+  });
+
+  test('the panel stays on screen when the window is resized while it is open (BB-92)', async ({ app, page, mobile }) => {
+    test.skip(mobile, 'phones do not resize');
+    await app.openPrefs();
+    await page.setViewportSize({ width: 960, height: 800 });
+    await expect.poll(async () => (await panelBox(page)).left).toBeGreaterThanOrEqual(0);
+    const b = await panelBox(page);
+    expect(b.right).toBeLessThanOrEqual(b.vw);
+  });
 });
 
 test.describe('run colours follow effort', () => {
