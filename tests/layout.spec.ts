@@ -192,10 +192,14 @@ test.describe('run colours follow effort', () => {
 });
 
 test('type: Archivo expanded for the brand and big numbers, Inter elsewhere, uppercase only on small labels (BB-22)', async ({ app, page }) => {
-  const href = await page.locator('link[rel="stylesheet"][href*="fonts.googleapis.com"]').getAttribute('href');
-  expect(href).toContain('family=Archivo:wdth,wght@125,700;125,800');
-  expect(href).toContain('family=Inter:wght@400;500;600;700');
-  expect(href).not.toMatch(/Barlow|JetBrains/);
+  // BB-89: both typefaces come from fonts/ in the repo, and are really loaded, not just named in the CSS
+  await page.evaluate(() => document.fonts.ready);
+  const faces = await page.evaluate(() => [...document.fonts].map((f) => ({ family: f.family.replace(/"/g, ''), weight: f.weight, stretch: f.stretch, status: f.status })));
+  expect(faces.map((f) => f.family).sort()).toEqual(['Archivo', 'Archivo', 'Inter', 'Inter']);
+  expect(faces.filter((f) => f.family === 'Archivo').every((f) => f.weight === '700 800' && f.stretch === '125%')).toBe(true);
+  expect(faces.filter((f) => f.family === 'Inter').every((f) => f.weight === '400 700')).toBe(true);
+  expect(faces.filter((f) => f.status === 'loaded').map((f) => f.family), 'the latin files load').toEqual(expect.arrayContaining(['Archivo', 'Inter']));
+  expect(await page.locator('link[href*="fonts.g"]').count()).toBe(0);
   const style = (sel: string) => page.locator(sel).first().evaluate((e) => {
     const c = getComputedStyle(e);
     return { family: c.fontFamily.split(',')[0].replace(/"/g, ''), stretch: c.fontStretch, transform: c.textTransform, size: parseFloat(c.fontSize) };

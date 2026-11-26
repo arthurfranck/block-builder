@@ -11,4 +11,8 @@ test('index.html opened from disk (file://) runs the bundled app and engine and 
   await page.goto(pathToFileURL(resolve('index.html')).href);
   await expect(page.locator('table.grid tbody tr').first()).toBeVisible();
   expect(errors).toEqual([]);
+  // BB-89: the fonts in fonts/ load from disk too, so the page shows its real type offline
+  await page.evaluate(() => document.fonts.ready);
+  const loaded = await page.evaluate(() => [...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family.replace(/"/g, '')));
+  expect(loaded).toEqual(expect.arrayContaining(['Archivo', 'Inter']));
 });

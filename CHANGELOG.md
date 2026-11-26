@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.14.2] - 2026-11-26
+
+### Changed
+- The page's two typefaces, Archivo and Inter, now come with the page instead of from Google Fonts: opening it no longer contacts Google, and the real type shows offline too. Nothing changes on screen (BB-89).
+
 ## [1.14.1] - 2026-11-26
 
 ### Fixed

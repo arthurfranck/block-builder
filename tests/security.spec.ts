@@ -18,6 +18,8 @@ test('the page declares a strict Content Security Policy', async ({ app, page })
   expect(csp).toContain("base-uri 'none'");
   expect(csp).toContain('connect-src https://api.open-meteo.com https://geocoding-api.open-meteo.com;');
   expect(csp).not.toContain('jsdelivr');
+  expect(csp, 'BB-89: fonts come from the page itself').toContain("font-src 'self';");
+  expect(csp).not.toMatch(/fonts\.g(oogleapis|static)/);
   expect(csp, 'BB-66: no inline scripts').toMatch(/script-src 'self' https:\/\/cdnjs\.cloudflare\.com;/);
 });
 

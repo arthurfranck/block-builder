@@ -46,5 +46,5 @@ From CLAUDE.md; check each:
 - Plans live only in `localStorage` (`bb-plans`): lost when site data is cleared or evicted by the browser; the only backup is manual Export (BB-84; ADR 0003).
 - `src/app.js` is one ~4,700-line module (formatted in BB-79; bundled into app.js since BB-86). About 100 lines are still over 160 characters: prose strings and HTML template literals (now `html`-tagged and escaped by default since BB-78; shorter once BB-76 splits the views). Split: BB-76.
 - Type checking is strict for `tests/*.ts` but non-strict for `src/app.js`; `src/engine.js` and `tests/engine/*.mjs` are not checked (BB-70, then BB-81).
-- PDF export needs cdnjs (jsPDF 4.2.1, AutoTable 5.0.9) and fails offline; Google Fonts is another outside request.
+- PDF export needs cdnjs (jsPDF 4.2.1, AutoTable 5.0.9) and fails offline. Fonts are served from `fonts/` since BB-89 (ADR 0011): no Google request.
 - ICS line folding counts characters, not octets (BB-16).

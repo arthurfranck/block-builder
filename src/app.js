@@ -9,7 +9,7 @@ const BBEngine = engine;
 
 (() => {
   "use strict";
-  const VERSION = "1.14.1";
+  const VERSION = "1.14.2";
   /* runs shown in km or minutes (BB-54): a display preference on this device; plans are still built and saved in km */
   let RUN_UNIT = "d";
   try {
