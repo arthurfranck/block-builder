@@ -15,14 +15,14 @@ if ! git diff --cached --quiet -- .github/workflows; then
     exit 1
   fi
   wf=$(mktemp -d)
+  trap 'rm -rf "$wf"' EXIT
+  mkdir -p "$wf/.github/workflows" # still there when every workflow file is being deleted
   git ls-files -z -- .github/workflows | xargs -0 git checkout-index --prefix="$wf/" --
   if ! out=$(node scripts/check-workflows.mjs "$wf/.github/workflows" 2>&1); then
-    rm -rf "$wf"
     printf '%s\n' "$out" | sed "s|$wf/||" >&2
     echo "Commit blocked: fix the staged workflow file(s) above (a name containing ': ' needs quotes)." >&2
     exit 1
   fi
-  rm -rf "$wf"
 fi
 CHECKED="index.html theme.js src app.js app.js.map tests scripts package.json package-lock.json playwright.config.ts eslint.config.mjs tsconfig.json tsconfig.app.json .prettierrc.json"
 # shellcheck disable=SC2086
@@ -41,7 +41,7 @@ if ! git diff --quiet -- $CHECKED; then
   exit 1
 fi
 log=$(mktemp)
-trap 'rm -f "$log"' EXIT
+trap 'rm -f "$log"; [ -n "${wf:-}" ] && rm -rf "$wf"' EXIT
 # BB-86: app.js is the esbuild bundle of src/. Rebuild; if that changed it, the commit would ship a stale bundle.
 if ! npm run --silent build >"$log" 2>&1; then
   { echo "Commit blocked: 'npm run build' failed."; tail -40 "$log"; } >&2
@@ -51,8 +51,9 @@ if ! git diff --quiet -- app.js app.js.map; then
   echo "Commit blocked: app.js was out of date with src/ and has just been rebuilt. Add app.js and app.js.map to this commit ('git add app.js app.js.map', or list them in 'git commit <files>'), then commit again." >&2
   exit 1
 fi
-# BB-79: lint and formatting first, they take a second.
-if ! { npm run --silent lint && npm run --silent format:check; } >"$log" 2>&1; then
+# BB-79: lint and formatting first, they take a second. ESLint directly, not `npm run lint`: that also checks the
+# working-tree workflows, and an unstaged workflow edit must not block an unrelated commit (staged ones: see above).
+if ! { npx --no-install eslint . && npm run --silent format:check; } >"$log" 2>&1; then
   { echo "Commit blocked: 'npm run lint' or 'npm run format:check' failed. Run 'npm run format', fix the lint errors, then commit again."; tail -40 "$log"; } >&2
   exit 1
 fi

@@ -2,7 +2,13 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
+import { mkdtempSync, writeFileSync, copyFileSync, symlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { fileURLToPath } from 'node:url';
 import { checkWorkflow, checkFolder } from '../../scripts/check-workflows.mjs';
+
+const root = fileURLToPath(new URL('../../', import.meta.url));
+const script = root + 'scripts/check-workflows.mjs';
 
 const ok = `name: Tests
 on: [push, pull_request]
@@ -31,7 +37,7 @@ describe('checkWorkflow', () => {
     assert.match(checkWorkflow(ok.replace('    runs-on: ubuntu-latest\n', '    runs-on: ubuntu-latest\n    runs-on: macos-latest\n')).join(), /unique/i);
   });
   test('missing on, missing jobs', () => {
-    assert.match(checkWorkflow(ok.replace('on: [push, pull_request]\n', '')).join(), /missing top-level 'on'/);
+    assert.match(checkWorkflow(ok.replace('on: [push, pull_request]\n', '')).join(), /missing or empty top-level 'on'/);
     assert.match(checkWorkflow('name: x\non: push\n').join(), /missing top-level 'jobs'/);
   });
   test('a job with no runs-on, or no steps', () => {
@@ -39,8 +45,27 @@ describe('checkWorkflow', () => {
     assert.match(checkWorkflow('on: push\njobs:\n  a:\n    runs-on: x\n    steps: []\n').join(), /job 'a' has no steps/);
   });
   test('a step needs exactly one of run or uses', () => {
-    assert.match(checkWorkflow(ok.replace('        run: npm test\n', '')).join(), /step 2 needs exactly one of 'run' or 'uses' \(has 0\)/);
+    assert.match(checkWorkflow(ok.replace('        run: npm test\n', '')).join(), /step 2 needs exactly one non-empty 'run' or 'uses' \(has 0\)/);
     assert.match(checkWorkflow(ok.replace('        run: npm test\n', '        run: npm test\n        uses: x/y@v1\n')).join(), /\(has 2\)/);
+  });
+  test('a key with an empty value counts as missing (GitHub rejects it)', () => {
+    assert.match(checkWorkflow(ok.replace('runs-on: ubuntu-latest', 'runs-on:')).join(), /job 'build' has no 'runs-on'/);
+    assert.match(checkWorkflow(ok.replace('run: npm test', 'run:')).join(), /step 2 needs exactly one non-empty 'run' or 'uses' \(has 0\)/);
+    assert.match(checkWorkflow(ok.replace('on: [push, pull_request]', 'on:')).join(), /missing or empty top-level 'on'/);
+  });
+  test('anchors, aliases and merge keys are resolved first, as GitHub does', () => {
+    const anchored = `on: push
+jobs:
+  a: &job
+    runs-on: ubuntu-latest
+    steps:
+      - &checkout
+        uses: actions/checkout@v4
+      - <<: *checkout
+        name: again
+  b: *job
+`;
+    assert.deepEqual(checkWorkflow(anchored), []);
   });
   test('two YAML documents in one file fail', () => {
     assert.match(checkWorkflow(ok + '---\n' + ok).join(), /one YAML document, found 2/);
@@ -48,15 +73,33 @@ describe('checkWorkflow', () => {
 });
 
 describe('the repository', () => {
-  test("this repo's own workflows pass", () => {
-    assert.deepEqual(checkFolder('.github/workflows'), []);
+  test("this repo's own workflows pass (the staged copies, as the hook checks them)", () => {
+    /* not the working tree: an unstaged workflow edit must not block an unrelated commit (the hook runs these tests) */
+    const git = (...a) => execFileSync('git', ['-C', root, ...a], { encoding: 'utf8' });
+    const files = git('ls-files', '--', '.github/workflows').split('\n').filter((f) => /\.ya?ml$/.test(f));
+    assert.ok(files.length >= 2, `found ${files.length} workflow files`);
+    assert.deepEqual(files.flatMap((f) => checkWorkflow(git('show', ':' + f)).map((e) => `${f}:${e}`)), []);
   });
-  test('the command line exits 1 and names the file on a broken workflow', async () => {
-    const { mkdtempSync, writeFileSync } = await import('node:fs');
-    const { tmpdir } = await import('node:os');
+  test('a folder that does not exist fails', () => {
+    assert.match(checkFolder(root + '.github/workflow').join(), /folder not found/);
+  });
+  test('the command line exits 1 and names the file, also run from a path with a space or through a symlink', () => {
     const dir = mkdtempSync(tmpdir() + '/wf-');
     writeFileSync(dir + '/bad.yml', ok.replace('"Unit tests (Node): engine"', 'Unit tests (Node): engine'));
-    assert.throws(() => execFileSync('node', ['scripts/check-workflows.mjs', dir], { stdio: 'pipe' }), (e) =>
-      e.status === 1 && /bad\.yml:8:\d+ Nested mappings/.test(String(e.stderr)));
+    /* the copies import yaml from the repo's node_modules */
+    const spaced = root + 'scripts/check workflows copy.mjs';
+    const linked = mkdtempSync(tmpdir() + '/wfl-') + '/link.mjs';
+    copyFileSync(script, spaced);
+    symlinkSync(script, linked);
+    try {
+      for (const s of [script, spaced, linked])
+        assert.throws(() => execFileSync('node', [s, dir], { stdio: 'pipe' }), (e) =>
+          e.status === 1 && /bad\.yml:8:\d+ Nested mappings/.test(String(e.stderr)), s);
+    } finally {
+      execFileSync('rm', ['-f', spaced]);
+    }
+  });
+  test('the command line exits 1 on a folder that does not exist', () => {
+    assert.throws(() => execFileSync('node', [script, root + '.github/workflow'], { stdio: 'pipe' }), (e) => e.status === 1);
   });
 });
