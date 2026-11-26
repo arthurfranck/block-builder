@@ -9,8 +9,8 @@ import type { Page } from '@playwright/test';
  * so the spec is skipped on other systems. VISUAL_LOCAL=1 runs it anyway against local baselines
  * (macOS files are git-ignored), handy to check a refactor before pushing.
  *
- * Determinism: frozen date, empty storage, every outside request blocked (Google Fonts, Open-Meteo, cdnjs),
- * so the page uses the image's system fonts; the version in the footer is replaced, so a release
+ * Determinism: frozen date, empty storage, every outside request blocked (Open-Meteo, cdnjs); the fonts
+ * come from fonts/ in the repo (BB-89), so the images show the real type; the version in the footer is replaced, so a release
  * does not change every image. Animations are off and the caret hidden (toHaveScreenshot defaults).
  */
 const test = base.extend<{ shot: App }>({

@@ -1050,7 +1050,7 @@
   var BBEngine = engine_exports;
   (() => {
     "use strict";
-    const VERSION = "1.14.1";
+    const VERSION = "1.14.2";
     let RUN_UNIT = "d";
     try {
       if (localStorage.getItem("bb-run-unit") === "t") RUN_UNIT = "t";

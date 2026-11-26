@@ -52,7 +52,6 @@ There are no accounts, no server and no tracking. Everything stays in your brows
 **My plans → Save plan** downloads every plan as one JSON file, and **Import** loads it back on any device or browser. Imported files are checked field by field and cleaned before they are stored, so a file from someone else can't inject anything into the page. Importing a plan you already have never loses either version: a newer file replaces yours, and when yours is newer the file's version is added beside it. A saved plan saves itself 1.5 seconds after each change, and right away before another plan replaces it or the tab closes; leaving with a plan that was never saved asks first. A browser can delete what a site keeps (clearing site data, or Safari after 7 days of use without a visit), so the page asks the browser to keep its storage once a plan is saved, My plans says when plans were last saved to a file, and the plan shows a reminder when saved plans have changes not saved to a file for a week (Later hides it for a week).
 
 The page only reaches outside for:
-- Google Fonts, for the type;
 - [Open-Meteo](https://open-meteo.com) (free, no key), once you set a city or use your location;
 - cdnjs, for the PDF library, only when you export a PDF.
 
@@ -90,11 +89,12 @@ src/engine.js         the plan engine: paces, plan building, warnings, week chec
 app.js, app.js.map    built from src/ by npm run build (committed, so the page opens as is)
 theme.js              sets the theme before the page paints
 vendor/               third-party code served from this repo (see vendor/README.md)
+fonts/                Archivo and Inter (woff2) with their licences, written by scripts/fetch-fonts.mjs
 docs/                 features in detail, architecture decisions (adr/), brainstorms per backlog item, README screenshot
 tests/                Playwright browser tests, Node engine tests, test server (see tests/README.md)
 .github/              CI workflow and Dependabot
 .githooks/            the git pre-commit hook (ADR 0010)
-scripts/              repo tooling: check-workflows.mjs checks the GitHub workflow files (BB-91)
+scripts/              repo tooling: check-workflows.mjs checks the GitHub workflow files (BB-91), fetch-fonts.mjs refreshes fonts/ (BB-89)
 .claude/              Claude Code setup (see CLAUDE.md)
 CHANGELOG.md          what changed in each version
 CLAUDE.md             rules for working on this repo with Claude Code
@@ -103,17 +103,17 @@ CLAUDE.md             rules for working on this repo with Claude Code
 ### Tech
 
 - The code is ES modules in `src/`. [esbuild](https://esbuild.github.io) bundles them into one classic script, `app.js` (with a source map), so the page still works opened from disk; the bundle is committed and CI checks it matches `src/` ([ADR 0008](docs/adr/0008-es-modules-bundled-with-esbuild.md)). `theme.js` is a separate classic script that runs before the page paints.
-- Google Fonts: Archivo (expanded and heavy) for the brand and big numbers, Inter for everything else.
+- Type: Archivo (expanded and heavy) for the brand and big numbers, Inter for everything else, both served from `fonts/` (SIL Open Font License, licences beside the files), so no font request leaves the page ([ADR 0011](docs/adr/0011-fonts-served-from-the-repo.md)). `node scripts/fetch-fonts.mjs` refreshes them from Google Fonts.
 - [jsPDF](https://github.com/parallax/jsPDF) 4.2.1 and [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable) 5.0.9 from cdnjs, loaded only when exporting a PDF, with integrity hashes: if the CDN serves a different file, the browser refuses it.
 - Vendored [`@bibixx/workoutkit`](https://www.npmjs.com/package/@bibixx/workoutkit) 0.2.0 (MIT) in `vendor/workoutkit-0.2.0/`, loaded only when exporting to Apple Watch.
-- Content Security Policy (in a `<meta>` tag): scripts only from the page itself and cdnjs, styles from the page and Google Fonts, network requests only to Open-Meteo, no plugins, forms or `<base>` changes. No inline script is allowed: the app's code is in its own files, so a script injected into the page would not run. Those files are loaded with the version in the URL (`app.js?v=1.11.1`), so a new release never runs with an older cached copy.
+- Content Security Policy (in a `<meta>` tag): scripts only from the page itself and cdnjs, styles and fonts from the page only, network requests only to Open-Meteo, no plugins, forms or `<base>` changes. No inline script is allowed: the app's code is in its own files, so a script injected into the page would not run. Those files are loaded with the version in the URL (`app.js?v=1.11.1`), so a new release never runs with an older cached copy.
 - Rendering: the screen is built with one small `html` template helper (`src/html.js`) that escapes every value by default, and one function that writes it into the page; a lint rule forbids writing HTML any other way, so text from a plan or an imported file can never run as code.
 - Code style: [Prettier](https://prettier.io) (lines up to 120 characters) and [ESLint](https://eslint.org) (recommended rules) on the page scripts, checked in CI and before each commit: `npm run format`, `npm run lint`.
 - Hosted on GitHub Pages from the `main` branch, root folder.
 
 ### Run locally
 
-Open `index.html` in a browser. Everything works offline except the fonts, which fall back to system fonts, the weather, the Apple Watch export and the PDF export.
+Open `index.html` in a browser. Everything works offline, fonts included, except the weather, the Apple Watch export and the PDF export.
 
 After changing anything in `src/`, run `npm ci` once, then `npm run build` to rebuild `app.js`.
 

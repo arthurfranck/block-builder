@@ -20,9 +20,9 @@ The refactors planned under ADR 0008 (BB-76 split by feature, BB-78 safe renderi
 ## Consequences
 - Good: a refactor that changes the look fails CI with a diff image in the report.
 - Cost: a deliberate look change needs one more step: run Visual baselines on the branch, download the artifact, commit the images in the same PR.
-- Cost: images use the Docker image's system fonts, not Archivo and Inter (Google Fonts is blocked); `layout.spec.ts` still checks the font choice.
+- Cost: images use the Docker image's system fonts, not Archivo and Inter (Google Fonts is blocked); `layout.spec.ts` still checks the font choice. Resolved 2026-11-26 by ADR 0011 (BB-89): the fonts come from the repo, so the images show them.
 - Cost: a Playwright upgrade can change rendering, so the Dependabot PR may need fresh baselines.
 
 ## Revisit when
 - Baselines need regenerating so often that the extra step slows delivery.
-- The fonts are vendored (then the images can use them).
+- ~~The fonts are vendored (then the images can use them).~~ Done in ADR 0011 (BB-89).
