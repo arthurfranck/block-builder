@@ -34,46 +34,6 @@
     mod
   ));
 
-  // src/html.js
-  var ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" };
-  var escapeText = (s) => String(s).replace(/[&<>"]/g, (c) => ESC[c]);
-  var SafeHtml = class {
-    /** @param {string} s markup that is safe to insert  @param {string} [text] the plain text it came from, if any */
-    constructor(s, text) {
-      this.s = s;
-      this.text = text;
-    }
-    toString() {
-      return this.s;
-    }
-  };
-  function part(v) {
-    if (v instanceof SafeHtml) return v.s;
-    if (Array.isArray(v)) return v.map(part).join("");
-    if (v === null || v === void 0) return "";
-    return escapeText(v);
-  }
-  function html(strings, ...values) {
-    let out = strings[0];
-    for (let i = 0; i < values.length; i++) out += part(values[i]) + strings[i + 1];
-    return new SafeHtml(out);
-  }
-  function esc(s) {
-    if (s instanceof SafeHtml) return s;
-    const text = String(s ?? "");
-    return new SafeHtml(escapeText(text), text);
-  }
-  var htmlJoin = (list, sep = "") => new SafeHtml(list.map(part).join(part(sep)));
-  var trustedHtml = (s) => new SafeHtml(String(s));
-  var plainText = (v) => v instanceof SafeHtml ? v.text ?? v.s : String(v);
-  function setHtml(el, value) {
-    if (value === "") return clearHtml(el);
-    if (!(value instanceof SafeHtml) && !Array.isArray(value))
-      throw new TypeError("setHtml needs html`` output, not a plain string (BB-78)");
-    el.innerHTML = part(value);
-  }
-  var clearHtml = (el) => el.replaceChildren();
-
   // src/engine.js
   var engine_exports = {};
   __export(engine_exports, {
@@ -1090,27 +1050,6 @@
     nextMonday: nextMonday2
   } = BBEngine;
 
-  // src/prefs.js
-  var RUN_UNIT = (() => {
-    try {
-      if (localStorage.getItem("bb-run-unit") === "t") return "t";
-    } catch (_) {
-    }
-    return "d";
-  })();
-  function useRunUnit(u) {
-    RUN_UNIT = u;
-    try {
-      localStorage.setItem("bb-run-unit", u);
-    } catch (_) {
-    }
-  }
-
-  // src/dom.js
-  var $ = (s) => document.querySelector(s);
-  var $$ = (s) => document.querySelectorAll(s);
-  var cardDetails = (s) => document.querySelector(s);
-
   // src/strings.js
   var I18N = {
     en: {
@@ -2071,6 +2010,46 @@
     needVol: "Indiquez votre volume hebdo actuel."
   });
 
+  // src/html.js
+  var ESC = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" };
+  var escapeText = (s) => String(s).replace(/[&<>"]/g, (c) => ESC[c]);
+  var SafeHtml = class {
+    /** @param {string} s markup that is safe to insert  @param {string} [text] the plain text it came from, if any */
+    constructor(s, text) {
+      this.s = s;
+      this.text = text;
+    }
+    toString() {
+      return this.s;
+    }
+  };
+  function part(v) {
+    if (v instanceof SafeHtml) return v.s;
+    if (Array.isArray(v)) return v.map(part).join("");
+    if (v === null || v === void 0) return "";
+    return escapeText(v);
+  }
+  function html(strings, ...values) {
+    let out = strings[0];
+    for (let i = 0; i < values.length; i++) out += part(values[i]) + strings[i + 1];
+    return new SafeHtml(out);
+  }
+  function esc(s) {
+    if (s instanceof SafeHtml) return s;
+    const text = String(s ?? "");
+    return new SafeHtml(escapeText(text), text);
+  }
+  var htmlJoin = (list, sep = "") => new SafeHtml(list.map(part).join(part(sep)));
+  var trustedHtml = (s) => new SafeHtml(String(s));
+  var plainText = (v) => v instanceof SafeHtml ? v.text ?? v.s : String(v);
+  function setHtml(el, value) {
+    if (value === "") return clearHtml(el);
+    if (!(value instanceof SafeHtml) && !Array.isArray(value))
+      throw new TypeError("setHtml needs html`` output, not a plain string (BB-78)");
+    el.innerHTML = part(value);
+  }
+  var clearHtml = (el) => el.replaceChildren();
+
   // src/i18n.js
   var LANG = (() => {
     try {
@@ -2138,6 +2117,11 @@
     LOC(),
     LANG === "fr" ? { weekday: "long", day: "numeric", month: "long" } : { weekday: "short", day: "numeric", month: "short" }
   );
+
+  // src/dom.js
+  var $ = (s) => document.querySelector(s);
+  var $$ = (s) => document.querySelectorAll(s);
+  var cardDetails = (s) => document.querySelector(s);
 
   // src/state.js
   var DEFAULT_INPUTS = () => ({
@@ -2211,934 +2195,664 @@
     return I.goal === "fitness" ? cap2(t2("fitBlock", { n: I.weeks })) : cap2(t2("blockName", { lbl: distLabel2(I) }));
   }
 
-  // src/app.js
-  var VERSION = "1.14.3";
-  $("#appVersion").textContent = "Block Builder v" + VERSION;
-  BBEngine.setLocale({ t: t2, days: () => DAYS, fmtDate: fmtDate2 });
-  function renderVolHint() {
-    $("#volHint").hidden = !volIsSuggested();
+  // src/modal.js
+  var modalOpener = null;
+  var lastTrigger = null;
+  function openerKey(el) {
+    if (el.id) return "#" + CSS.escape(el.id);
+    const at = ["data-act", "data-w", "data-s", "data-d"].filter((a) => el.hasAttribute(a));
+    return at.length ? at.map((a) => `[${a}="${CSS.escape(el.getAttribute(a))}"]`).join("") : null;
   }
-  function renderLongPh() {
-    const I = S.inputs;
-    $("#curLong").placeholder = +I.curVol > 0 ? "\u2248 " + longOf2(I) : "";
+  function modal(body, onMount) {
+    const root = $("#modalRoot");
+    if (!root.firstChild) {
+      const a = document.activeElement;
+      const o = a && a !== document.body && !a.closest("#modalRoot") && a.id !== "setup" ? a : lastTrigger;
+      modalOpener = o ? { el: o, key: openerKey(o) } : null;
+    }
+    setHtml(root, html`<div class="modal-bg"><div class="modal" role="dialog" aria-modal="true">${body}</div></div>`);
+    const bg = root.firstChild;
+    bg.addEventListener("click", (e) => {
+      if (e.target === bg) closeModal();
+    });
+    const m = bg.firstChild;
+    const h = m.querySelector("h2");
+    if (h) {
+      h.id = "modalTitle";
+      m.setAttribute("aria-labelledby", "modalTitle");
+    }
+    onMount && onMount(m);
+    m.tabIndex = -1;
+    m.focus({ preventScroll: true });
+    return m;
   }
-  function renderSetup() {
-    const I = S.inputs;
-    setHtml(
-      $("#distSeg"),
-      htmlJoin(
-        DISTS2.map(
-          (d) => html`<button type="button" data-dist="${d.k}" aria-pressed="${I.dist === d.k}">${t2("d" + d.k)}</button>`
-        )
-      )
+  function closeModal() {
+    clearHtml($("#modalRoot"));
+    const o = modalOpener;
+    modalOpener = null;
+    if (!o) return;
+    queueMicrotask(() => {
+      if ($("#modalRoot").firstChild) return;
+      const el = o.el.isConnected ? o.el : o.key && document.querySelector(o.key);
+      if (el && typeof el.focus === "function") el.focus({ preventScroll: true });
+    });
+  }
+  function modalFocusables(m) {
+    return [...m.querySelectorAll('a[href],button,input,select,textarea,[tabindex]:not([tabindex="-1"])')].filter(
+      (el) => !el.disabled && el.getClientRects().length
     );
-    $("#customRow").hidden = I.dist !== "custom";
-    $("#customKm").value = I.customKm;
-    $("#raceDate").value = I.raceDate;
-    $("#weeks").value = I.weeks;
-    $("#startDate").value = I.startDate || nextMonday2();
-    const fit = I.goal === "fitness";
-    $$("#goalSeg button").forEach(
-      (b) => b.setAttribute("aria-pressed", String(b.dataset.goal === (fit ? "fitness" : "race")))
+  }
+  function confirmBox(title, text, okLabel, ok) {
+    modal(
+      html`<h2>${esc(title)}</h2><p style="margin:0">${esc(text)}</p><div class="actions"><button class="btn" id="cNo">${t2("cancel")}</button><button class="btn primary" id="cYes">${esc(okLabel)}</button></div>`,
+      (m) => {
+        m.querySelector("#cNo").onclick = closeModal;
+        m.querySelector("#cYes").onclick = () => {
+          closeModal();
+          ok();
+        };
+      }
     );
-    $("#recWeeksF").hidden = fit;
-    const rw = recWeeksOf2({ ...I, goal: "race" });
-    setHtml(
-      $("#recSeg"),
-      htmlJoin(
-        [0, 1, 2].map(
-          (n) => html`<button type="button" data-rec="${n}" aria-pressed="${rw === n}">${t2("rec" + n)}</button>`
-        )
-      )
+  }
+  function toast(msg) {
+    const t3 = document.createElement("div");
+    t3.className = "toast";
+    t3.textContent = msg;
+    $("#toastRoot").appendChild(t3);
+    setTimeout(() => t3.remove(), Math.max(2600, msg.length * 60));
+  }
+  function initModal() {
+    document.addEventListener(
+      "pointerdown",
+      (e) => {
+        const el = (
+          /** @type {HTMLElement} */
+          e.target
+        );
+        const c = el.closest && el.closest("button,a[href],[tabindex]");
+        if (c && !c.closest("#modalRoot")) lastTrigger = c;
+      },
+      true
     );
-    $("#recHint").textContent = t2(rw ? "recHint" : "recHint0");
-    $("#raceDateF").hidden = fit;
-    $("#startDateF").hidden = !fit;
-    $("#raceBox").hidden = fit;
-    $("#focusHint").hidden = !fit;
-    $("#distLbl").textContent = t2(fit ? "focusDist" : "distance");
-    $("#secRaceH").textContent = t2(fit ? "secFocus" : "secRace");
-    setHtml($("#introCards"), [
-      htmlJoin(
-        [
-          ["race", "goalRace", "icRace"],
-          ["fitness", "goalFit", "icFit"]
-        ].map(
-          ([g, a, b]) => html`<button type="button" class="icard" data-goal="${g}" aria-pressed="${(fit ? "fitness" : "race") === g}"><b>${t2(a)}</b><span>${t2(b)}</span></button>`
-        )
-      ),
-      html`<button type="button" class="icard" data-intro="quick"><b>${t2("qwOpen")}</b><span>${t2("icQuick")}</span></button>`
+    document.addEventListener("keydown", (e) => {
+      const m = $("#modalRoot .modal");
+      if (!m) return;
+      if (e.key === "Escape") {
+        closeModal();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const f = modalFocusables(m);
+      if (!f.length) {
+        e.preventDefault();
+        m.focus();
+        return;
+      }
+      e.preventDefault();
+      const i = f.indexOf(document.activeElement);
+      const n = i < 0 ? e.shiftKey ? f.length - 1 : 0 : (i + (e.shiftKey ? -1 : 1) + f.length) % f.length;
+      f[n].focus();
+    });
+  }
+
+  // src/editor.js
+  var whyOf = (id) => TYPE_DEFS2.some((d) => d[0] === id) ? t2("why_" + id) : "";
+  var whyHtml = (id) => {
+    const w = whyOf(id);
+    return w ? html`<b>${t2("whyLbl")}</b> ${esc(w)}` : "";
+  };
+  function openEditor(wi, id) {
+    const w = S.plan.weeks[wi];
+    const s = w.sessions.find((x) => x.id === id);
+    if (!s) return;
+    const opts = htmlJoin([
+      ...S.types.filter((t3) => t3.on || t3.id === s.typeId).map((t3) => html`<option value="${esc(t3.id)}" ${t3.id === s.typeId ? "selected" : ""}>${esc(t3.name)}</option>`),
+      html`<option value="race" ${s.typeId === "race" ? "selected" : ""}>${t2("raceDay")}</option>`
     ]);
-    $("#focusHint").textContent = t2("focusHint");
-    $("#curVol").value = I.curVol;
-    renderVolHint();
-    $("#curLong").value = I.curLong;
-    renderLongPh();
-    $("#recDist").value = I.recDist;
-    $("#recTime").value = I.recTime;
-    const lv = levelOf2(I);
-    setHtml(
-      $("#levelSeg"),
-      htmlJoin(
-        LEVELS2.map(
-          (l) => html`<button type="button" data-level="${l}" aria-pressed="${lv === l}">${t2("lv_" + l)}</button>`
-        )
-      )
+    modal(
+      html`<h2>${t2("eTitle", { n: w.n, day: DAYS[s.day] })}</h2>
+  <div class="row"><div class="field"><label for="eType">${t2("runType")}</label><select id="eType">${opts}</select></div>
+  <div class="field"><label for="eDay">${t2("dayLbl")}</label><select id="eDay">${htmlJoin(DAYS.map((d, i) => html`<option value="${i}" ${i === s.day ? "selected" : ""}>${d}</option>`))}</select></div></div>
+  <p class="hint why" id="eWhy" ${whyOf(s.typeId) ? "" : "hidden"}>${whyHtml(s.typeId)}</p>
+  <div class="row"><div class="field"><label for="eKm">${t2("distKm")}</label><input id="eKm" type="number" min="0" step="0.5" value="${esc(s.km)}"></div><div></div></div>
+  <div class="field"><label for="eDesc">${t2("desc")}</label><textarea id="eDesc" rows="4">${esc(s.desc)}</textarea></div>
+  <div class="field"><span class="lbl">${t2("watchWorkout")}</span><div class="watchsum" id="eWatch">${esc(watchSummary(s.watch || watchPlan2(s.kind, s.km)))}</div><div class="hint">${t2("watchHint")}</div></div>
+  <div class="field"><label for="eNote">${t2("note")}</label><textarea id="eNote" rows="3" placeholder="${esc(t2("notePhOwn"))}">${esc(s.note)}</textarea></div>
+  <div class="actions"><button class="btn ghost left" id="eDel">${t2("deleteRun")}</button><button class="btn" id="eWatchBtn">${t2("sendWatch")}</button><button class="btn" id="eCancel">${t2("cancel")}</button><button class="btn primary" id="eOk">${t2("saveChanges")}</button></div>`,
+      (m) => {
+        m.querySelector("#eCancel").onclick = closeModal;
+        m.querySelector("#eDel").onclick = () => {
+          w.sessions = w.sessions.filter((x) => x.id !== id);
+          closeModal();
+          touched();
+        };
+        m.querySelector("#eType").onchange = (ev) => {
+          const wy = m.querySelector("#eWhy");
+          setHtml(wy, whyHtml(ev.target.value));
+          wy.hidden = !whyOf(ev.target.value);
+          const ty = S.types.find((x) => x.id === ev.target.value);
+          if (ty) {
+            const P = paces2(S.inputs);
+            const km = +m.querySelector("#eKm").value || s.km;
+            const wk = workFor2(ty, {
+              p: 0.5,
+              D: distKm2(S.inputs),
+              c: cat2(distKm2(S.inputs)),
+              taper: w.phase === "taper",
+              P,
+              phase: w.phase
+            });
+            m.querySelector("#eDesc").value = fill2(ty.tpl, { ...P.txt, km, work: fill2(wk.text || "", P.txt) });
+          }
+        };
+        m.querySelector("#eWatchBtn").onclick = () => {
+          closeModal();
+          sendToWatch(
+            planWorkouts([{ w, s }]),
+            t2("sendTitleRun", { n: w.n, day: DAYS[s.day], name: s.name, amt: sesAmt(s) })
+          );
+        };
+        m.querySelector("#eOk").onclick = () => {
+          const tid = m.querySelector("#eType").value;
+          const ty = S.types.find((x) => x.id === tid);
+          const newKm = Math.max(0, +m.querySelector("#eKm").value || 0);
+          if (tid !== s.typeId) {
+            const P = paces2(S.inputs);
+            const D = distKm2(S.inputs);
+            s.watch = ty ? watchPlan2(
+              ty.kind,
+              newKm,
+              workFor2(ty, { p: 0.5, D, c: cat2(D), taper: w.phase === "taper", P, phase: w.phase })
+            ) : watchPlan2("race", newKm);
+          } else if (newKm !== s.km) {
+            s.watch = rescaleWatch(s.watch || watchPlan2(s.kind, s.km), newKm - s.km);
+          }
+          s.typeId = tid;
+          s.name = ty ? ty.name : t2("raceDay");
+          s.kind = ty ? ty.kind : "race";
+          s.km = Math.max(0, +m.querySelector("#eKm").value || 0);
+          s.desc = m.querySelector("#eDesc").value;
+          s.note = m.querySelector("#eNote").value;
+          const nd = +m.querySelector("#eDay").value;
+          closeModal();
+          if (nd !== s.day) moveSession(wi, id, nd);
+          else touched();
+        };
+      }
     );
-    $("#levelHint").textContent = t2("lvHint_" + lv);
-    setHtml(
-      $("#runsSeg"),
-      htmlJoin(
-        [1, 2, 3, 4, 5, 6, 7].map(
-          (n) => html`<button type="button" data-runs="${n}" aria-pressed="${+I.runs === n}">${n}</button>`
-        )
-      )
-    );
-    setHtml(
-      $("#daysSeg"),
-      htmlJoin(
-        DAYS1.map(
-          (d, i) => html`<button type="button" data-day="${i}" aria-label="${DAYS[i]}" aria-pressed="${I.days.includes(i)}" class="${+I.longDay === i ? "long" : ""}">${d}</button>`
-        )
-      )
-    );
-    $("#daysCount").textContent = t2("daysCount", { a: I.days.length, b: I.runs || "-" });
-    setHtml($("#longDay"), [
-      +I.longDay < 0 ? html`<option value="-1" selected>-</option>` : "",
-      htmlJoin(DAYS.map((d, i) => html`<option value="${i}" ${+I.longDay === i ? "selected" : ""}>${d}</option>`))
-    ]);
-    renderTypes();
-    renderHints();
-    renderRaceBox();
-    renderIntro();
   }
-  function renderHints() {
-    const I = S.inputs, P = paces2(I);
-    const start = parseISO2(S.plan ? S.plan.meta.start : I.raceDate || I.startDate);
-    const blank = missingSetup2(I).some((k) => SETUP_STEP2[k] === 2);
-    $("#startHint").textContent = blank ? "" : I.goal === "fitness" ? t2("fitHint", {
-      s: fmtDate2(start),
-      e: fmtDate2(addDays2(start, 7 * (S.plan ? S.plan.weeks.length : I.weeks) - 1))
-    }) : t2("startHint", { d: fmtDate2(start), r: fmtDay(parseISO2(I.raceDate)) });
-    $("#paceHint").textContent = P.vdot ? t2("paceHint", { e: P.txt.easy, t: P.txt.tempo, i: P.txt.interval, lbl: distLabel2(I), r: P.txt.race }) : badRaceTime2(I) ? badTimeMsg2(I) : t2("paceHintNone");
-  }
+
+  // src/effort.js
   var TEMPO_IDS = /* @__PURE__ */ new Set(["tempo", "progression", "racepace", "fartlek"]);
   var effort = (id, kind) => kind === "hard" ? TEMPO_IDS.has(id) ? "tempo" : "hard" : ["recovery", "long", "race"].includes(kind) ? kind : "easy";
   var sesEffort = (s) => effort(s.typeId, s.kind);
   var effColor = (e) => `var(--${e})`;
   var effText = (e) => `var(--${e}-t)`;
-  function renderChips() {
-    const tt = t2;
-    const focusId = document.activeElement && document.activeElement.closest && document.activeElement.closest("#typeChips") ? document.activeElement.id : null;
-    const chip = (t3, i) => html`<label class="tchip ${t3.on ? "" : "off"}" data-i="${i}"><input type="checkbox" id="t-on-${t3.id}" ${t3.on ? "checked" : ""} ${t3.locked ? "disabled" : ""} aria-label="${esc(tt("useType", { name: t3.name }))}"><span class="kind-dot" style="background:${effColor(effort(t3.id, t3.kind))}" aria-hidden="true"></span>${esc(t3.name)}${t3.locked ? html`<svg class="lock" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><title>${tt("alwaysOn")}</title><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>` : ""}</label>`;
-    const grp = (key, list) => list.length ? html`<div class="tgrp"><span class="lbl" id="tg-${key}">${tt(key)}</span><div class="tchips" role="group" aria-labelledby="tg-${key}">${htmlJoin(list.map(([t3, i]) => chip(t3, i)))}</div></div>` : "";
-    const idx = S.types.map((t3, i) => [t3, i]);
-    setHtml($("#typeChips"), [
-      grp(
-        "grpEasy",
-        idx.filter(([t3]) => t3.kind !== "hard")
-      ),
-      grp(
-        "grpQuality",
-        idx.filter(([t3]) => t3.kind === "hard")
-      )
-    ]);
-    $("#typesCount").textContent = tt("typesCount", { a: S.types.filter((t3) => t3.on).length, b: S.types.length });
-    if (focusId) {
-      const f = document.getElementById(focusId);
-      if (f) f.focus();
-    }
+
+  // src/exports.js
+  function dlSave({ filename, data }) {
+    const blob = data instanceof Blob ? data : new Blob([data], { type: "application/octet-stream" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.rel = "noopener";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 6e4);
   }
-  function renderTypes() {
-    const tt = t2;
-    const openCards = [...document.querySelectorAll("#types .type details[open]")].map(
-      (d) => (
-        /** @type {HTMLElement} */
-        d.closest(".type").dataset.i
-      )
-    );
-    renderChips();
-    setHtml(
-      $("#types"),
-      htmlJoin(
-        S.types.map(
-          (t3, i) => html`
-<div class="type ${t3.on ? "" : "off"}" data-i="${i}">
-  <div class="type-head">
-    <span class="kind-dot" style="background:${effColor(effort(t3.id, t3.kind))}" title="${kindLbl(t3.kind)}"></span>
-    <input class="tname" id="t-name-${t3.id}" data-f="name" value="${esc(t3.name)}" aria-label="${tt("typeNameLbl")}">
-    ${t3.locked || DEFAULT_TYPES().some((d) => d.id === t3.id) ? "" : html`<button class="icon-btn" data-del="${i}" aria-label="${tt("remove")} ${esc(t3.name)}">${tt("remove")}</button>`}
-  </div>
-  <details><summary>${kindLbl(t3.kind)}${t3.kind === "hard" ? " \xB7 " + t3.phases.map(phaseLbl).join(", ") : ""} · ${tt("editDesc")}</summary>
-    <div class="opts">
-      ${t3.locked || t3.id === "long" ? "" : html`<div class="field"><label for="t-kind-${t3.id}">${tt("kind")}</label><select id="t-kind-${t3.id}" data-f="kind">${htmlJoin(["easy", "recovery", "hard"].map((k) => html`<option value="${k}" ${t3.kind === k ? "selected" : ""}>${kindLbl(k)}</option>`))}</select></div>`}
-      ${t3.kind === "hard" ? html`<div class="field"><span class="lbl">${tt("usedPhases")}</span><div class="chips">${htmlJoin(PHASES2.map((p) => html`<button type="button" class="chip" data-phase="${p}" aria-pressed="${t3.phases.includes(p)}">${phaseLbl(p)}</button>`))}</div></div>` : ""}
-      <div class="field"><label for="t-tpl-${t3.id}">${tt("tplLbl")}</label><textarea id="t-tpl-${t3.id}" data-f="tpl" rows="3">${esc(t3.tpl)}</textarea></div>
-    </div>
-  </details>
-</div>`
-        )
-      )
-    );
-    for (const i of openCards) {
-      const d = cardDetails(`.type[data-i="${i}"] details`);
-      if (d) d.open = true;
-    }
-  }
-  function inputsChanged() {
-    S.isExample = false;
-    renderRaceBox();
-    if (S.inputs.weeks !== "") S.inputs.weeks = clamp2(Math.round(+S.inputs.weeks || 12), 3, 30);
-    if (S.edited) {
-      S.pendingRegen = true;
-      renderPlan();
-      renderHints();
-      return;
-    }
-    regen();
-    renderPlan();
-    renderHints();
-    markDirty();
-  }
-  $("#setup").addEventListener("click", (e) => {
-    const b = e.target.closest("button");
-    if (!b) return;
-    const I = S.inputs;
-    if (b.dataset.goal) {
-      const prevName = defaultName();
-      I.goal = b.dataset.goal;
-      if (S.nameAuto || S.name === prevName) {
-        S.nameAuto = true;
-        S.name = defaultName();
-        $("#planName").value = S.name;
-      }
-      renderSetup();
-      inputsChanged();
-    } else if (b.dataset.dist) {
-      const prevName = defaultName();
-      I.dist = b.dataset.dist;
-      if (!S.savedAt && S.isExample || S.nameAuto && !S.savedAt || S.name === prevName) S.name = defaultName();
-      suggestVolume();
-      renderSetup();
-      $("#planName").value = S.name;
-      inputsChanged();
-    } else if (b.dataset.rec !== void 0) {
-      I.recWeeks = +b.dataset.rec;
-      renderSetup();
-      inputsChanged();
-    } else if (b.dataset.level) {
-      I.level = b.dataset.level;
-      suggestVolume();
-      renderSetup();
-      inputsChanged();
-    } else if (b.dataset.runs) {
-      I.runs = +b.dataset.runs;
-      I.days = DEFAULT_DAYS2[I.runs].slice();
-      if (!I.days.includes(+I.longDay)) I.longDay = I.days[I.days.length - 1];
-      renderSetup();
-      inputsChanged();
-    } else if (b.dataset.day !== void 0) {
-      const d = +b.dataset.day;
-      I.days = I.days.includes(d) ? I.days.filter((x) => x !== d) : [...I.days, d].sort((a, b2) => a - b2);
-      renderSetup();
-      inputsChanged();
-    } else if (b.dataset.phase) {
-      const t3 = S.types[+b.closest(".type").dataset.i];
-      const p = b.dataset.phase;
-      t3.phases = t3.phases.includes(p) ? t3.phases.filter((x) => x !== p) : PHASES2.filter((x) => x === p || t3.phases.includes(x));
-      if (!t3.phases.length) t3.phases = [p];
-      const open = (
-        /** @type {HTMLDetailsElement} */
-        b.closest("details").open
-      );
-      renderTypes();
-      if (open) cardDetails(`.type[data-i="${S.types.indexOf(t3)}"] details`).open = true;
-      inputsChanged();
-    } else if (b.dataset.del !== void 0) {
-      S.types.splice(+b.dataset.del, 1);
-      renderTypes();
-      inputsChanged();
-    } else if (b.id === "btnAddType") {
-      const id = "c" + uid2();
-      S.types.push({
-        id,
-        name: t2("ty_custom"),
-        kind: "hard",
-        on: true,
-        phases: ["build", "peak"],
-        tpl: t2("tp_custom")
-      });
-      renderTypes();
-      const el = cardDetails(`.type[data-i="${S.types.length - 1}"] details`);
-      if (el) el.open = true;
-      inputsChanged();
-    }
-  });
-  $("#setup").addEventListener("change", (e) => {
-    const el = e.target, I = S.inputs;
-    const map = {
-      startDate: "startDate",
-      customKm: "customKm",
-      raceDate: "raceDate",
-      weeks: "weeks",
-      curVol: "curVol",
-      curLong: "curLong",
-      recDist: "recDist",
-      recTime: "recTime",
-      longDay: "longDay"
-    };
-    if (map[el.id]) {
-      if (el.id === "raceDate" && !el.value) {
-        el.value = I.raceDate;
-        return;
-      }
-      if (el.id === "startDate" && !el.value) {
-        el.value = I.startDate;
-        return;
-      }
-      const prevName = defaultName();
-      I[map[el.id]] = el.type === "number" && el.value === "" ? "" : el.type === "number" || el.id === "longDay" ? +el.value : el.value;
-      if (el.id === "longDay" && +el.value >= 0 && !I.days.includes(+el.value)) {
-        I.days = [...I.days.filter((d) => d !== I.days[I.days.length - 1]), +el.value].sort((a, b) => a - b);
-      }
-      if (el.id === "longDay") renderSetup();
-      if (el.id === "customKm") {
-        suggestVolume();
-        $("#curVol").value = I.curVol;
-      }
-      if (el.id === "customKm" || el.id === "curVol") renderVolHint();
-      if (el.id === "customKm" || el.id === "curVol") renderLongPh();
-      if (el.id === "recTime" || el.id === "recDist") {
-        const sec = raceTimeSec2(I.recTime, +I.recDist);
-        if (sec) {
-          I.recTime = fmtDur2(sec);
-          $("#recTime").value = I.recTime;
-        }
-      }
-      if (S.name === prevName) {
-        S.name = defaultName();
-        $("#planName").value = S.name;
-      }
-      inputsChanged();
-      return;
-    }
-    const cEl = el.closest(".tchip");
-    if (cEl) {
-      S.types[+cEl.dataset.i].on = el.checked;
-      renderTypes();
-      inputsChanged();
-      return;
-    }
-    const tEl = el.closest(".type");
-    if (tEl && el.dataset.f) {
-      const t3 = S.types[+tEl.dataset.i];
-      const f = el.dataset.f;
-      if (f === "on") t3.on = el.checked;
-      else if (f === "kind") {
-        t3.kind = el.value;
-        if (t3.kind === "hard" && !t3.phases.length) t3.phases = ["build", "peak"];
-      } else t3[f] = el.value;
-      if (f === "name") renderChips();
-      if (f === "on" || f === "kind") {
-        const open = (
-          /** @type {HTMLDetailsElement} */
-          tEl.querySelector("details").open
-        );
-        renderTypes();
-        if (open) cardDetails(`.type[data-i="${tEl.dataset.i}"] details`).open = true;
-      }
-      inputsChanged();
-    }
-  });
-  var phaseColor = (p) => `var(--ph-${p})`;
-  var phaseText = (p) => `var(--ph-${p}-t)`;
-  function profileSVG(weeks, W) {
-    W = Math.max(Math.round(W || 600), 240);
-    const H = 186, pl = 30, pb = 22, pt = 34;
-    const max = Math.max(...weeks.map((w) => w.sessions.reduce((a, s) => a + s.km, 0)), 10);
-    const top = Math.ceil(max / 10) * 10;
-    const bw = (W - pl - 4) / weeks.length;
-    const every = bw >= 22 ? 1 : bw >= 12 ? 2 : 4;
-    const y = (v) => pt + (H - pt - pb) * (1 - v / top);
-    const today = /* @__PURE__ */ new Date();
-    today.setHours(0, 0, 0, 0);
-    const nowI = weeks.findIndex((w) => {
-      const st = parseISO2(w.start);
-      return today >= st && today < addDays2(st, 7);
-    });
-    let g = [];
-    for (let i = 0; i < weeks.length; ) {
-      let j = i;
-      while (j + 1 < weeks.length && weeks[j + 1].phase === weeks[i].phase) j++;
-      const ph = weeks[i].phase, x0 = pl + i * bw, wd = (j - i + 1) * bw, lbl = phaseLbl(ph);
-      g.push(
-        html`<rect class="band" data-phase="${esc(ph)}" x="${x0 + 1}" y="${pt - 22}" width="${Math.max(0, wd - 2)}" height="${H - pb - pt + 22}" rx="4" fill="${phaseColor(ph)}" opacity=".13"/>`
-      );
-      if (wd >= lbl.length * 6.6 + 10)
-        g.push(
-          html`<text class="band-lbl" x="${x0 + 6}" y="${pt - 9}" style="fill:${phaseText(ph)};font-weight:600">${esc(lbl)}</text>`
-        );
-      i = j + 1;
-    }
-    for (let t3 = 0; t3 <= top; t3 += top > 60 ? 20 : 10) {
-      g.push(
-        html`<line x1="${pl}" x2="${W}" y1="${y(t3)}" y2="${y(t3)}" stroke="var(--line)" stroke-width="1"/><text x="${pl - 6}" y="${y(t3) + 4}" text-anchor="end">${t3}</text>`
-      );
-    }
-    weeks.forEach((w, i) => {
-      const km = w.sessions.reduce((a, s) => a + s.km, 0);
-      const x = pl + i * bw + bw * 0.14, bwi = bw * 0.72;
-      const lk = (w.sessions.find((s) => s.kind === "long" || s.kind === "race") || {}).km || 0;
-      const race = w.sessions.some((s) => s.kind === "race"), now = i === nowI;
-      const lab = i % every === 0 || i === weeks.length - 1 || race || now;
-      const extra = [w.cutback ? t2("cutback") : "", now ? t2("svgNow") : "", race ? t2("svgRace") : ""].filter(Boolean).join(", ");
-      g.push(html`<g${race ? html` class="race"` : ""}${now ? html` class="now"` : ""}><title>${esc(t2("svgTitle", { n: w.n, km: km.toFixed(1), phase: phaseLbl(w.phase) }))}${extra ? " (" + esc(extra) + ")" : ""}</title><rect x="${x}" y="${y(km)}" width="${bwi}" height="${Math.max(0, y(0) - y(km))}" rx="2" fill="${phaseColor(w.phase)}" opacity="${w.cutback ? 0.55 : 1}"/>
-  ${lk ? html`<rect x="${x}" y="${y(lk)}" width="${bwi}" height="2" fill="var(--ink)" opacity=".55"/>` : ""}
-  ${lab ? html`<text x="${x + bwi / 2}" y="${y(km) - 5}" text-anchor="middle">${Math.round(km)}</text>` : ""}
-  ${race ? html`<path class="flag" d="M${x + bwi / 2 - 4} ${y(km) - 16}v-14l10 4l-10 4" fill="var(--race)" stroke="var(--race)" stroke-width="1.5" stroke-linejoin="round"/>` : ""}
-  ${lab ? html`<text x="${x + bwi / 2}" y="${H - 6}" text-anchor="middle"${now ? html` style="fill:var(--ink);font-weight:700"` : ""}>${w.n}</text>` : ""}</g>`);
-    });
-    if (nowI >= 0) {
-      const st = parseISO2(weeks[nowI].start), d = Math.round((+today - +st) / 864e5), xn = pl + nowI * bw + bw * (d + 0.5) / 7;
-      g.push(
-        html`<line class="today-mark" x1="${xn}" x2="${xn}" y1="${pt - 22}" y2="${H - pb}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="3 3" opacity=".8"><title>${esc(cap2(t2("svgToday")))}</title></line>`
-      );
-    }
-    return html`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t2("svgAria")}">${g}</svg>`;
-  }
-  var chartW = 0;
-  function drawProfile() {
-    const el = $("#profileChart");
-    if (!el || !S.plan) return;
-    chartW = el.clientWidth;
-    setHtml(el, profileSVG(S.plan.weeks, chartW));
-  }
-  try {
-    new ResizeObserver(() => {
-      const el = $("#profileChart");
-      if (el && Math.abs(el.clientWidth - chartW) > 4) drawProfile();
-    }).observe($("#plan"));
-  } catch (_) {
-  }
-  function fieldLabel(f) {
-    const k = {
-      date: S.inputs.goal === "fitness" ? "startDate" : "raceDate",
-      weeks: "weeks",
-      curVol: "curVol",
-      curLong: "curLong",
-      runs: "runsPerWeek",
-      days: "runningDays",
-      longDay: "longDay",
-      types: "secTypes",
-      pace: "recTime"
-    }[f];
-    return t2(k).replace(/\s*\(.*\)$/, "");
-  }
-  function renderFieldWarns(items) {
-    for (const f of SETUP_FIELDS2) {
-      const el = $("#fw-" + f);
-      if (!el) continue;
-      const ms = items.filter((x) => x.f === f).map((x) => x.m);
-      el.hidden = !ms.length;
-      setHtml(el, htmlJoin(ms.map((m) => html`<p>${esc(m)}</p>`)));
-    }
-  }
-  var nameCtx = null;
-  function fitName() {
-    const el = (
-      /** @type {HTMLInputElement} */
-      $("#planName")
-    );
-    if (!el) return;
+  function saveFile(filename, data) {
     try {
-      nameCtx = nameCtx || document.createElement("canvas").getContext("2d");
-      const cs = getComputedStyle(el);
-      nameCtx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
-      el.style.width = Math.min(320, Math.ceil(nameCtx.measureText(el.value || "").width) + 18) + "px";
-    } catch (_) {
+      dlSave({ filename, data });
+    } catch (e) {
+      toast(t2("dlFail"));
     }
   }
-  function renderPlan() {
-    fitName();
-    const P = S.plan, I = S.inputs;
-    if (!P) return;
-    syncMode();
-    const miss = missingSetup2(I);
-    if (miss.length) {
-      renderFieldWarns([]);
-      const h0 = $("#hello");
-      if (h0) clearHtml(h0);
-      setHtml(
-        $("#plan"),
-        html`<div class="banner info"><span>${esc(t2("needTitle"))}</span><ul>${htmlJoin(miss.map((k) => html`<li>${esc(t2(k))}</li>`))}</ul><button class="btn sm m-only" type="button" data-tabgo="setup">${t2("editSettings")}</button></div><p class="qempty">${t2("qwEmpty")} <button type="button" class="linkbtn" data-act="quick">${t2("qwEmptyGo")}</button></p>`
-      );
-      return;
-    }
-    renderHello();
-    const weeks = P.weeks;
-    const totals = weeks.map((w) => w.sessions.reduce((a, s) => a + s.km, 0));
-    const longest = Math.max(...weeks.flatMap((w) => w.sessions.filter((s) => s.kind === "long").map((s) => s.km)), 0);
-    const Pg = paces2(I);
-    const items = warningItems2(I, S.types, P, S.edited);
-    renderFieldWarns(items);
-    const warns = items.filter((x) => !x.f).map((x) => x.m);
-    const setupF = [...new Set(items.filter((x) => x.f && (x.f !== "pace" || badRaceTime2(I))).map((x) => x.f))];
-    let h = [];
-    if (S.isExample)
-      h.push(
-        html`<div class="banner info"><span>${t2("exampleBanner")}</span><button class="btn sm m-only" type="button" data-tabgo="setup">${t2("editSettings")}</button></div>`
-      );
-    if (!S.isExample && backupDue())
-      h.push(
-        html`<div class="banner info" id="bkBanner"><span>${t2("bkBanner")}</span><button class="btn sm primary" data-act="bksave">${t2("bkSave")}</button><button class="btn sm ghost" data-act="bklater">${t2("bkLater")}</button></div>`
-      );
-    if (S.pendingRegen)
-      h.push(
-        html`<div class="banner"><span>${t2("pendingBanner")}</span><button class="btn sm primary" data-act="regen">${t2("rebuildPlan")}</button><button class="btn sm ghost" data-act="keep">${t2("keepEdits")}</button></div>`
-      );
-    if (setupF.length)
-      h.push(
-        html`<div class="banner" id="setupWarn"><span>${esc(t2("setupWarn", { f: setupF.map(fieldLabel).join(", ") }))}</span><button class="btn sm m-only" type="button" data-tabgo="setup">${t2("editSettings")}</button></div>`
-      );
-    if (warns.length)
-      h.push(html`<div class="banner"><ul>${htmlJoin(warns.map((w) => html`<li>${esc(w)}</li>`))}</ul></div>`);
-    const today = /* @__PURE__ */ new Date();
-    today.setHours(0, 0, 0, 0);
-    const raceI = weeks.findIndex((w) => w.sessions.some((s) => s.kind === "race")), endI = raceI >= 0 ? raceI : weeks.length - 1;
-    const nowI = weeks.findIndex((w) => {
-      const st = parseISO2(w.start);
-      return today >= st && today < addDays2(st, 7);
-    });
-    const toGo = today < parseISO2(weeks[0].start) ? endI + 1 : nowI >= 0 ? Math.max(0, endI - nowI + 1) : 0;
-    const u = (x) => html`<small>${x}</small>`;
-    const hm2 = (sec) => {
-      sec = Math.round(sec / 60) * 60;
-      const h2 = Math.floor(sec / 3600), m = Math.round(sec % 3600 / 60);
-      return h2 ? html`${h2}${u(t2("uH"))}${String(m).padStart(2, "0")}` : html`${m}${u(t2("uMin"))}`;
+  var fname = (ext) => (S.name || t2("trainingBlock")).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").toLowerCase() + "." + ext;
+  function sessionDate(w, s) {
+    return addDays2(parseISO2(w.start), s.day);
+  }
+  function exportICS() {
+    const Pe = paces2(S.inputs);
+    const e = (v) => String(v).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
+    const fold = (l) => {
+      let out = "";
+      while (l.length > 73) {
+        out += l.slice(0, 73) + "\r\n ";
+        l = l.slice(73);
+      }
+      return out + l;
     };
-    h.push(html`<div class="summary">
-  <div class="stat" data-stat="togo"><b>${toGo}</b><span>${t2(toGo === 1 ? "sToGo1" : "sToGo")}</span></div>
-  <div class="stat" data-stat="peak"><b>${Math.round(Math.max(...totals))}${u("km")}</b><span>${t2("sPeak")}</span></div>
-  <div class="stat" data-stat="long"><b>${longest}${u("km")}</b><span>${t2("sLongest")}</span></div>
-  ${P.meta.raceSec ? html`<div class="stat" data-stat="target" title="${esc(fmtDur2(P.meta.raceSec))}"><b>${hm2(P.meta.raceSec)}</b><span>${esc(cap2(t2("sTarget", { lbl: distLabel2(I) })))}</span></div>` : ""}
-</div>`);
-    h.push(renderToday());
-    h.push(
-      html`<div class="profile"><div class="profile-head"><h2>${t2("loadProfile")}</h2><div class="legend"><span><i style="background:var(--ink);height:2px;opacity:.55;vertical-align:3px"></i>${t2("longRunLeg")}</span></div></div><div class="chart" id="profileChart"></div></div>`
-    );
-    h.push(html`<div class="toolbar">
-  <span class="spacer"></span>
-  <button class="btn sm" data-act="quick">${t2("qwOpen")}</button>
-  <button class="btn sm" data-act="allwatch">${t2("sendAll")}</button>
-  <button class="btn sm" data-act="ics">${t2("exportCal")}</button>
-  <span class="exp"><select id="expFmt" aria-label="${esc(t2("exportFmt"))}"><option value="csv" ${S.exportFmt === "csv" ? "selected" : ""}>${t2("fmtCsv")}</option><option value="pdf" ${S.exportFmt === "pdf" ? "selected" : ""}>${t2("fmtPdf")}</option></select><button class="btn sm" data-act="export">${t2("exportGo")}</button></span>
-  <button class="btn sm ghost" data-act="rebuild">${t2("rebuildFrom")}</button>
-</div>`);
-    const pastN = nowI > 0 ? nowI : 0;
-    if (pastN)
-      h.push(
-        html`<button type="button" class="btn sm ghost mpast" data-act="past" aria-expanded="${!!S.showPast}">${t2(S.showPast ? "hidePast" : "showPast", { n: pastN })}</button>`
-      );
-    h.push(
-      html`<div class="grid-wrap${S.showPast ? " show-past" : ""}"><table class="grid"><thead><tr><th class="wk">${t2("week")}</th>${htmlJoin(DAYS.map((d) => html`<th>${d}</th>`))}</tr></thead><tbody>`
-    );
-    weeks.forEach((w, wi) => {
-      const st = parseISO2(w.start), en = addDays2(st, 6);
-      const rc = (wi < pastN ? " past" : "") + (wi === nowI ? " now" : "");
-      h.push(html`<tr class="wrow${w.cutback ? " cutback" : ""}${rc}"><td class="wk"><div class="wkcell"><span class="bar" style="background:${phaseColor(w.phase)}"></span><div>
-    <div class="n">${t2("wAbbr")}${esc(w.n)}</div><div class="meta"><span>${fmtShort(st)} – ${fmtShort(en)}</span><span class="ph" data-cut="${t2("cutback")}" style="color:${phaseText(w.phase)}">${phaseLbl(w.phase)}</span><span class="km">${RUN_UNIT === "t" ? estDur(w.sessions.reduce((a, s) => a + sesSec(s, Pg), 0)) : totals[wi].toFixed(1) + " km"}</span></div>
-    <button class="btn sm ghost wbtn" data-act="wwatch" data-w="${wi}" aria-label="${esc(t2("sendWatchWeek", { n: w.n }))}" title="${esc(t2("sendWatchWeek", { n: w.n }))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3M12 10v2l1.5 1"/></svg>${t2("watchShort")}</button></div></div></td>`);
-      for (let d = 0; d < 7; d++) {
-        const ss = w.sessions.filter((s) => s.day === d);
-        h.push(
-          html`<td class="day" data-w="${wi}" data-d="${d}" data-dl="${esc(DAYS[d])}">${ss.length ? htmlJoin(ss.map((s) => html`<button type="button" class="ses ${s.kind === "race" ? "race" : ""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${effColor(sesEffort(s))};--kt:${effText(sesEffort(s))}"><span class="t">${esc(s.name)}</span><span class="k">${sesAmt(s, Pg)}</span><span class="d">${esc(s.desc)}</span>${s.note ? html`<span class="nb">${t2("noteBadge")}</span>` : ""}</button>`)) : html`<div class="empty" tabindex="0" role="button" aria-label="${esc(t2("rest") + " " + t2("addRun") + " \xB7 " + t2("eTitle", { n: w.n, day: DAYS[d] }))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t2("rest")}</span><span class="plus">${t2("addRun")}</span></div>`}</td>`
+    const ymd = (d) => iso2(d).replace(/-/g, "");
+    const stamp = (/* @__PURE__ */ new Date()).toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
+    const lines = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Block Builder//EN",
+      "CALSCALE:GREGORIAN",
+      "X-WR-CALNAME:" + e(S.name)
+    ];
+    for (const w of S.plan.weeks)
+      for (const s of w.sessions) {
+        const d = sessionDate(w, s);
+        lines.push(
+          "BEGIN:VEVENT",
+          "UID:" + s.id + "-" + ymd(d) + "@blockbuilder",
+          "DTSTAMP:" + stamp,
+          "DTSTART;VALUE=DATE:" + ymd(d),
+          "DTEND;VALUE=DATE:" + ymd(addDays2(d, 1)),
+          fold("SUMMARY:" + e(`${s.name} \xB7 ${sesAmt(s, Pe)}`)),
+          fold(
+            "DESCRIPTION:" + e(
+              t2("icsDesc", { n: w.n, phase: phaseLbl(w.phase), desc: s.desc }) + (s.note ? "\n\n" + t2("icsNote") + s.note : "")
+            )
+          ),
+          "TRANSP:TRANSPARENT",
+          "END:VEVENT"
         );
       }
-      h.push(html`</tr>`);
-      weekChecks2(w, I, weeks[wi - 1]).forEach((c) => {
-        h.push(
-          html`<tr class="wwarn${rc}" data-check="${c.k}"><td colspan="8"><p><b>${t2("wkWarn")}</b>${esc(c.txt)}</p></td></tr>`
-        );
-      });
-      if (w.note) h.push(html`<tr class="wnote${rc}"><td colspan="8"><p><b>${t2("note")}</b>${esc(w.note)}</p></td></tr>`);
-    });
-    h.push(html`</tbody></table></div>`);
-    setHtml($("#plan"), h);
-    drawProfile();
-    renderWx();
-    wxLoad(false);
+    lines.push("END:VCALENDAR");
+    saveFile(fname("ics"), new Blob([lines.join("\r\n")], { type: "text/calendar" }));
   }
-  var WX = {
-    fails: 0,
-    failAt: 0,
-    loc: (() => {
+  function exportCSV() {
+    const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    const rows = [t2("csvHead").split("|")];
+    for (const w of S.plan.weeks)
+      for (const s of w.sessions)
+        rows.push([w.n, phaseLbl(w.phase), iso2(sessionDate(w, s)), DAYS[s.day], s.name, s.km, s.desc, s.note]);
+    saveFile(fname("csv"), new Blob(["\uFEFF" + rows.map((r) => r.map(q).join(",")).join("\r\n")], { type: "text/csv" }));
+  }
+  var PDFLIB = null;
+  function loadScript(src, integrity) {
+    return new Promise((ok, ko) => {
+      const s = document.createElement("script");
+      s.src = src;
+      s.async = true;
+      s.integrity = integrity;
+      s.crossOrigin = "anonymous";
+      s.onload = ok;
+      s.onerror = () => ko(new Error("load " + src));
+      document.head.appendChild(s);
+    });
+  }
+  function loadPDF() {
+    if (!PDFLIB)
+      PDFLIB = (async () => {
+        await loadScript(
+          "https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js",
+          "sha512-plOdviVmws4Y3JAvbnpfKb2hVxKM1lCwsi3vmElYRj+tiDLffZ4FVUj5a8vyKJ9pIgl8JCAHEJ4D1iUKBecswg=="
+        );
+        await loadScript(
+          "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.9/jspdf.plugin.autotable.min.js",
+          "sha512-p73fJ+Q5sCDFsEa54+EWEEWYipUV2Dc7L+E+yp6jSud5Ht1zbEqiI3OuatH5EDdDLxnOW/UN+FwBu8l+4klwLQ=="
+        );
+        const J = window.jspdf && window.jspdf.jsPDF;
+        if (!J) throw new Error("jsPDF missing");
+        const P = window.jspdf_autotable || {};
+        if (!J.API.autoTable && typeof P.applyPlugin === "function") P.applyPlugin(J);
+        const run = (doc, o) => typeof doc.autoTable === "function" ? doc.autoTable(o) : typeof P.autoTable === "function" ? P.autoTable(doc, o) : (() => {
+          throw new Error("AutoTable missing");
+        })();
+        return { J, run };
+      })().catch((e) => {
+        PDFLIB = null;
+        throw e;
+      });
+    return PDFLIB;
+  }
+  var pdfTxt = (v) => String(v ?? "").replace(/[–—−]/g, "-").replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, "...").replace(/→/g, "->").replace(/≈/g, "~").replace(/≤/g, "<=").replace(/≥/g, ">=").replace(/[\u00a0\u202f\u2009]/g, " ").replace(/[^\n\x20-\xFF]/g, "");
+  var PDF_KIND = {
+    recovery: [79, 126, 171],
+    easy: [43, 135, 104],
+    long: [158, 124, 8],
+    tempo: [198, 91, 31],
+    hard: [201, 64, 90],
+    race: [176, 75, 168]
+  };
+  var PDF_PHASE = {
+    base: [143, 178, 165],
+    build: [108, 147, 200],
+    peak: [212, 84, 44],
+    taper: [201, 164, 71],
+    recovery: [138, 164, 174]
+  };
+  async function exportPDF(btn) {
+    if (btn) btn.disabled = true;
+    let lib;
+    try {
+      toast(t2("pdfBuilding"));
+      lib = await loadPDF();
+    } catch (_) {
+      if (btn) btn.disabled = false;
+      toast(t2("pdfLoadFail"));
+      return;
+    }
+    try {
+      const { J, run } = lib, I = S.inputs, W = S.plan.weeks;
+      const doc = new J({ orientation: "landscape", unit: "mm", format: "a4" });
+      const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight(), M = 10;
+      const totals = W.map((w) => w.sessions.reduce((a, s) => a + s.km, 0));
+      const Pe = paces2(S.inputs);
+      const longest = Math.max(0, ...W.flatMap((w) => w.sessions.filter((s) => s.kind === "long").map((s) => s.km)));
+      const start = parseISO2(W[0].start), end = addDays2(start, 7 * W.length - 1);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(18);
+      doc.setTextColor(20, 32, 39);
+      doc.text(pdfTxt(S.name), M, M + 6);
+      const R = I.race && I.race.name ? I.race : null;
+      const line1 = [
+        distLabel2(I),
+        R ? `${t2("pdfRace")}: ${R.name}${R.city ? " (" + R.city + ")" : ""}` : "",
+        I.goal !== "fitness" ? fmtDay(parseISO2(I.raceDate)) : "",
+        `${fmtDate2(start)} - ${fmtDate2(end)}`
+      ].filter(Boolean).join("  \xB7  ");
+      const line2 = [
+        `${W.length} ${t2("stWeeks")}`,
+        `${Math.round(totals.reduce((a, b) => a + b, 0))} ${t2("stTotal")}`,
+        `${Math.round(Math.max(...totals))} ${t2("stPeak")}`,
+        `${longest} ${t2("stLongest")}`
+      ].join("  \xB7  ");
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9.5);
+      doc.setTextColor(90, 106, 111);
+      doc.text(pdfTxt(line1), M, M + 12);
+      doc.text(pdfTxt(line2), M, M + 16.5);
+      const body = [], meta = [];
+      W.forEach((w, wi) => {
+        const st = parseISO2(w.start);
+        const row = [
+          `${t2("wAbbr")}${w.n}
+${fmtShort(st)} - ${fmtShort(addDays2(st, 6))}
+${phaseLbl(w.phase)}${w.cutback ? " \xB7 " + t2("cutback") : ""}
+${RUN_UNIT === "t" ? estDur(w.sessions.reduce((a, s) => a + sesSec(s, Pe), 0)) : totals[wi].toFixed(1) + " km"}`
+        ];
+        const kinds = [w.phase];
+        for (let d = 0; d < 7; d++) {
+          const ss = w.sessions.filter((s) => s.day === d);
+          row.push(
+            ss.map((s) => `${s.name} \xB7 ${sesAmt(s, Pe)}
+${s.desc}${s.note ? "\n" + t2("note") + ": " + s.note : ""}`).join("\n\n")
+          );
+          kinds.push(ss.length ? sesEffort(ss[0]) : null);
+        }
+        body.push(row.map(pdfTxt));
+        meta.push({ type: "week", kinds });
+        if (w.note) {
+          body.push([{ content: pdfTxt(`${t2("note")}: ${w.note}`), colSpan: 8 }]);
+          meta.push({ type: "note" });
+        }
+      });
+      const dayW = (pw - 2 * M - 30) / 7;
+      run(doc, {
+        startY: M + 21,
+        margin: { left: M, right: M, top: M, bottom: M + 5 },
+        head: [[t2("week"), ...DAYS].map(pdfTxt)],
+        body,
+        theme: "grid",
+        showHead: "everyPage",
+        rowPageBreak: "avoid",
+        styles: {
+          font: "helvetica",
+          fontSize: 7.2,
+          cellPadding: { top: 1.6, right: 1.6, bottom: 1.6, left: 2.6 },
+          valign: "top",
+          lineColor: [213, 221, 219],
+          lineWidth: 0.2,
+          textColor: [20, 32, 39],
+          overflow: "linebreak"
+        },
+        headStyles: { fillColor: [20, 32, 39], textColor: 255, fontStyle: "bold", fontSize: 8 },
+        columnStyles: {
+          0: { cellWidth: 30, fontStyle: "bold" },
+          ...Object.fromEntries([1, 2, 3, 4, 5, 6, 7].map((i) => [i, { cellWidth: dayW }]))
+        },
+        didParseCell: (h) => {
+          if (h.section !== "body") return;
+          const m = meta[h.row.index];
+          if (!m) return;
+          if (m.type === "note") {
+            h.cell.styles.fillColor = [233, 238, 236];
+            h.cell.styles.fontStyle = "italic";
+            return;
+          }
+          if (h.column.index > 0 && m.kinds[h.column.index] === "race") h.cell.styles.fillColor = [245, 229, 243];
+        },
+        didDrawCell: (h) => {
+          if (h.section !== "body") return;
+          const m = meta[h.row.index];
+          if (!m || m.type !== "week") return;
+          const k = m.kinds[h.column.index];
+          const c = h.column.index === 0 ? PDF_PHASE[k] : PDF_KIND[k];
+          if (!c) return;
+          doc.setFillColor(...c);
+          doc.rect(h.cell.x + 0.4, h.cell.y + 0.6, 1.1, h.cell.height - 1.2, "F");
+        }
+      });
+      const used = [...new Set(W.flatMap((w) => w.sessions.map((s) => s.typeId)))].filter((id) => whyOf(id));
+      if (used.length)
+        run(doc, {
+          startY: (doc.lastAutoTable ? doc.lastAutoTable.finalY : M + 21) + 6,
+          margin: { left: M, right: M, top: M, bottom: M + 5 },
+          rowPageBreak: "avoid",
+          head: [[t2("pdfWhyHead"), t2("pdfWhyCol")].map(pdfTxt)],
+          body: used.map((id) => {
+            const ty = S.types.find((x) => x.id === id);
+            return [pdfTxt(ty && ty.name || t2("ty_" + id)), pdfTxt(whyOf(id))];
+          }),
+          theme: "grid",
+          styles: {
+            font: "helvetica",
+            fontSize: 7.6,
+            cellPadding: 1.8,
+            valign: "top",
+            lineColor: [213, 221, 219],
+            lineWidth: 0.2,
+            textColor: [20, 32, 39]
+          },
+          headStyles: { fillColor: [20, 32, 39], textColor: 255, fontStyle: "bold", fontSize: 8 },
+          columnStyles: { 0: { cellWidth: 40, fontStyle: "bold" } }
+        });
+      const n = doc.internal.getNumberOfPages(), gen = t2("pdfGenerated", { d: fmtDate2(/* @__PURE__ */ new Date()) });
+      for (let p = 1; p <= n; p++) {
+        doc.setPage(p);
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(7.5);
+        doc.setTextColor(90, 106, 111);
+        doc.text(pdfTxt(`Block Builder \xB7 ${gen}`), M, ph - 5);
+        doc.text(pdfTxt(t2("pdfPage", { p, n })), pw - M, ph - 5, { align: "right" });
+      }
+      saveFile(fname("pdf"), doc.output("blob"));
+    } catch (e) {
+      toast(t2("pdfFail", { m: e && e.message || t2("unknownErr") }));
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+  function initExports() {
+    S.exportFmt = (() => {
       try {
-        const v = JSON.parse(localStorage.getItem("bb-wx") || "null");
-        return v && isFinite(v.lat) && isFinite(v.lon) ? v : null;
+        return localStorage.getItem("bb-export-fmt");
       } catch (_) {
         return null;
       }
-    })(),
-    data: null,
-    at: 0,
-    busy: false,
-    err: "",
-    editing: false,
-    open: (() => {
-      try {
-        return localStorage.getItem("bb-wx-open") === "1";
-      } catch (_) {
-        return false;
-      }
-    })(),
-    heat: null
-  };
-  function wxSaveLoc(l) {
-    WX.loc = l;
-    WX.data = null;
-    WX.at = 0;
-    WX.err = "";
-    WX.fails = 0;
-    WX.failAt = 0;
-    WX.editing = false;
-    try {
-      localStorage.setItem("bb-wx", JSON.stringify(l));
-    } catch (_) {
-    }
+    })() === "pdf" ? "pdf" : "csv";
   }
-  function wmoKey(c) {
-    c = +c;
-    if (c === 0) return 0;
-    if (c === 1) return 1;
-    if (c === 2) return 2;
-    if (c === 3) return 3;
-    if (c === 45 || c === 48) return 45;
-    if (c >= 51 && c <= 55) return 51;
-    if (c === 56 || c === 57) return 56;
-    if (c === 61 || c === 63) return 61;
-    if (c === 65) return 65;
-    if (c === 66 || c === 67) return 66;
-    if (c >= 71 && c <= 77) return 71;
-    if (c >= 80 && c <= 82) return 80;
-    if (c === 85 || c === 86) return 85;
-    if (c >= 95) return 95;
-    return 3;
+
+  // src/plan-edit.js
+  var drag = null;
+  function moveSession(wi, id, d) {
+    const w = S.plan.weeks[wi];
+    const s = w.sessions.find((x) => x.id === id);
+    if (!s || s.day === d) return;
+    const other = w.sessions.filter((x) => x.day === d);
+    other.forEach((o) => o.day = s.day);
+    s.day = d;
+    w.sessions.sort((a, b) => a.day - b.day);
+    touched();
   }
-  function wxIcon(c) {
-    const k = wmoKey(c);
-    const sun = html`<circle cx="20" cy="20" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><g stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 4v4M20 32v4M4 20h4M32 20h4M8.7 8.7l2.8 2.8M28.5 28.5l2.8 2.8M8.7 31.3l2.8-2.8M28.5 11.5l2.8-2.8"/></g>`;
-    const cloud = (y = 0) => html`<path d="M12 ${30 + y}h17a6 6 0 0 0 0-12 9 9 0 0 0-17 2 5 5 0 0 0 0 10z" fill="var(--surface)" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>`;
-    let g;
-    if (k === 0) g = sun;
-    else if (k === 1 || k === 2) g = html`<g transform="translate(-5 -6) scale(.75)" opacity=".85">${sun}</g>${cloud(2)}`;
-    else if (k === 3) g = cloud(-2);
-    else if (k === 45)
-      g = html`<g stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 14h26M5 20h30M8 26h24M11 32h18"/></g>`;
-    else if (k === 71 || k === 85)
-      g = html`${cloud(-6)}<g fill="currentColor"><circle cx="14" cy="33" r="1.8"/><circle cx="21" cy="36" r="1.8"/><circle cx="28" cy="33" r="1.8"/></g>`;
-    else if (k === 95)
-      g = html`${cloud(-6)}<path d="M21 28l-4 7h5l-3 6" fill="none" stroke="var(--long)" stroke-width="2.4" stroke-linejoin="round"/>`;
-    else
-      g = html`${cloud(-6)}<g stroke="var(--recovery)" stroke-width="2.4" stroke-linecap="round"><path d="M14 30l-2 5M21 30l-2 5M28 30l-2 5"/></g>`;
-    return html`<svg viewBox="0 0 40 40" aria-hidden="true">${g}</svg>`;
+  function touched() {
+    S.edited = true;
+    renderPlan();
+    markDirty();
   }
-  var hm = (s) => String(s).slice(11, 16);
-  var wxWait = (n) => Math.min(30 * 6e4, 3e4 * 2 ** Math.max(0, n - 1));
-  async function wxLoad(force) {
-    if (!WX.loc || WX.busy) return;
-    if (!force && WX.data && Date.now() - WX.at < 30 * 6e4) return;
-    if (!force && WX.fails && Date.now() - WX.failAt < wxWait(WX.fails)) return;
-    WX.busy = true;
-    WX.err = "";
-    renderWx();
-    const { lat, lon } = WX.loc;
-    const u = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,apparent_temperature,precipitation_probability,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunset&timezone=auto&forecast_days=1`;
-    try {
-      const r = await fetch(u);
-      if (!r.ok) throw new Error("http " + r.status);
-      WX.data = await r.json();
-      WX.at = Date.now();
-      WX.fails = 0;
-    } catch (_) {
-      WX.err = "blocked";
-      WX.fails = (WX.fails || 0) + 1;
-      WX.failAt = Date.now();
-    }
-    WX.busy = false;
-    renderWx();
+  function addSession(wi, d) {
+    const t3 = S.types.find((x) => x.id === "easy");
+    const P = paces2(S.inputs);
+    const s = {
+      id: uid2(),
+      day: d,
+      typeId: "easy",
+      name: t3.name,
+      kind: "easy",
+      km: 5,
+      desc: fill2(t3.tpl, { ...P.txt, km: 5, work: "" }),
+      note: ""
+    };
+    S.plan.weeks[wi].sessions.push(s);
+    S.plan.weeks[wi].sessions.sort((a, b) => a.day - b.day);
+    touched();
+    openEditor(wi, s.id);
   }
-  async function wxFind(q) {
-    q = q.trim();
-    if (!q) return;
-    WX.busy = true;
-    WX.err = "";
-    renderWx();
-    try {
-      const r = await fetch(
-        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=${LANG}&format=json`
-      );
-      if (!r.ok) throw new Error();
-      const j = await r.json();
-      const h = j.results && j.results[0];
-      WX.busy = false;
-      if (!h) {
-        WX.err = "nocity:" + q;
-        renderWx();
+  function initPlanEdit() {
+    $("#plan").addEventListener("click", (e) => {
+      const a = e.target.closest("[data-act]");
+      const ses = e.target.closest(".ses");
+      if (ses && !a) {
+        openEditor(+ses.dataset.w, ses.dataset.s);
         return;
       }
-      wxSaveLoc({ name: h.name, lat: h.latitude, lon: h.longitude, country: h.country || "" });
-      wxLoad(true);
-    } catch (_) {
-      WX.busy = false;
-      WX.err = "blocked";
-      renderWx();
-    }
-  }
-  function wxGeo() {
-    const fail = () => {
-      WX.busy = false;
-      WX.err = "geo";
-      renderWx();
-    };
-    if (!navigator.geolocation) {
-      fail();
-      return;
-    }
-    WX.busy = true;
-    WX.err = "";
-    renderWx();
-    try {
-      navigator.geolocation.getCurrentPosition(
-        (p) => {
-          WX.busy = false;
-          wxSaveLoc({ name: "", lat: p.coords.latitude, lon: p.coords.longitude, country: "" });
-          wxLoad(true);
-        },
-        fail,
-        { timeout: 1e4, maximumAge: 30 * 6e4 }
-      );
-    } catch (_) {
-      fail();
-    }
-  }
-  function wxBestSlot(D) {
-    const c = D.current || {}, H = D.hourly || {};
-    const nowH = String(c.time || "").slice(0, 13);
-    const idx = (H.time || []).map((tm, i) => ({ tm, i })).filter((o) => o.tm.slice(0, 13) >= nowH && +o.tm.slice(11, 13) <= 22);
-    let best = null;
-    if (idx.length > 1)
-      for (const o of idx) {
-        const p = H.precipitation_probability[o.i] ?? 0;
-        if (!best || p < best.p || p === best.p && H.temperature_2m[o.i] > best.tp)
-          best = { i: o.i, p, tp: H.temperature_2m[o.i] };
-      }
-    return { idx, best };
-  }
-  function wxHeat(D) {
-    if (!D) return null;
-    const c = D.current || {}, H = D.hourly || {};
-    const { best } = wxBestSlot(D);
-    const at = best && H.apparent_temperature ? H.apparent_temperature[best.i] : c.apparent_temperature;
-    if (!isFinite(at)) return null;
-    const add = at >= 28 ? 20 : at >= 22 ? 10 : 0;
-    return add ? { feels: Math.round(at), add } : null;
-  }
-  function renderWx() {
-    const el = document.getElementById("wx");
-    if (!el) return;
-    const D = WX.data;
-    const errMsg = WX.err === "blocked" ? t2("wxBlocked") : WX.err === "geo" ? t2("wxGeoFail") : WX.err.startsWith("nocity:") ? t2("wxNoCity", { q: esc(WX.err.slice(7)) }) : "";
-    const open = WX.open || WX.editing || !!errMsg;
-    const city = WX.loc ? esc(WX.loc.name || `${WX.loc.lat.toFixed(2)}, ${WX.loc.lon.toFixed(2)}`) : "";
-    const chev = html`<svg class="chev" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-    let sum, more;
-    if (!WX.loc || WX.editing) {
-      const sug = S.inputs.race && S.inputs.race.city || WX.loc && WX.loc.name || "";
-      sum = html`${wxIcon(2)}<span>${WX.loc ? html`<b>${t2("wxTitle")}</b> · ${city}` : t2("wxAdd")}</span>`;
-      more = html`<span class="hint">${t2("wxSet")}</span>
-    <form id="wxForm"><input id="wxQ" aria-label="${esc(t2("wxCity"))}" placeholder="${esc(t2("wxCityPh"))}" value="${esc(sug)}" autocomplete="address-level2"><button class="btn sm primary" type="submit" ${WX.busy ? "disabled" : ""}>${t2("wxGo")}</button></form>
-    <div class="wxloc">${navigator.geolocation ? html`<button type="button" class="icon-btn" data-act="wxgeo">${t2("wxGeo")}</button>` : ""}${WX.busy ? html`<span>${t2("wxLoading")}</span>` : ""}</div>
-    ${errMsg ? html`<span class="hint">${errMsg}</span>` : ""}`;
-    } else {
-      const change = html`<div class="wxloc">${D ? html`<span>${t2("wxUpd", { t: new Date(WX.at).toLocaleTimeString(LOC(), { hour: "2-digit", minute: "2-digit" }) })}</span>` : ""}<button type="button" class="icon-btn" data-act="wxedit">${t2("wxChange")}</button></div>`;
-      if (!D) {
-        sum = html`${wxIcon(3)}<span><b>${t2("wxTitle")}</b> · ${city}${WX.busy ? ` \xB7 ${t2("wxLoading")}` : ""}</span>`;
-        more = html`${errMsg ? html`<span class="hint">${errMsg}</span>` : ""}${change}`;
-      } else {
-        const c = D.current || {}, dd = D.daily || {}, H = D.hourly || {};
-        const { idx, best } = wxBestSlot(D);
-        const step = idx.length > 8 ? 2 : 1;
-        const hrs = idx.filter((_, j) => j % step === 0);
-        const wk = wmoKey(c.weather_code);
-        sum = html`${wxIcon(c.weather_code)}<span><b>${Math.round(c.temperature_2m)}°</b> ${esc(t2("wmo" + wk).toLowerCase())} · ${t2("wxRain", { p: dd.precipitation_probability_max ? dd.precipitation_probability_max[0] ?? 0 : 0 })}${best ? ` \xB7 ${t2("wxDriest", { h: hm(H.time[best.i]) })}` : ""} · ${city}</span>`;
-        more = html`<div class="wxnow">${wxIcon(c.weather_code)}<span class="tmp">${Math.round(c.temperature_2m)}°</span><span class="dsc"><b>${t2("wmo" + wk)}</b><span>${t2("wxFeels", { v: Math.round(c.apparent_temperature) })}</span></span></div>
-  <div class="wxfacts"><span>${t2("wxHiLo", { h: html`<b>${Math.round(dd.temperature_2m_max[0])}</b>`, l: html`<b>${Math.round(dd.temperature_2m_min[0])}</b>` })}</span><span>${t2("wxRain", { p: html`<b>${dd.precipitation_probability_max[0] ?? 0}</b>` })}</span><span>${t2("wxWind", { w: html`<b>${Math.round(c.wind_speed_10m)}</b>` })}</span>${dd.sunset ? html`<span>${t2("wxSun", { t: html`<b>${hm(dd.sunset[0])}</b>` })}</span>` : ""}</div>
-  ${hrs.length ? html`<div class="wxhours">${htmlJoin(hrs.map((o) => html`<div class="wxh ${best && best.i === o.i ? "best" : ""}"><span class="hr">${hm(o.tm)}</span><span class="tp">${Math.round(H.temperature_2m[o.i])}°</span><span class="pp">${H.precipitation_probability[o.i] ?? 0}%</span></div>`))}</div>` : ""}
-  ${best ? html`<span class="wxbest">${t2("wxBest", { h: hm(H.time[best.i]), p: best.p, tp: Math.round(best.tp) })}</span>` : ""}
-  ${change}`;
-      }
-    }
-    setHtml(
-      el,
-      html`<button type="button" class="wxline" data-act="wxtoggle" aria-expanded="${open}" aria-controls="wxMore">${sum}${chev}</button><div class="wxmore" id="wxMore" ${open ? "" : "hidden"}>${more}</div>`
-    );
-    WX.heat = wxHeat(D);
-    applyHeat();
-  }
-  var PACE_EFF = { interval: "hard", rep: "hard", tempo: "tempo", mp: "tempo" };
-  function stepEffort(x, sesE) {
-    if (x.p === "recovery") return "recovery";
-    if (PACE_EFF[x.pace]) return PACE_EFF[x.pace];
-    if (x.pace === "race") return sesE === "race" ? "race" : "tempo";
-    if (x.pace === "easy") return sesE === "long" ? "long" : "easy";
-    return sesE === "easy" || sesE === "long" ? "hard" : sesE;
-  }
-  function stepSecKm(x, e, P) {
-    return x.pace ? P.sec[x.pace] : e === "recovery" ? P.sec.easy * 1.1 : e === "hard" ? P.sec.interval : e === "tempo" ? P.sec.tempo : P.sec.easy;
-  }
-  function workoutSegs(wp, sesE, P) {
-    const segs = [];
-    const add = (x, e, role) => {
-      const spk = stepSecKm(x, e, P);
-      const sec = x.g[0] === "t" ? x.g[1] : x.g[1] * spk;
-      const km = x.g[0] === "d" ? x.g[1] : sec / spk;
-      segs.push({ e, sec, km, role, pace: x.pace || null });
-    };
-    if (wp.wu) add({ p: "work", g: wp.wu, pace: "easy" }, "easy", "wu");
-    for (const b of wp.blocks)
-      for (let r = 0; r < Math.max(1, b.n); r++)
-        for (const x of b.steps) add(x, stepEffort(x, sesE), x.p === "recovery" ? "rec" : "main");
-    if (wp.cd) add({ p: "work", g: wp.cd, pace: "easy" }, "easy", "cd");
-    return segs;
-  }
-  function estDur(sec) {
-    const m = Math.max(1, Math.round(sec / 60));
-    if (m < 60) return t2("durMin", { m });
-    const r = Math.round(m / 5) * 5;
-    return t2("durHM", { h: Math.floor(r / 60), m: String(r % 60).padStart(2, "0") });
-  }
-  var sesWp = (s) => s.watch || watchPlan2(s.kind, s.km);
-  var inTime = (s) => RUN_UNIT === "t" && s.kind !== "race" && (s.km > 0 || !!s.watch);
-  function sesSec(s, P) {
-    if (!(s.km > 0) && !s.watch) return 0;
-    return workoutSegs(sesWp(s), sesEffort(s), P || paces2(S.inputs)).reduce((a, g) => a + g.sec, 0);
-  }
-  function sesAmt(s, P) {
-    return inTime(s) ? estDur(sesSec(s, P)) : `${s.km} km`;
-  }
-  function mainSetHtml(wp) {
-    return htmlJoin(
-      wp.blocks.map((b) => {
-        const w = b.steps.find((x) => x.p !== "recovery") || b.steps[0], rec = b.steps.find((x) => x.p === "recovery");
-        if (b.n > 1) return html`<b>${b.n} × ${gTxt(w.g)}</b>${rec ? ` \xB7 ${gTxt(rec.g)} ${t2("tdJog")}` : ""}`;
-        return htmlJoin(
-          b.steps.map((x) => html`<b>${gTxt(x.g)}</b>${x.pace ? " " + paceLbl(x.pace) : ""}`),
-          " + "
+      if (!a) return;
+      const act = a.dataset.act;
+      if (act === "regen" || act === "rebuild") {
+        if (act === "rebuild" && S.edited) {
+          confirmBox(t2("rebuildQ"), t2("rebuildT"), t2("rebuild"), () => {
+            S.pendingRegen = false;
+            regen();
+            renderPlan();
+            markDirty();
+          });
+          return;
+        }
+        S.pendingRegen = false;
+        regen();
+        renderPlan();
+        markDirty();
+      } else if (act === "keep") {
+        S.pendingRegen = false;
+        renderPlan();
+      } else if (act === "bksave") {
+        exportAllPlans();
+        renderPlan();
+      } else if (act === "bklater") {
+        const b = bkGet();
+        b.snooze = Date.now() + 7 * BK_DAY;
+        bkSet(b);
+        renderPlan();
+      } else if (act === "tedit") {
+        openEditor(+a.dataset.w, a.dataset.s);
+      } else if (act === "twatch") {
+        const w = S.plan.weeks[+a.dataset.w], s = w.sessions.find((x) => x.id === a.dataset.s);
+        if (s)
+          sendToWatch(
+            planWorkouts([{ w, s }]),
+            t2("tdWatchTitle", { name: s.name, d: fmtDay(sessionDate(w, s)) }),
+            `${slug(S.name)}-${iso2(sessionDate(w, s))}`
+          );
+      } else if (act === "wxedit") {
+        WX.editing = true;
+        WX.err = "";
+        renderWx();
+        const q = $("#wxQ");
+        q && q.focus();
+      } else if (act === "wxtoggle") {
+        WX.open = !(WX.open || WX.editing);
+        if (!WX.open) WX.editing = false;
+        try {
+          localStorage.setItem("bb-wx-open", WX.open ? "1" : "0");
+        } catch (_) {
+        }
+        renderWx();
+        const q = $("#wxQ");
+        if (WX.open && q && !WX.loc) q.focus();
+      } else if (act === "wxgeo") {
+        wxGeo();
+      } else if (act === "add") {
+        addSession(+a.dataset.w, +a.dataset.d);
+      } else if (act === "wwatch") {
+        const w = S.plan.weeks[+a.dataset.w];
+        sendToWatch(
+          planWorkouts(w.sessions.map((s) => ({ w, s }))),
+          t2("sendTitleWeek", { n: w.n, c: w.sessions.length }),
+          `${slug(S.name)}-week-${String(w.n).padStart(2, "0")}`
         );
-      }),
-      " + "
-    );
-  }
-  function workoutBar(wp, sesE, P) {
-    const segs = workoutSegs(wp, sesE, P);
-    const bar = html`<div class="wbar" role="img" aria-label="${esc(watchSummary(wp, P))}">${htmlJoin(segs.map((g) => html`<i class="${g.role === "rec" ? "rec" : ""}" style="flex:${Math.max(1, Math.round(g.sec))} 1 0;background:${effColor(g.e)}"></i>`))}</div>`;
-    const main = mainSetHtml(wp);
-    const lbl = html`<div class="wbarlbl">${wp.wu ? html`<span><b>${gTxt(wp.wu)}</b> ${t2("warmup").toLowerCase()}</span>` : ""}<span>${main}</span>${wp.cd ? html`<span><b>${gTxt(wp.cd)}</b> ${t2("cooldown").toLowerCase()}</span>` : ""}</div>`;
-    return { html: html`<div>${bar}${lbl}</div>`, sec: segs.reduce((a, g) => a + g.sec, 0), segs };
-  }
-  var TD = { keys: [], eff: {}, hard: false };
-  var HEAT_KEYS = /* @__PURE__ */ new Set(["easy", "tempo", "mp"]);
-  function paceChips() {
-    const P = paces2(S.inputs), add = WX.heat ? WX.heat.add : 0;
-    return htmlJoin(
-      TD.keys.map((k) => {
-        const e = TD.eff[k] || "easy";
-        const val = P.vdot ? add && HEAT_KEYS.has(k) ? html`<b>${fmtPace2(P.sec[k] + add).replace("/km", "")}</b>/km <s>${P.txt[k].replace("/km", "")}</s>` : html`<b>${P.txt[k].replace("/km", "")}</b>/km` : html`<b>${esc(P.txt[k])}</b>`;
-        return html`<span class="pc" data-k="${k}" style="--c:${effColor(e)}">${esc(cap2(paceLbl(k)))} ${val}</span>`;
-      })
-    );
-  }
-  function applyHeat() {
-    const pe = document.getElementById("tdPaces"), he = document.getElementById("tdHeat");
-    if (pe) setHtml(pe, paceChips());
-    if (he) {
-      const h = WX.heat;
-      setHtml(
-        he,
-        h && (TD.keys.length || TD.hard) ? html`${t2("tdHeat", { v: h.feels, s: h.add })}${TD.hard ? t2("tdHeatHard") : ""}` : ""
-      );
-    }
-  }
-  function sendLbl(name) {
-    const d = DEVICES.find((x) => x.k === getDevice()) || DEVICES[0];
-    const b = d.k === "other" ? t2("sendWatch") : t2("sendTo", { dev: d.name() });
-    return name ? `${b} \xB7 ${name}` : b;
-  }
-  function renderToday() {
-    TD = { keys: [], eff: {}, hard: false };
-    const P = S.plan;
-    if (!P || !P.weeks.length) return "";
-    const today = /* @__PURE__ */ new Date();
-    today.setHours(12, 0, 0, 0);
-    const td = dow2(today);
-    const st0 = parseISO2(P.weeks[0].start), end = addDays2(st0, 7 * P.weeks.length - 1);
-    const wi = P.weeks.findIndex((w) => {
-      const st = parseISO2(w.start);
-      return today >= st && today < addDays2(st, 7);
+      } else if (act === "quick") {
+        openQuick(a.dataset.type);
+      } else if (act === "allwatch") {
+        sendToWatch(
+          planWorkouts(S.plan.weeks.flatMap((w) => w.sessions.map((s) => ({ w, s })))),
+          t2("sendTitleAll", { c: S.plan.weeks.reduce((a2, w) => a2 + w.sessions.length, 0) }),
+          `${slug(S.name)}-all`
+        );
+      } else if (act === "ics") exportICS();
+      else if (act === "csv") exportCSV();
+      else if (act === "past") {
+        S.showPast = !S.showPast;
+        renderPlan();
+      } else if (act === "export") {
+        const f = $("#expFmt");
+        S.exportFmt = f ? f.value : "csv";
+        if (S.exportFmt === "pdf") exportPDF(a);
+        else exportCSV();
+      }
     });
-    const whenOf = (w, s) => fmtDay(sessionDate(w, s));
-    const nextAfter = (wi0, d0) => {
-      for (let i = Math.max(wi0, 0); i < P.weeks.length; i++) {
-        const ss = P.weeks[i].sessions.filter((s) => i > wi0 || s.day > d0).sort((a, b) => a.day - b.day);
-        if (ss.length) return { w: P.weeks[i], s: ss[0] };
+    $("#plan").addEventListener("change", (e) => {
+      if (e.target.id === "expFmt") {
+        S.exportFmt = e.target.value;
+        try {
+          localStorage.setItem("bb-export-fmt", S.exportFmt);
+        } catch (_) {
+        }
       }
-      return null;
-    };
-    let eb = [html`<b>${t2("tdToday")}</b><span>${cap2(fmtDay(today))}</span>`], body, cta = html``;
-    if (today < st0) {
-      const n = nextAfter(0, -1);
-      body = html`<div class="rest"><b>${t2("tdBefore", { d: fmtDate2(st0) })}</b>${n ? html`<p class="tnext">${t2("tdBeforeT", { when: whenOf(n.w, n.s), name: esc(n.s.name.toLowerCase()), amt: sesAmt(n.s) })}</p>` : ""}</div>`;
-    } else if (wi < 0 || today > end) {
-      body = html`<div class="rest"><b>${t2("tdDone")}</b><p>${t2("tdDoneT", { d: fmtDate2(end) })}</p></div>`;
-    } else {
-      const w = P.weeks[wi];
-      eb.push(
-        html`<span style="color:${phaseText(w.phase)}">${t2("tdWeek", { n: w.n, phase: phaseLbl(w.phase) })}</span>`
-      );
-      const ss = w.sessions.filter((s) => s.day === td);
-      if (ss.length) {
-        const Pc = paces2(S.inputs);
-        const hard = [], easy = [];
-        body = htmlJoin(
-          ss.map((s) => {
-            const e = sesEffort(s), wp = s.watch || watchPlan2(s.kind, s.km), wb = workoutBar(wp, e, Pc);
-            for (const g of wb.segs) {
-              if (g.role === "main" && (g.e === "hard" || g.e === "race")) TD.hard = true;
-            }
-            for (const g of wb.segs)
-              if (g.pace && !TD.eff[g.pace]) {
-                TD.eff[g.pace] = g.e;
-                (g.pace === "easy" ? easy : hard).push(g.pace);
-              }
-            return html`<div class="tses" style="--k:${effColor(e)};--kt:${effText(e)}"><div class="tn"><b>${esc(s.name)}</b></div>
-      <div class="tbig">${inTime(s) ? html`<b>${t2("tdEst", { d: estDur(wb.sec) })}</b><span>${esc(s.km)} km</span>` : html`<b>${esc(s.km)}<small> km</small></b><span>${t2("tdEst", { d: estDur(wb.sec) })}</span>`}</div>${wb.html}${s.desc ? html`<p>${esc(s.desc)}</p>` : ""}</div>`;
-          })
-        );
-        TD.keys = [...hard, ...easy];
-        cta = html`<div class="tcta">${htmlJoin(ss.map((s) => html`<button type="button" class="btn primary" data-act="twatch" data-w="${wi}" data-s="${s.id}" data-n="${ss.length > 1 ? esc(s.name) : ""}">${esc(sendLbl(ss.length > 1 ? s.name : ""))}</button><button type="button" class="btn" data-act="tedit" data-w="${wi}" data-s="${s.id}">${t2("tdEdit")}${ss.length > 1 ? html`<span class="sr"> ${esc(s.name)}</span>` : ""}</button>`))}</div>`;
-      } else {
-        const n = nextAfter(wi, td);
-        body = html`<div class="rest"><b>${t2("tdRest")}</b><p>${t2("tdRestT")}</p></div>${n ? html`<p class="tnext">${t2("tdNext", { when: whenOf(n.w, n.s), name: esc(n.s.name.toLowerCase()), amt: sesAmt(n.s) })}</p>` : ""}<p class="tnext"><button type="button" class="linkbtn" data-act="quick" data-type="easy">${t2("qwAnyway")}</button></p>`;
+    });
+    $("#plan").addEventListener("keydown", (e) => {
+      const a = e.target.closest(".empty");
+      if (a && (e.key === "Enter" || e.key === " ")) {
+        e.preventDefault();
+        addSession(+a.dataset.w, +a.dataset.d);
       }
-    }
-    return html`<section class="today" aria-label="${esc(t2("tdToday"))}"><div class="tmain"><div class="eyebrow">${eb}</div>${body}</div><div class="tside"><div><div class="tpaces" id="tdPaces"></div><div class="theat" id="tdHeat" role="note"></div><div class="wxp" id="wx" aria-live="polite"></div></div>${cta}</div></section>`;
+    });
+    $("#plan").addEventListener("dragstart", (e) => {
+      const s = e.target.closest(".ses");
+      if (!s) return;
+      drag = { w: +s.dataset.w, id: s.dataset.s };
+      s.classList.add("dragging");
+      e.dataTransfer.effectAllowed = "move";
+      try {
+        e.dataTransfer.setData("text/plain", s.dataset.s);
+      } catch (_) {
+      }
+    });
+    $("#plan").addEventListener("dragend", () => {
+      document.querySelectorAll(".dragging,.drop").forEach((x) => x.classList.remove("dragging", "drop"));
+      drag = null;
+    });
+    $("#plan").addEventListener("dragover", (e) => {
+      const td = e.target.closest("td.day");
+      if (!td || !drag || +td.dataset.w !== drag.w) return;
+      e.preventDefault();
+      document.querySelectorAll(".drop").forEach((x) => x.classList.remove("drop"));
+      td.classList.add("drop");
+    });
+    $("#plan").addEventListener("drop", (e) => {
+      const td = e.target.closest("td.day");
+      if (!td || !drag || +td.dataset.w !== drag.w) return;
+      e.preventDefault();
+      moveSession(drag.w, drag.id, +td.dataset.d);
+    });
   }
-  $("#plan").addEventListener("submit", (e) => {
-    if (e.target.id !== "wxForm") return;
-    e.preventDefault();
-    const q = $("#wxQ");
-    if (q) wxFind(q.value);
-  });
+
+  // src/quick.js
   var QW_EASY = {
     easy: { km: 8, min: 45 },
     recovery: { km: 5, min: 30 },
@@ -3551,667 +3265,8 @@
     closeModal();
     exportWorkouts(QW.dev, [{ title, fitTitle: title, file, wp: R.wp, paces: R.P }], file);
   }
-  function finishersUrl(I) {
-    const m = Math.round(distKm2(I) * 1e3);
-    return `https://www.finishers.com/courses?discipline=road&dmin=${m}&dmax=${m}&distanceUnit=meters`;
-  }
-  function nameFromUrl(u) {
-    try {
-      const x = new URL(u);
-      if (!/finishers\.com$/.test(x.hostname.replace(/^www\./, ""))) return "";
-      const seg = x.pathname.split("/").filter(Boolean);
-      const i = seg.indexOf("course");
-      const slug2 = i >= 0 ? seg[i + 1] : seg[seg.length - 1];
-      if (!slug2) return "";
-      return decodeURIComponent(slug2).replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).replace(/\b(De|Du|Des|La|Le|Les|Et|D|L)\b/g, (w) => w.toLowerCase());
-    } catch (_) {
-      return "";
-    }
-  }
-  function renderRaceBox() {
-    const R = S.inputs.race, el = $("#raceBox");
-    if (!el) return;
-    if (R && R.name && !S.raceEditing) {
-      el.className = "racebox set";
-      setHtml(
-        el,
-        html`<div><div style="font-weight:600">${esc(R.name)}</div><div class="hint">${R.city ? esc(R.city) + " \xB7 " : ""}${fmtDate2(parseISO2(S.inputs.raceDate))} · ${esc(distLabel2(S.inputs))}</div></div>
-    <div class="acts"><button type="button" class="btn sm" data-race="edit">${t2("editRace")}</button><button type="button" class="btn sm ghost" data-race="clear">${t2("removeRace")}</button></div>`
-      );
-      return;
-    }
-    el.className = "racebox";
-    if (!S.raceEditing) {
-      setHtml(
-        el,
-        html`<div class="hint">${t2("raceOptional")}</div>
-    <div class="acts"><a class="btn sm" href="${finishersUrl(S.inputs)}" target="_blank" rel="noopener">${esc(t2("findOn", { lbl: distLabel2(S.inputs).toLowerCase() }))}</a><button type="button" class="btn sm" data-race="edit">${t2("addMyRace")}</button></div>`
-      );
-      return;
-    }
-    const r = R || {};
-    setHtml(
-      el,
-      html`<div class="field"><label for="rUrl">${t2("raceUrl")}</label><input id="rUrl" type="url" placeholder="${esc(t2("raceUrlPh"))}" value="${esc(r.url || "")}"></div>
-  <div class="field"><label for="rName">${t2("raceName")}</label><input id="rName" value="${esc(r.name || "")}" placeholder="${esc(t2("raceNamePh"))}"></div>
-  <div class="field"><label for="rCity">${t2("city")}</label><input id="rCity" value="${esc(r.city || "")}"></div>
-  <div class="hint">${t2("raceMatch")}</div>
-  <div class="acts"><button type="button" class="btn sm primary" data-race="save">${t2("useRace")}</button><button type="button" class="btn sm ghost" data-race="cancel">${t2("cancel")}</button><a class="btn sm ghost" href="${finishersUrl(S.inputs)}" target="_blank" rel="noopener">${t2("searchFin")}</a></div>`
-    );
-    const u = el.querySelector("#rUrl"), n = el.querySelector("#rName");
-    u.addEventListener("input", () => {
-      const g = nameFromUrl(u.value);
-      if (g && (!n.value || n.dataset.auto === "1")) {
-        n.value = g;
-        n.dataset.auto = "1";
-      }
-    });
-    n.addEventListener("input", () => {
-      n.dataset.auto = "0";
-    });
-  }
-  $("#raceBox").addEventListener("click", (e) => {
-    const b = e.target.closest("[data-race]");
-    if (!b) return;
-    e.stopPropagation();
-    const a = b.dataset.race;
-    if (a === "edit") {
-      S.raceEditing = true;
-      renderRaceBox();
-      const f = $("#rUrl");
-      f && f.focus();
-    } else if (a === "cancel") {
-      S.raceEditing = false;
-      renderRaceBox();
-    } else if (a === "clear") {
-      S.inputs.race = null;
-      S.raceEditing = false;
-      renderRaceBox();
-      renderHello();
-      markDirty();
-    } else if (a === "save") {
-      const name = $("#rName").value.trim(), city = $("#rCity").value.trim(), url = safeUrl($("#rUrl").value);
-      if (!name) {
-        $("#rName").focus();
-        toast(t2("needName"));
-        return;
-      }
-      S.inputs.race = { name, city, url };
-      S.raceEditing = false;
-      if (S.isExample || !S.savedAt) {
-        S.name = name;
-        $("#planName").value = name;
-      }
-      S.isExample = false;
-      renderRaceBox();
-      renderPlan();
-      markDirty();
-    }
-  });
-  $("#raceBox").addEventListener("change", (e) => e.stopPropagation());
-  function renderHello() {
-    const el = $("#hello");
-    if (!el) return;
-    const P = S.plan, I = S.inputs;
-    const today = /* @__PURE__ */ new Date();
-    today.setHours(12, 0, 0, 0);
-    const race = parseISO2(I.raceDate);
-    const days = Math.round((+race - +today) / 864e5);
-    const lbl = distLabel2(I);
-    let line;
-    if (I.goal === "fitness") {
-      const st0 = parseISO2(P.weeks[0].start), end = addDays2(st0, 7 * P.weeks.length - 1);
-      const wi = P.weeks.findIndex((w) => {
-        const st = parseISO2(w.start);
-        return today >= st && today < addDays2(st, 7);
-      });
-      if (today < st0) line = t2("hFitStarts", { n: P.weeks.length, d: fmtDate2(st0) });
-      else if (wi < 0) line = t2("hFitDone", { n: P.weeks.length, d: fmtDate2(end) });
-      else {
-        const w = P.weeks[wi];
-        const tdow = dow2(today);
-        const next = w.sessions.find((s) => s.day >= tdow) || P.weeks[wi + 1] && P.weeks[wi + 1].sessions[0];
-        const when = next ? next.day === tdow && w.sessions.includes(next) ? t2("today") : DAYS[next.day] : "";
-        line = html`${t2("hFitIn", { n: w.n, t: P.weeks.length, phase: phaseLbl(w.phase), cut: w.cutback ? t2("hCut") : "" })}${next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), amt: sesAmt(next) }) : ""}`;
-      }
-    } else if (days < 0) {
-      const wi = P.weeks.findIndex((w2) => {
-        const st = parseISO2(w2.start);
-        return today >= st && today < addDays2(st, 7);
-      });
-      const w = wi >= 0 ? P.weeks[wi] : null;
-      if (w && w.phase === "recovery") {
-        const tdow = dow2(today), rw = P.weeks.filter((x) => x.phase === "recovery");
-        const next = w.sessions.find((s) => s.day >= tdow) || P.weeks[wi + 1] && P.weeks[wi + 1].sessions[0];
-        const when = next ? next.day === tdow && w.sessions.includes(next) ? t2("today") : DAYS[next.day] : "";
-        line = html`${t2("hRecIn", { lbl: esc(lbl), k: rw.indexOf(w) + 1, r: rw.length })}${next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), amt: sesAmt(next) }) : ""}`;
-      } else line = t2("hPast", { lbl: esc(lbl), d: fmtDate2(race) });
-    } else if (days === 0) line = t2("hToday", { lbl: esc(lbl) });
-    else {
-      const wi = P.weeks.findIndex((w) => {
-        const st = parseISO2(w.start);
-        return today >= st && today < addDays2(st, 7);
-      });
-      const head = t2(days === 1 ? "hDay1" : "hDays", { n: days, lbl: esc(lbl), d: fmtDate2(race) });
-      if (wi < 0) {
-        line = html`${head} ${t2("hStarts", { d: fmtDate2(parseISO2(P.weeks[0].start)) })}`;
-      } else {
-        const w = P.weeks[wi];
-        const tdow = dow2(today);
-        const next = w.sessions.find((s) => s.day >= tdow) || P.weeks[wi + 1] && P.weeks[wi + 1].sessions[0];
-        const when = next ? next.day === tdow && w.sessions.includes(next) ? t2("today") : DAYS[next.day] : "";
-        line = html`${head} ${t2("hInWeek", {
-          n: w.n,
-          t: P.weeks.filter((x) => x.phase !== "recovery").length,
-          phase: phaseLbl(w.phase),
-          cut: w.cutback ? t2("hCut") : ""
-        })}${next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), amt: sesAmt(next) }) : ""}`;
-      }
-    }
-    const R = I.race;
-    let cd = html``;
-    if (I.goal !== "fitness" && R && R.name && days >= 0) {
-      const nm = R.url ? html`<a class="rn" href="${esc(R.url)}" target="_blank" rel="noopener">${esc(R.name)}</a>` : html`<span class="rn">${esc(R.name)}</span>`;
-      cd = html`<div class="countdown"><div class="num">${days}<small>${days === 1 ? t2("dayOne") : t2("dayMany")}</small></div>${nm}<span class="rm">${R.city ? esc(R.city) + " \xB7 " : ""}${fmtDay(race)} · ${esc(lbl)}</span></div>`;
-    }
-    setHtml(el, html`<div class="txt"><p class="lead">${line}</p></div>${cd}`);
-  }
-  $("#plan").addEventListener("click", (e) => {
-    const a = e.target.closest("[data-act]");
-    const ses = e.target.closest(".ses");
-    if (ses && !a) {
-      openEditor(+ses.dataset.w, ses.dataset.s);
-      return;
-    }
-    if (!a) return;
-    const act = a.dataset.act;
-    if (act === "regen" || act === "rebuild") {
-      if (act === "rebuild" && S.edited) {
-        confirmBox(t2("rebuildQ"), t2("rebuildT"), t2("rebuild"), () => {
-          S.pendingRegen = false;
-          regen();
-          renderPlan();
-          markDirty();
-        });
-        return;
-      }
-      S.pendingRegen = false;
-      regen();
-      renderPlan();
-      markDirty();
-    } else if (act === "keep") {
-      S.pendingRegen = false;
-      renderPlan();
-    } else if (act === "bksave") {
-      exportAllPlans();
-      renderPlan();
-    } else if (act === "bklater") {
-      const b = bkGet();
-      b.snooze = Date.now() + 7 * BK_DAY;
-      bkSet(b);
-      renderPlan();
-    } else if (act === "tedit") {
-      openEditor(+a.dataset.w, a.dataset.s);
-    } else if (act === "twatch") {
-      const w = S.plan.weeks[+a.dataset.w], s = w.sessions.find((x) => x.id === a.dataset.s);
-      if (s)
-        sendToWatch(
-          planWorkouts([{ w, s }]),
-          t2("tdWatchTitle", { name: s.name, d: fmtDay(sessionDate(w, s)) }),
-          `${slug(S.name)}-${iso2(sessionDate(w, s))}`
-        );
-    } else if (act === "wxedit") {
-      WX.editing = true;
-      WX.err = "";
-      renderWx();
-      const q = $("#wxQ");
-      q && q.focus();
-    } else if (act === "wxtoggle") {
-      WX.open = !(WX.open || WX.editing);
-      if (!WX.open) WX.editing = false;
-      try {
-        localStorage.setItem("bb-wx-open", WX.open ? "1" : "0");
-      } catch (_) {
-      }
-      renderWx();
-      const q = $("#wxQ");
-      if (WX.open && q && !WX.loc) q.focus();
-    } else if (act === "wxgeo") {
-      wxGeo();
-    } else if (act === "add") {
-      addSession(+a.dataset.w, +a.dataset.d);
-    } else if (act === "wwatch") {
-      const w = S.plan.weeks[+a.dataset.w];
-      sendToWatch(
-        planWorkouts(w.sessions.map((s) => ({ w, s }))),
-        t2("sendTitleWeek", { n: w.n, c: w.sessions.length }),
-        `${slug(S.name)}-week-${String(w.n).padStart(2, "0")}`
-      );
-    } else if (act === "quick") {
-      openQuick(a.dataset.type);
-    } else if (act === "allwatch") {
-      sendToWatch(
-        planWorkouts(S.plan.weeks.flatMap((w) => w.sessions.map((s) => ({ w, s })))),
-        t2("sendTitleAll", { c: S.plan.weeks.reduce((a2, w) => a2 + w.sessions.length, 0) }),
-        `${slug(S.name)}-all`
-      );
-    } else if (act === "ics") exportICS();
-    else if (act === "csv") exportCSV();
-    else if (act === "past") {
-      S.showPast = !S.showPast;
-      renderPlan();
-    } else if (act === "export") {
-      const f = $("#expFmt");
-      S.exportFmt = f ? f.value : "csv";
-      if (S.exportFmt === "pdf") exportPDF(a);
-      else exportCSV();
-    }
-  });
-  $("#plan").addEventListener("change", (e) => {
-    if (e.target.id === "expFmt") {
-      S.exportFmt = e.target.value;
-      try {
-        localStorage.setItem("bb-export-fmt", S.exportFmt);
-      } catch (_) {
-      }
-    }
-  });
-  $("#plan").addEventListener("keydown", (e) => {
-    const a = e.target.closest(".empty");
-    if (a && (e.key === "Enter" || e.key === " ")) {
-      e.preventDefault();
-      addSession(+a.dataset.w, +a.dataset.d);
-    }
-  });
-  var drag = null;
-  $("#plan").addEventListener("dragstart", (e) => {
-    const s = e.target.closest(".ses");
-    if (!s) return;
-    drag = { w: +s.dataset.w, id: s.dataset.s };
-    s.classList.add("dragging");
-    e.dataTransfer.effectAllowed = "move";
-    try {
-      e.dataTransfer.setData("text/plain", s.dataset.s);
-    } catch (_) {
-    }
-  });
-  $("#plan").addEventListener("dragend", () => {
-    document.querySelectorAll(".dragging,.drop").forEach((x) => x.classList.remove("dragging", "drop"));
-    drag = null;
-  });
-  $("#plan").addEventListener("dragover", (e) => {
-    const td = e.target.closest("td.day");
-    if (!td || !drag || +td.dataset.w !== drag.w) return;
-    e.preventDefault();
-    document.querySelectorAll(".drop").forEach((x) => x.classList.remove("drop"));
-    td.classList.add("drop");
-  });
-  $("#plan").addEventListener("drop", (e) => {
-    const td = e.target.closest("td.day");
-    if (!td || !drag || +td.dataset.w !== drag.w) return;
-    e.preventDefault();
-    moveSession(drag.w, drag.id, +td.dataset.d);
-  });
-  function moveSession(wi, id, d) {
-    const w = S.plan.weeks[wi];
-    const s = w.sessions.find((x) => x.id === id);
-    if (!s || s.day === d) return;
-    const other = w.sessions.filter((x) => x.day === d);
-    other.forEach((o) => o.day = s.day);
-    s.day = d;
-    w.sessions.sort((a, b) => a.day - b.day);
-    touched();
-  }
-  function touched() {
-    S.edited = true;
-    renderPlan();
-    markDirty();
-  }
-  function addSession(wi, d) {
-    const t3 = S.types.find((x) => x.id === "easy");
-    const P = paces2(S.inputs);
-    const s = {
-      id: uid2(),
-      day: d,
-      typeId: "easy",
-      name: t3.name,
-      kind: "easy",
-      km: 5,
-      desc: fill2(t3.tpl, { ...P.txt, km: 5, work: "" }),
-      note: ""
-    };
-    S.plan.weeks[wi].sessions.push(s);
-    S.plan.weeks[wi].sessions.sort((a, b) => a.day - b.day);
-    touched();
-    openEditor(wi, s.id);
-  }
-  var modalOpener = null;
-  var lastTrigger = null;
-  document.addEventListener(
-    "pointerdown",
-    (e) => {
-      const el = (
-        /** @type {HTMLElement} */
-        e.target
-      );
-      const c = el.closest && el.closest("button,a[href],[tabindex]");
-      if (c && !c.closest("#modalRoot")) lastTrigger = c;
-    },
-    true
-  );
-  function openerKey(el) {
-    if (el.id) return "#" + CSS.escape(el.id);
-    const at = ["data-act", "data-w", "data-s", "data-d"].filter((a) => el.hasAttribute(a));
-    return at.length ? at.map((a) => `[${a}="${CSS.escape(el.getAttribute(a))}"]`).join("") : null;
-  }
-  function modal(body, onMount) {
-    const root = $("#modalRoot");
-    if (!root.firstChild) {
-      const a = document.activeElement;
-      const o = a && a !== document.body && !a.closest("#modalRoot") && a.id !== "setup" ? a : lastTrigger;
-      modalOpener = o ? { el: o, key: openerKey(o) } : null;
-    }
-    setHtml(root, html`<div class="modal-bg"><div class="modal" role="dialog" aria-modal="true">${body}</div></div>`);
-    const bg = root.firstChild;
-    bg.addEventListener("click", (e) => {
-      if (e.target === bg) closeModal();
-    });
-    const m = bg.firstChild;
-    const h = m.querySelector("h2");
-    if (h) {
-      h.id = "modalTitle";
-      m.setAttribute("aria-labelledby", "modalTitle");
-    }
-    onMount && onMount(m);
-    m.tabIndex = -1;
-    m.focus({ preventScroll: true });
-    return m;
-  }
-  function closeModal() {
-    clearHtml($("#modalRoot"));
-    const o = modalOpener;
-    modalOpener = null;
-    if (!o) return;
-    queueMicrotask(() => {
-      if ($("#modalRoot").firstChild) return;
-      const el = o.el.isConnected ? o.el : o.key && document.querySelector(o.key);
-      if (el && typeof el.focus === "function") el.focus({ preventScroll: true });
-    });
-  }
-  function modalFocusables(m) {
-    return [...m.querySelectorAll('a[href],button,input,select,textarea,[tabindex]:not([tabindex="-1"])')].filter(
-      (el) => !el.disabled && el.getClientRects().length
-    );
-  }
-  document.addEventListener("keydown", (e) => {
-    const m = $("#modalRoot .modal");
-    if (!m) return;
-    if (e.key === "Escape") {
-      closeModal();
-      return;
-    }
-    if (e.key !== "Tab") return;
-    const f = modalFocusables(m);
-    if (!f.length) {
-      e.preventDefault();
-      m.focus();
-      return;
-    }
-    e.preventDefault();
-    const i = f.indexOf(document.activeElement);
-    const n = i < 0 ? e.shiftKey ? f.length - 1 : 0 : (i + (e.shiftKey ? -1 : 1) + f.length) % f.length;
-    f[n].focus();
-  });
-  function confirmBox(title, text, okLabel, ok) {
-    modal(
-      html`<h2>${esc(title)}</h2><p style="margin:0">${esc(text)}</p><div class="actions"><button class="btn" id="cNo">${t2("cancel")}</button><button class="btn primary" id="cYes">${esc(okLabel)}</button></div>`,
-      (m) => {
-        m.querySelector("#cNo").onclick = closeModal;
-        m.querySelector("#cYes").onclick = () => {
-          closeModal();
-          ok();
-        };
-      }
-    );
-  }
-  function toast(msg) {
-    const t3 = document.createElement("div");
-    t3.className = "toast";
-    t3.textContent = msg;
-    $("#toastRoot").appendChild(t3);
-    setTimeout(() => t3.remove(), Math.max(2600, msg.length * 60));
-  }
-  var whyOf = (id) => TYPE_DEFS2.some((d) => d[0] === id) ? t2("why_" + id) : "";
-  var whyHtml = (id) => {
-    const w = whyOf(id);
-    return w ? html`<b>${t2("whyLbl")}</b> ${esc(w)}` : "";
-  };
-  function openEditor(wi, id) {
-    const w = S.plan.weeks[wi];
-    const s = w.sessions.find((x) => x.id === id);
-    if (!s) return;
-    const opts = htmlJoin([
-      ...S.types.filter((t3) => t3.on || t3.id === s.typeId).map((t3) => html`<option value="${esc(t3.id)}" ${t3.id === s.typeId ? "selected" : ""}>${esc(t3.name)}</option>`),
-      html`<option value="race" ${s.typeId === "race" ? "selected" : ""}>${t2("raceDay")}</option>`
-    ]);
-    modal(
-      html`<h2>${t2("eTitle", { n: w.n, day: DAYS[s.day] })}</h2>
-  <div class="row"><div class="field"><label for="eType">${t2("runType")}</label><select id="eType">${opts}</select></div>
-  <div class="field"><label for="eDay">${t2("dayLbl")}</label><select id="eDay">${htmlJoin(DAYS.map((d, i) => html`<option value="${i}" ${i === s.day ? "selected" : ""}>${d}</option>`))}</select></div></div>
-  <p class="hint why" id="eWhy" ${whyOf(s.typeId) ? "" : "hidden"}>${whyHtml(s.typeId)}</p>
-  <div class="row"><div class="field"><label for="eKm">${t2("distKm")}</label><input id="eKm" type="number" min="0" step="0.5" value="${esc(s.km)}"></div><div></div></div>
-  <div class="field"><label for="eDesc">${t2("desc")}</label><textarea id="eDesc" rows="4">${esc(s.desc)}</textarea></div>
-  <div class="field"><span class="lbl">${t2("watchWorkout")}</span><div class="watchsum" id="eWatch">${esc(watchSummary(s.watch || watchPlan2(s.kind, s.km)))}</div><div class="hint">${t2("watchHint")}</div></div>
-  <div class="field"><label for="eNote">${t2("note")}</label><textarea id="eNote" rows="3" placeholder="${esc(t2("notePhOwn"))}">${esc(s.note)}</textarea></div>
-  <div class="actions"><button class="btn ghost left" id="eDel">${t2("deleteRun")}</button><button class="btn" id="eWatchBtn">${t2("sendWatch")}</button><button class="btn" id="eCancel">${t2("cancel")}</button><button class="btn primary" id="eOk">${t2("saveChanges")}</button></div>`,
-      (m) => {
-        m.querySelector("#eCancel").onclick = closeModal;
-        m.querySelector("#eDel").onclick = () => {
-          w.sessions = w.sessions.filter((x) => x.id !== id);
-          closeModal();
-          touched();
-        };
-        m.querySelector("#eType").onchange = (ev) => {
-          const wy = m.querySelector("#eWhy");
-          setHtml(wy, whyHtml(ev.target.value));
-          wy.hidden = !whyOf(ev.target.value);
-          const ty = S.types.find((x) => x.id === ev.target.value);
-          if (ty) {
-            const P = paces2(S.inputs);
-            const km = +m.querySelector("#eKm").value || s.km;
-            const wk = workFor2(ty, {
-              p: 0.5,
-              D: distKm2(S.inputs),
-              c: cat2(distKm2(S.inputs)),
-              taper: w.phase === "taper",
-              P,
-              phase: w.phase
-            });
-            m.querySelector("#eDesc").value = fill2(ty.tpl, { ...P.txt, km, work: fill2(wk.text || "", P.txt) });
-          }
-        };
-        m.querySelector("#eWatchBtn").onclick = () => {
-          closeModal();
-          sendToWatch(
-            planWorkouts([{ w, s }]),
-            t2("sendTitleRun", { n: w.n, day: DAYS[s.day], name: s.name, amt: sesAmt(s) })
-          );
-        };
-        m.querySelector("#eOk").onclick = () => {
-          const tid = m.querySelector("#eType").value;
-          const ty = S.types.find((x) => x.id === tid);
-          const newKm = Math.max(0, +m.querySelector("#eKm").value || 0);
-          if (tid !== s.typeId) {
-            const P = paces2(S.inputs);
-            const D = distKm2(S.inputs);
-            s.watch = ty ? watchPlan2(
-              ty.kind,
-              newKm,
-              workFor2(ty, { p: 0.5, D, c: cat2(D), taper: w.phase === "taper", P, phase: w.phase })
-            ) : watchPlan2("race", newKm);
-          } else if (newKm !== s.km) {
-            s.watch = rescaleWatch(s.watch || watchPlan2(s.kind, s.km), newKm - s.km);
-          }
-          s.typeId = tid;
-          s.name = ty ? ty.name : t2("raceDay");
-          s.kind = ty ? ty.kind : "race";
-          s.km = Math.max(0, +m.querySelector("#eKm").value || 0);
-          s.desc = m.querySelector("#eDesc").value;
-          s.note = m.querySelector("#eNote").value;
-          const nd = +m.querySelector("#eDay").value;
-          closeModal();
-          if (nd !== s.day) moveSession(wi, id, nd);
-          else touched();
-        };
-      }
-    );
-  }
-  var PACE_TOL = { easy: 25, tempo: 8, interval: 8, rep: 6, race: 6, mp: 8, custom: 8 };
-  var hasPace = (P, k) => !!(k && (P.vdot || P.fixed && P.fixed[k]));
-  var paceLbl = (k) => t2("pl_" + k);
-  function gTxt(g) {
-    if (g[0] === "d") {
-      const m = Math.round(g[1] * 1e3);
-      return m < 1e3 || m % 1e3 ? m >= 1e3 ? (m / 1e3).toLocaleString(LOC(), { maximumFractionDigits: 1 }) + " km" : m + " m" : m / 1e3 + " km";
-    }
-    const z = g[1];
-    return z >= 60 ? z % 60 ? Math.floor(z / 60) + ":" + String(z % 60).padStart(2, "0") + " min" : z / 60 + " min" : z + " s";
-  }
-  function stepTxt(x, P) {
-    return gTxt(x.g) + (x.pace ? " @ " + (hasPace(P, x.pace) ? P.txt[x.pace] : paceLbl(x.pace)) : "") + (x.p === "recovery" ? t2("recoverySfx") : "");
-  }
-  function watchSummary(wp, P) {
-    P = P || paces2(S.inputs);
-    const parts = [];
-    if (wp.wu) parts.push(t2("warmup") + " " + gTxt(wp.wu));
-    for (const b of wp.blocks) {
-      const st = b.steps.map((x) => stepTxt(x, P)).join(", ");
-      parts.push(b.n > 1 ? `${b.n} \xD7 (${st})` : st);
-    }
-    if (wp.cd) parts.push(t2("cooldown") + " " + gTxt(wp.cd));
-    return parts.join(" \xB7 ");
-  }
-  function rescaleWatch(wp, delta) {
-    wp = JSON.parse(JSON.stringify(wp));
-    if (wp.wu && wp.cd) {
-      wp.cd = ["d", r052(Math.max(0.5, wp.cd[1] + delta))];
-      return wp;
-    }
-    const st = wp.blocks[0] && wp.blocks[0].n === 1 && wp.blocks[0].steps.find((x) => x.g[0] === "d");
-    if (st) st.g = ["d", r052(Math.max(0.5, st.g[1] + delta))];
-    return wp;
-  }
-  var WK = null;
-  function loadWK() {
-    if (!WK)
-      WK = Promise.all([
-        // Loaded at runtime from the page's folder, not bundled (esbuild --external:./vendor/*), so tsc can't resolve it from src/.
-        // @ts-expect-error
-        import("./vendor/workoutkit-0.2.0/index.js"),
-        // @ts-expect-error
-        import("./vendor/workoutkit-0.2.0/encode.js")
-      ]).catch((e) => {
-        WK = null;
-        throw e;
-      });
-    return WK;
-  }
-  function planWorkout(w, s) {
-    const P = paces2(S.inputs), tm = inTime(s);
-    return {
-      title: `W${w.n} ${s.name} ${sesAmt(s, P)}`,
-      fitTitle: `W${w.n} ${s.name} ${tm ? sesAmt(s, P).replace(/ /g, "") : s.km + "k"}`,
-      file: `w${String(w.n).padStart(2, "0")}-${DAYS[s.day].toLowerCase()}-${slug(s.name)}`,
-      wp: tm ? wpInUnit(sesWp(s), "t", sesEffort(s), P, true) : sesWp(s)
-    };
-  }
-  var planWorkouts = (list) => list.map(({ w, s }) => planWorkout(w, s));
-  async function workoutBlob(it) {
-    const [K, E] = await loadWK();
-    const P = it.paces || paces2(S.inputs);
-    const wp = it.wp;
-    const plan = new K.WorkoutPlan({ referenceId: crypto.randomUUID() });
-    const cw = plan.asCustom({ activity: "running", location: "outdoor", displayName: it.title.slice(0, 48) });
-    const goal = (g) => g[0] === "d" ? new K.DistanceGoal(new K.Distance(Math.round(g[1] * 1e3), "meters")) : new K.TimeGoal(new K.Duration(Math.round(g[1]), "seconds"));
-    const alert = (pace) => {
-      if (!hasPace(P, pace)) return void 0;
-      const sec = P.sec[pace], tol = PACE_TOL[pace];
-      const sp = (x) => new K.Speed(new K.Distance(1, "kilometers"), new K.Duration(Math.round(x), "seconds"));
-      return new K.SpeedRangeAlert(sp(sec + tol), sp(sec - tol), "current");
-    };
-    if (wp.wu) cw.warmup = new K.Step(goal(wp.wu), t2("warmup"));
-    for (const b of wp.blocks) {
-      const blk = cw.addBlock(Math.max(1, b.n));
-      for (const x of b.steps)
-        blk.addStep(
-          x.p,
-          goal(x.g),
-          x.pace ? hasPace(P, x.pace) ? P.txt[x.pace] : paceLbl(x.pace) : void 0,
-          alert(x.pace)
-        );
-    }
-    if (wp.cd) cw.cooldown = new K.Step(goal(wp.cd), t2("cooldown"));
-    return E.toBlob(plan);
-  }
-  var CRC_T = (() => {
-    const t3 = new Uint32Array(256);
-    for (let n = 0; n < 256; n++) {
-      let c = n;
-      for (let k = 0; k < 8; k++) c = c & 1 ? 3988292384 ^ c >>> 1 : c >>> 1;
-      t3[n] = c >>> 0;
-    }
-    return t3;
-  })();
-  var crc32 = (b) => {
-    let c = 4294967295;
-    for (let i = 0; i < b.length; i++) c = CRC_T[(c ^ b[i]) & 255] ^ c >>> 8;
-    return (c ^ 4294967295) >>> 0;
-  };
-  function makeZip(files) {
-    const enc = new TextEncoder(), parts = [], central = [];
-    let off = 0;
-    const d = /* @__PURE__ */ new Date(), dt = (d.getHours() << 11 | d.getMinutes() << 5 | d.getSeconds() >> 1) & 65535, dd = (d.getFullYear() - 1980 << 9 | d.getMonth() + 1 << 5 | d.getDate()) & 65535;
-    for (const f of files) {
-      const name = enc.encode(f.name), data = f.data, crc = crc32(data);
-      const h = new DataView(new ArrayBuffer(30));
-      h.setUint32(0, 67324752, true);
-      h.setUint16(4, 20, true);
-      h.setUint16(6, 2048, true);
-      h.setUint16(8, 0, true);
-      h.setUint16(10, dt, true);
-      h.setUint16(12, dd, true);
-      h.setUint32(14, crc, true);
-      h.setUint32(18, data.length, true);
-      h.setUint32(22, data.length, true);
-      h.setUint16(26, name.length, true);
-      h.setUint16(28, 0, true);
-      parts.push(new Uint8Array(h.buffer), name, data);
-      const c = new DataView(new ArrayBuffer(46));
-      c.setUint32(0, 33639248, true);
-      c.setUint16(4, 20, true);
-      c.setUint16(6, 20, true);
-      c.setUint16(8, 2048, true);
-      c.setUint16(10, 0, true);
-      c.setUint16(12, dt, true);
-      c.setUint16(14, dd, true);
-      c.setUint32(16, crc, true);
-      c.setUint32(20, data.length, true);
-      c.setUint32(24, data.length, true);
-      c.setUint16(28, name.length, true);
-      c.setUint32(42, off, true);
-      central.push(new Uint8Array(c.buffer), name);
-      off += 30 + name.length + data.length;
-    }
-    const csize = central.reduce((a, x) => a + x.length, 0);
-    const e = new DataView(new ArrayBuffer(22));
-    e.setUint32(0, 101010256, true);
-    e.setUint16(8, files.length, true);
-    e.setUint16(10, files.length, true);
-    e.setUint32(12, csize, true);
-    e.setUint32(16, off, true);
-    return new Blob([...parts, ...central, new Uint8Array(e.buffer)], { type: "application/zip" });
-  }
-  var slug = (t3) => String(t3).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+  // src/fit.js
   var FIT_CRC = [
     0,
     52225,
@@ -4358,6 +3413,154 @@
     if (wp.cd) out.push({ name: t2("cooldown"), ...goal(wp.cd), target: null, intensity: 3 });
     return out;
   }
+
+  // src/watch.js
+  var PACE_TOL = { easy: 25, tempo: 8, interval: 8, rep: 6, race: 6, mp: 8, custom: 8 };
+  var hasPace = (P, k) => !!(k && (P.vdot || P.fixed && P.fixed[k]));
+  var paceLbl = (k) => t2("pl_" + k);
+  function gTxt(g) {
+    if (g[0] === "d") {
+      const m = Math.round(g[1] * 1e3);
+      return m < 1e3 || m % 1e3 ? m >= 1e3 ? (m / 1e3).toLocaleString(LOC(), { maximumFractionDigits: 1 }) + " km" : m + " m" : m / 1e3 + " km";
+    }
+    const z = g[1];
+    return z >= 60 ? z % 60 ? Math.floor(z / 60) + ":" + String(z % 60).padStart(2, "0") + " min" : z / 60 + " min" : z + " s";
+  }
+  function stepTxt(x, P) {
+    return gTxt(x.g) + (x.pace ? " @ " + (hasPace(P, x.pace) ? P.txt[x.pace] : paceLbl(x.pace)) : "") + (x.p === "recovery" ? t2("recoverySfx") : "");
+  }
+  function watchSummary(wp, P) {
+    P = P || paces2(S.inputs);
+    const parts = [];
+    if (wp.wu) parts.push(t2("warmup") + " " + gTxt(wp.wu));
+    for (const b of wp.blocks) {
+      const st = b.steps.map((x) => stepTxt(x, P)).join(", ");
+      parts.push(b.n > 1 ? `${b.n} \xD7 (${st})` : st);
+    }
+    if (wp.cd) parts.push(t2("cooldown") + " " + gTxt(wp.cd));
+    return parts.join(" \xB7 ");
+  }
+  function rescaleWatch(wp, delta) {
+    wp = JSON.parse(JSON.stringify(wp));
+    if (wp.wu && wp.cd) {
+      wp.cd = ["d", r052(Math.max(0.5, wp.cd[1] + delta))];
+      return wp;
+    }
+    const st = wp.blocks[0] && wp.blocks[0].n === 1 && wp.blocks[0].steps.find((x) => x.g[0] === "d");
+    if (st) st.g = ["d", r052(Math.max(0.5, st.g[1] + delta))];
+    return wp;
+  }
+  var WK = null;
+  function loadWK() {
+    if (!WK)
+      WK = Promise.all([
+        // Loaded at runtime from the page's folder, not bundled (esbuild --external:./vendor/*), so tsc can't resolve it from src/.
+        // @ts-expect-error
+        import("./vendor/workoutkit-0.2.0/index.js"),
+        // @ts-expect-error
+        import("./vendor/workoutkit-0.2.0/encode.js")
+      ]).catch((e) => {
+        WK = null;
+        throw e;
+      });
+    return WK;
+  }
+  function planWorkout(w, s) {
+    const P = paces2(S.inputs), tm = inTime(s);
+    return {
+      title: `W${w.n} ${s.name} ${sesAmt(s, P)}`,
+      fitTitle: `W${w.n} ${s.name} ${tm ? sesAmt(s, P).replace(/ /g, "") : s.km + "k"}`,
+      file: `w${String(w.n).padStart(2, "0")}-${DAYS[s.day].toLowerCase()}-${slug(s.name)}`,
+      wp: tm ? wpInUnit(sesWp(s), "t", sesEffort(s), P, true) : sesWp(s)
+    };
+  }
+  var planWorkouts = (list) => list.map(({ w, s }) => planWorkout(w, s));
+  async function workoutBlob(it) {
+    const [K, E] = await loadWK();
+    const P = it.paces || paces2(S.inputs);
+    const wp = it.wp;
+    const plan = new K.WorkoutPlan({ referenceId: crypto.randomUUID() });
+    const cw = plan.asCustom({ activity: "running", location: "outdoor", displayName: it.title.slice(0, 48) });
+    const goal = (g) => g[0] === "d" ? new K.DistanceGoal(new K.Distance(Math.round(g[1] * 1e3), "meters")) : new K.TimeGoal(new K.Duration(Math.round(g[1]), "seconds"));
+    const alert = (pace) => {
+      if (!hasPace(P, pace)) return void 0;
+      const sec = P.sec[pace], tol = PACE_TOL[pace];
+      const sp = (x) => new K.Speed(new K.Distance(1, "kilometers"), new K.Duration(Math.round(x), "seconds"));
+      return new K.SpeedRangeAlert(sp(sec + tol), sp(sec - tol), "current");
+    };
+    if (wp.wu) cw.warmup = new K.Step(goal(wp.wu), t2("warmup"));
+    for (const b of wp.blocks) {
+      const blk = cw.addBlock(Math.max(1, b.n));
+      for (const x of b.steps)
+        blk.addStep(
+          x.p,
+          goal(x.g),
+          x.pace ? hasPace(P, x.pace) ? P.txt[x.pace] : paceLbl(x.pace) : void 0,
+          alert(x.pace)
+        );
+    }
+    if (wp.cd) cw.cooldown = new K.Step(goal(wp.cd), t2("cooldown"));
+    return E.toBlob(plan);
+  }
+  var CRC_T = (() => {
+    const t3 = new Uint32Array(256);
+    for (let n = 0; n < 256; n++) {
+      let c = n;
+      for (let k = 0; k < 8; k++) c = c & 1 ? 3988292384 ^ c >>> 1 : c >>> 1;
+      t3[n] = c >>> 0;
+    }
+    return t3;
+  })();
+  var crc32 = (b) => {
+    let c = 4294967295;
+    for (let i = 0; i < b.length; i++) c = CRC_T[(c ^ b[i]) & 255] ^ c >>> 8;
+    return (c ^ 4294967295) >>> 0;
+  };
+  function makeZip(files) {
+    const enc = new TextEncoder(), parts = [], central = [];
+    let off = 0;
+    const d = /* @__PURE__ */ new Date(), dt = (d.getHours() << 11 | d.getMinutes() << 5 | d.getSeconds() >> 1) & 65535, dd = (d.getFullYear() - 1980 << 9 | d.getMonth() + 1 << 5 | d.getDate()) & 65535;
+    for (const f of files) {
+      const name = enc.encode(f.name), data = f.data, crc = crc32(data);
+      const h = new DataView(new ArrayBuffer(30));
+      h.setUint32(0, 67324752, true);
+      h.setUint16(4, 20, true);
+      h.setUint16(6, 2048, true);
+      h.setUint16(8, 0, true);
+      h.setUint16(10, dt, true);
+      h.setUint16(12, dd, true);
+      h.setUint32(14, crc, true);
+      h.setUint32(18, data.length, true);
+      h.setUint32(22, data.length, true);
+      h.setUint16(26, name.length, true);
+      h.setUint16(28, 0, true);
+      parts.push(new Uint8Array(h.buffer), name, data);
+      const c = new DataView(new ArrayBuffer(46));
+      c.setUint32(0, 33639248, true);
+      c.setUint16(4, 20, true);
+      c.setUint16(6, 20, true);
+      c.setUint16(8, 2048, true);
+      c.setUint16(10, 0, true);
+      c.setUint16(12, dt, true);
+      c.setUint16(14, dd, true);
+      c.setUint32(16, crc, true);
+      c.setUint32(20, data.length, true);
+      c.setUint32(24, data.length, true);
+      c.setUint16(28, name.length, true);
+      c.setUint32(42, off, true);
+      central.push(new Uint8Array(c.buffer), name);
+      off += 30 + name.length + data.length;
+    }
+    const csize = central.reduce((a, x) => a + x.length, 0);
+    const e = new DataView(new ArrayBuffer(22));
+    e.setUint32(0, 101010256, true);
+    e.setUint16(8, files.length, true);
+    e.setUint16(10, files.length, true);
+    e.setUint32(12, csize, true);
+    e.setUint32(16, off, true);
+    return new Blob([...parts, ...central, new Uint8Array(e.buffer)], { type: "application/zip" });
+  }
+  var slug = (t3) => String(t3).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
   var DEVICES = [
     { k: "apple", name: () => "Apple Watch", ext: "workout", help: () => t2("helpApple") },
     { k: "garmin", name: () => "Garmin", ext: "fit", help: () => t2("helpGarmin") },
@@ -4442,292 +3645,387 @@
   function downloadErr(e) {
     return e && e.message ? t2("dlFailM", { m: e.message }) : t2("dlFail");
   }
-  function dlSave({ filename, data }) {
-    const blob = data instanceof Blob ? data : new Blob([data], { type: "application/octet-stream" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.rel = "noopener";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 6e4);
+
+  // src/workout.js
+  var PACE_EFF = { interval: "hard", rep: "hard", tempo: "tempo", mp: "tempo" };
+  function stepEffort(x, sesE) {
+    if (x.p === "recovery") return "recovery";
+    if (PACE_EFF[x.pace]) return PACE_EFF[x.pace];
+    if (x.pace === "race") return sesE === "race" ? "race" : "tempo";
+    if (x.pace === "easy") return sesE === "long" ? "long" : "easy";
+    return sesE === "easy" || sesE === "long" ? "hard" : sesE;
   }
-  function saveFile(filename, data) {
-    try {
-      dlSave({ filename, data });
-    } catch (e) {
-      toast(t2("dlFail"));
-    }
+  function stepSecKm(x, e, P) {
+    return x.pace ? P.sec[x.pace] : e === "recovery" ? P.sec.easy * 1.1 : e === "hard" ? P.sec.interval : e === "tempo" ? P.sec.tempo : P.sec.easy;
   }
-  var fname = (ext) => (S.name || t2("trainingBlock")).normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-").toLowerCase() + "." + ext;
-  function sessionDate(w, s) {
-    return addDays2(parseISO2(w.start), s.day);
-  }
-  function exportICS() {
-    const Pe = paces2(S.inputs);
-    const e = (v) => String(v).replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\r?\n/g, "\\n");
-    const fold = (l) => {
-      let out = "";
-      while (l.length > 73) {
-        out += l.slice(0, 73) + "\r\n ";
-        l = l.slice(73);
-      }
-      return out + l;
+  function workoutSegs(wp, sesE, P) {
+    const segs = [];
+    const add = (x, e, role) => {
+      const spk = stepSecKm(x, e, P);
+      const sec = x.g[0] === "t" ? x.g[1] : x.g[1] * spk;
+      const km = x.g[0] === "d" ? x.g[1] : sec / spk;
+      segs.push({ e, sec, km, role, pace: x.pace || null });
     };
-    const ymd = (d) => iso2(d).replace(/-/g, "");
-    const stamp = (/* @__PURE__ */ new Date()).toISOString().replace(/[-:]/g, "").replace(/\.\d+/, "");
-    const lines = [
-      "BEGIN:VCALENDAR",
-      "VERSION:2.0",
-      "PRODID:-//Block Builder//EN",
-      "CALSCALE:GREGORIAN",
-      "X-WR-CALNAME:" + e(S.name)
-    ];
-    for (const w of S.plan.weeks)
-      for (const s of w.sessions) {
-        const d = sessionDate(w, s);
-        lines.push(
-          "BEGIN:VEVENT",
-          "UID:" + s.id + "-" + ymd(d) + "@blockbuilder",
-          "DTSTAMP:" + stamp,
-          "DTSTART;VALUE=DATE:" + ymd(d),
-          "DTEND;VALUE=DATE:" + ymd(addDays2(d, 1)),
-          fold("SUMMARY:" + e(`${s.name} \xB7 ${sesAmt(s, Pe)}`)),
-          fold(
-            "DESCRIPTION:" + e(
-              t2("icsDesc", { n: w.n, phase: phaseLbl(w.phase), desc: s.desc }) + (s.note ? "\n\n" + t2("icsNote") + s.note : "")
-            )
-          ),
-          "TRANSP:TRANSPARENT",
-          "END:VEVENT"
+    if (wp.wu) add({ p: "work", g: wp.wu, pace: "easy" }, "easy", "wu");
+    for (const b of wp.blocks)
+      for (let r = 0; r < Math.max(1, b.n); r++)
+        for (const x of b.steps) add(x, stepEffort(x, sesE), x.p === "recovery" ? "rec" : "main");
+    if (wp.cd) add({ p: "work", g: wp.cd, pace: "easy" }, "easy", "cd");
+    return segs;
+  }
+  function estDur(sec) {
+    const m = Math.max(1, Math.round(sec / 60));
+    if (m < 60) return t2("durMin", { m });
+    const r = Math.round(m / 5) * 5;
+    return t2("durHM", { h: Math.floor(r / 60), m: String(r % 60).padStart(2, "0") });
+  }
+  var sesWp = (s) => s.watch || watchPlan2(s.kind, s.km);
+  var inTime = (s) => RUN_UNIT === "t" && s.kind !== "race" && (s.km > 0 || !!s.watch);
+  function sesSec(s, P) {
+    if (!(s.km > 0) && !s.watch) return 0;
+    return workoutSegs(sesWp(s), sesEffort(s), P || paces2(S.inputs)).reduce((a, g) => a + g.sec, 0);
+  }
+  function sesAmt(s, P) {
+    return inTime(s) ? estDur(sesSec(s, P)) : `${s.km} km`;
+  }
+  function mainSetHtml(wp) {
+    return htmlJoin(
+      wp.blocks.map((b) => {
+        const w = b.steps.find((x) => x.p !== "recovery") || b.steps[0], rec = b.steps.find((x) => x.p === "recovery");
+        if (b.n > 1) return html`<b>${b.n} × ${gTxt(w.g)}</b>${rec ? ` \xB7 ${gTxt(rec.g)} ${t2("tdJog")}` : ""}`;
+        return htmlJoin(
+          b.steps.map((x) => html`<b>${gTxt(x.g)}</b>${x.pace ? " " + paceLbl(x.pace) : ""}`),
+          " + "
         );
-      }
-    lines.push("END:VCALENDAR");
-    saveFile(fname("ics"), new Blob([lines.join("\r\n")], { type: "text/calendar" }));
+      }),
+      " + "
+    );
   }
-  function exportCSV() {
-    const q = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-    const rows = [t2("csvHead").split("|")];
-    for (const w of S.plan.weeks)
-      for (const s of w.sessions)
-        rows.push([w.n, phaseLbl(w.phase), iso2(sessionDate(w, s)), DAYS[s.day], s.name, s.km, s.desc, s.note]);
-    saveFile(fname("csv"), new Blob(["\uFEFF" + rows.map((r) => r.map(q).join(",")).join("\r\n")], { type: "text/csv" }));
+  function workoutBar(wp, sesE, P) {
+    const segs = workoutSegs(wp, sesE, P);
+    const bar = html`<div class="wbar" role="img" aria-label="${esc(watchSummary(wp, P))}">${htmlJoin(segs.map((g) => html`<i class="${g.role === "rec" ? "rec" : ""}" style="flex:${Math.max(1, Math.round(g.sec))} 1 0;background:${effColor(g.e)}"></i>`))}</div>`;
+    const main = mainSetHtml(wp);
+    const lbl = html`<div class="wbarlbl">${wp.wu ? html`<span><b>${gTxt(wp.wu)}</b> ${t2("warmup").toLowerCase()}</span>` : ""}<span>${main}</span>${wp.cd ? html`<span><b>${gTxt(wp.cd)}</b> ${t2("cooldown").toLowerCase()}</span>` : ""}</div>`;
+    return { html: html`<div>${bar}${lbl}</div>`, sec: segs.reduce((a, g) => a + g.sec, 0), segs };
   }
-  S.exportFmt = (() => {
-    try {
-      return localStorage.getItem("bb-export-fmt");
-    } catch (_) {
-      return null;
+
+  // src/today.js
+  var TD = { keys: [], eff: {}, hard: false };
+  var HEAT_KEYS = /* @__PURE__ */ new Set(["easy", "tempo", "mp"]);
+  function paceChips() {
+    const P = paces2(S.inputs), add = WX.heat ? WX.heat.add : 0;
+    return htmlJoin(
+      TD.keys.map((k) => {
+        const e = TD.eff[k] || "easy";
+        const val = P.vdot ? add && HEAT_KEYS.has(k) ? html`<b>${fmtPace2(P.sec[k] + add).replace("/km", "")}</b>/km <s>${P.txt[k].replace("/km", "")}</s>` : html`<b>${P.txt[k].replace("/km", "")}</b>/km` : html`<b>${esc(P.txt[k])}</b>`;
+        return html`<span class="pc" data-k="${k}" style="--c:${effColor(e)}">${esc(cap2(paceLbl(k)))} ${val}</span>`;
+      })
+    );
+  }
+  function applyHeat() {
+    const pe = document.getElementById("tdPaces"), he = document.getElementById("tdHeat");
+    if (pe) setHtml(pe, paceChips());
+    if (he) {
+      const h = WX.heat;
+      setHtml(
+        he,
+        h && (TD.keys.length || TD.hard) ? html`${t2("tdHeat", { v: h.feels, s: h.add })}${TD.hard ? t2("tdHeatHard") : ""}` : ""
+      );
     }
-  })() === "pdf" ? "pdf" : "csv";
-  var PDFLIB = null;
-  function loadScript(src, integrity) {
-    return new Promise((ok, ko) => {
-      const s = document.createElement("script");
-      s.src = src;
-      s.async = true;
-      s.integrity = integrity;
-      s.crossOrigin = "anonymous";
-      s.onload = ok;
-      s.onerror = () => ko(new Error("load " + src));
-      document.head.appendChild(s);
+  }
+  function sendLbl(name) {
+    const d = DEVICES.find((x) => x.k === getDevice()) || DEVICES[0];
+    const b = d.k === "other" ? t2("sendWatch") : t2("sendTo", { dev: d.name() });
+    return name ? `${b} \xB7 ${name}` : b;
+  }
+  function renderToday() {
+    TD = { keys: [], eff: {}, hard: false };
+    const P = S.plan;
+    if (!P || !P.weeks.length) return "";
+    const today = /* @__PURE__ */ new Date();
+    today.setHours(12, 0, 0, 0);
+    const td = dow2(today);
+    const st0 = parseISO2(P.weeks[0].start), end = addDays2(st0, 7 * P.weeks.length - 1);
+    const wi = P.weeks.findIndex((w) => {
+      const st = parseISO2(w.start);
+      return today >= st && today < addDays2(st, 7);
+    });
+    const whenOf = (w, s) => fmtDay(sessionDate(w, s));
+    const nextAfter = (wi0, d0) => {
+      for (let i = Math.max(wi0, 0); i < P.weeks.length; i++) {
+        const ss = P.weeks[i].sessions.filter((s) => i > wi0 || s.day > d0).sort((a, b) => a.day - b.day);
+        if (ss.length) return { w: P.weeks[i], s: ss[0] };
+      }
+      return null;
+    };
+    let eb = [html`<b>${t2("tdToday")}</b><span>${cap2(fmtDay(today))}</span>`], body, cta = html``;
+    if (today < st0) {
+      const n = nextAfter(0, -1);
+      body = html`<div class="rest"><b>${t2("tdBefore", { d: fmtDate2(st0) })}</b>${n ? html`<p class="tnext">${t2("tdBeforeT", { when: whenOf(n.w, n.s), name: esc(n.s.name.toLowerCase()), amt: sesAmt(n.s) })}</p>` : ""}</div>`;
+    } else if (wi < 0 || today > end) {
+      body = html`<div class="rest"><b>${t2("tdDone")}</b><p>${t2("tdDoneT", { d: fmtDate2(end) })}</p></div>`;
+    } else {
+      const w = P.weeks[wi];
+      eb.push(
+        html`<span style="color:${phaseText(w.phase)}">${t2("tdWeek", { n: w.n, phase: phaseLbl(w.phase) })}</span>`
+      );
+      const ss = w.sessions.filter((s) => s.day === td);
+      if (ss.length) {
+        const Pc = paces2(S.inputs);
+        const hard = [], easy = [];
+        body = htmlJoin(
+          ss.map((s) => {
+            const e = sesEffort(s), wp = s.watch || watchPlan2(s.kind, s.km), wb = workoutBar(wp, e, Pc);
+            for (const g of wb.segs) {
+              if (g.role === "main" && (g.e === "hard" || g.e === "race")) TD.hard = true;
+            }
+            for (const g of wb.segs)
+              if (g.pace && !TD.eff[g.pace]) {
+                TD.eff[g.pace] = g.e;
+                (g.pace === "easy" ? easy : hard).push(g.pace);
+              }
+            return html`<div class="tses" style="--k:${effColor(e)};--kt:${effText(e)}"><div class="tn"><b>${esc(s.name)}</b></div>
+      <div class="tbig">${inTime(s) ? html`<b>${t2("tdEst", { d: estDur(wb.sec) })}</b><span>${esc(s.km)} km</span>` : html`<b>${esc(s.km)}<small> km</small></b><span>${t2("tdEst", { d: estDur(wb.sec) })}</span>`}</div>${wb.html}${s.desc ? html`<p>${esc(s.desc)}</p>` : ""}</div>`;
+          })
+        );
+        TD.keys = [...hard, ...easy];
+        cta = html`<div class="tcta">${htmlJoin(ss.map((s) => html`<button type="button" class="btn primary" data-act="twatch" data-w="${wi}" data-s="${s.id}" data-n="${ss.length > 1 ? esc(s.name) : ""}">${esc(sendLbl(ss.length > 1 ? s.name : ""))}</button><button type="button" class="btn" data-act="tedit" data-w="${wi}" data-s="${s.id}">${t2("tdEdit")}${ss.length > 1 ? html`<span class="sr"> ${esc(s.name)}</span>` : ""}</button>`))}</div>`;
+      } else {
+        const n = nextAfter(wi, td);
+        body = html`<div class="rest"><b>${t2("tdRest")}</b><p>${t2("tdRestT")}</p></div>${n ? html`<p class="tnext">${t2("tdNext", { when: whenOf(n.w, n.s), name: esc(n.s.name.toLowerCase()), amt: sesAmt(n.s) })}</p>` : ""}<p class="tnext"><button type="button" class="linkbtn" data-act="quick" data-type="easy">${t2("qwAnyway")}</button></p>`;
+      }
+    }
+    return html`<section class="today" aria-label="${esc(t2("tdToday"))}"><div class="tmain"><div class="eyebrow">${eb}</div>${body}</div><div class="tside"><div><div class="tpaces" id="tdPaces"></div><div class="theat" id="tdHeat" role="note"></div><div class="wxp" id="wx" aria-live="polite"></div></div>${cta}</div></section>`;
+  }
+  function initToday() {
+    $("#plan").addEventListener("submit", (e) => {
+      if (e.target.id !== "wxForm") return;
+      e.preventDefault();
+      const q = $("#wxQ");
+      if (q) wxFind(q.value);
     });
   }
-  function loadPDF() {
-    if (!PDFLIB)
-      PDFLIB = (async () => {
-        await loadScript(
-          "https://cdnjs.cloudflare.com/ajax/libs/jspdf/4.2.1/jspdf.umd.min.js",
-          "sha512-plOdviVmws4Y3JAvbnpfKb2hVxKM1lCwsi3vmElYRj+tiDLffZ4FVUj5a8vyKJ9pIgl8JCAHEJ4D1iUKBecswg=="
-        );
-        await loadScript(
-          "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/5.0.9/jspdf.plugin.autotable.min.js",
-          "sha512-p73fJ+Q5sCDFsEa54+EWEEWYipUV2Dc7L+E+yp6jSud5Ht1zbEqiI3OuatH5EDdDLxnOW/UN+FwBu8l+4klwLQ=="
-        );
-        const J = window.jspdf && window.jspdf.jsPDF;
-        if (!J) throw new Error("jsPDF missing");
-        const P = window.jspdf_autotable || {};
-        if (!J.API.autoTable && typeof P.applyPlugin === "function") P.applyPlugin(J);
-        const run = (doc, o) => typeof doc.autoTable === "function" ? doc.autoTable(o) : typeof P.autoTable === "function" ? P.autoTable(doc, o) : (() => {
-          throw new Error("AutoTable missing");
-        })();
-        return { J, run };
-      })().catch((e) => {
-        PDFLIB = null;
-        throw e;
-      });
-    return PDFLIB;
-  }
-  var pdfTxt = (v) => String(v ?? "").replace(/[–—−]/g, "-").replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/…/g, "...").replace(/→/g, "->").replace(/≈/g, "~").replace(/≤/g, "<=").replace(/≥/g, ">=").replace(/[\u00a0\u202f\u2009]/g, " ").replace(/[^\n\x20-\xFF]/g, "");
-  var PDF_KIND = {
-    recovery: [79, 126, 171],
-    easy: [43, 135, 104],
-    long: [158, 124, 8],
-    tempo: [198, 91, 31],
-    hard: [201, 64, 90],
-    race: [176, 75, 168]
+
+  // src/weather.js
+  var WX = {
+    fails: 0,
+    failAt: 0,
+    loc: (() => {
+      try {
+        const v = JSON.parse(localStorage.getItem("bb-wx") || "null");
+        return v && isFinite(v.lat) && isFinite(v.lon) ? v : null;
+      } catch (_) {
+        return null;
+      }
+    })(),
+    data: null,
+    at: 0,
+    busy: false,
+    err: "",
+    editing: false,
+    open: (() => {
+      try {
+        return localStorage.getItem("bb-wx-open") === "1";
+      } catch (_) {
+        return false;
+      }
+    })(),
+    heat: null
   };
-  var PDF_PHASE = {
-    base: [143, 178, 165],
-    build: [108, 147, 200],
-    peak: [212, 84, 44],
-    taper: [201, 164, 71],
-    recovery: [138, 164, 174]
-  };
-  async function exportPDF(btn) {
-    if (btn) btn.disabled = true;
-    let lib;
+  function wxSaveLoc(l) {
+    WX.loc = l;
+    WX.data = null;
+    WX.at = 0;
+    WX.err = "";
+    WX.fails = 0;
+    WX.failAt = 0;
+    WX.editing = false;
     try {
-      toast(t2("pdfBuilding"));
-      lib = await loadPDF();
+      localStorage.setItem("bb-wx", JSON.stringify(l));
     } catch (_) {
-      if (btn) btn.disabled = false;
-      toast(t2("pdfLoadFail"));
+    }
+  }
+  function wmoKey(c) {
+    c = +c;
+    if (c === 0) return 0;
+    if (c === 1) return 1;
+    if (c === 2) return 2;
+    if (c === 3) return 3;
+    if (c === 45 || c === 48) return 45;
+    if (c >= 51 && c <= 55) return 51;
+    if (c === 56 || c === 57) return 56;
+    if (c === 61 || c === 63) return 61;
+    if (c === 65) return 65;
+    if (c === 66 || c === 67) return 66;
+    if (c >= 71 && c <= 77) return 71;
+    if (c >= 80 && c <= 82) return 80;
+    if (c === 85 || c === 86) return 85;
+    if (c >= 95) return 95;
+    return 3;
+  }
+  function wxIcon(c) {
+    const k = wmoKey(c);
+    const sun = html`<circle cx="20" cy="20" r="7" fill="none" stroke="currentColor" stroke-width="2.4"/><g stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M20 4v4M20 32v4M4 20h4M32 20h4M8.7 8.7l2.8 2.8M28.5 28.5l2.8 2.8M8.7 31.3l2.8-2.8M28.5 11.5l2.8-2.8"/></g>`;
+    const cloud = (y = 0) => html`<path d="M12 ${30 + y}h17a6 6 0 0 0 0-12 9 9 0 0 0-17 2 5 5 0 0 0 0 10z" fill="var(--surface)" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>`;
+    let g;
+    if (k === 0) g = sun;
+    else if (k === 1 || k === 2) g = html`<g transform="translate(-5 -6) scale(.75)" opacity=".85">${sun}</g>${cloud(2)}`;
+    else if (k === 3) g = cloud(-2);
+    else if (k === 45)
+      g = html`<g stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M7 14h26M5 20h30M8 26h24M11 32h18"/></g>`;
+    else if (k === 71 || k === 85)
+      g = html`${cloud(-6)}<g fill="currentColor"><circle cx="14" cy="33" r="1.8"/><circle cx="21" cy="36" r="1.8"/><circle cx="28" cy="33" r="1.8"/></g>`;
+    else if (k === 95)
+      g = html`${cloud(-6)}<path d="M21 28l-4 7h5l-3 6" fill="none" stroke="var(--long)" stroke-width="2.4" stroke-linejoin="round"/>`;
+    else
+      g = html`${cloud(-6)}<g stroke="var(--recovery)" stroke-width="2.4" stroke-linecap="round"><path d="M14 30l-2 5M21 30l-2 5M28 30l-2 5"/></g>`;
+    return html`<svg viewBox="0 0 40 40" aria-hidden="true">${g}</svg>`;
+  }
+  var hm = (s) => String(s).slice(11, 16);
+  var wxWait = (n) => Math.min(30 * 6e4, 3e4 * 2 ** Math.max(0, n - 1));
+  async function wxLoad(force) {
+    if (!WX.loc || WX.busy) return;
+    if (!force && WX.data && Date.now() - WX.at < 30 * 6e4) return;
+    if (!force && WX.fails && Date.now() - WX.failAt < wxWait(WX.fails)) return;
+    WX.busy = true;
+    WX.err = "";
+    renderWx();
+    const { lat, lon } = WX.loc;
+    const u = `https://api.open-meteo.com/v1/forecast?latitude=${lat.toFixed(3)}&longitude=${lon.toFixed(3)}&current=temperature_2m,apparent_temperature,weather_code,wind_speed_10m&hourly=temperature_2m,apparent_temperature,precipitation_probability,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunset&timezone=auto&forecast_days=1`;
+    try {
+      const r = await fetch(u);
+      if (!r.ok) throw new Error("http " + r.status);
+      WX.data = await r.json();
+      WX.at = Date.now();
+      WX.fails = 0;
+    } catch (_) {
+      WX.err = "blocked";
+      WX.fails = (WX.fails || 0) + 1;
+      WX.failAt = Date.now();
+    }
+    WX.busy = false;
+    renderWx();
+  }
+  async function wxFind(q) {
+    q = q.trim();
+    if (!q) return;
+    WX.busy = true;
+    WX.err = "";
+    renderWx();
+    try {
+      const r = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1&language=${LANG}&format=json`
+      );
+      if (!r.ok) throw new Error();
+      const j = await r.json();
+      const h = j.results && j.results[0];
+      WX.busy = false;
+      if (!h) {
+        WX.err = "nocity:" + q;
+        renderWx();
+        return;
+      }
+      wxSaveLoc({ name: h.name, lat: h.latitude, lon: h.longitude, country: h.country || "" });
+      wxLoad(true);
+    } catch (_) {
+      WX.busy = false;
+      WX.err = "blocked";
+      renderWx();
+    }
+  }
+  function wxGeo() {
+    const fail = () => {
+      WX.busy = false;
+      WX.err = "geo";
+      renderWx();
+    };
+    if (!navigator.geolocation) {
+      fail();
       return;
     }
+    WX.busy = true;
+    WX.err = "";
+    renderWx();
     try {
-      const { J, run } = lib, I = S.inputs, W = S.plan.weeks;
-      const doc = new J({ orientation: "landscape", unit: "mm", format: "a4" });
-      const pw = doc.internal.pageSize.getWidth(), ph = doc.internal.pageSize.getHeight(), M = 10;
-      const totals = W.map((w) => w.sessions.reduce((a, s) => a + s.km, 0));
-      const Pe = paces2(S.inputs);
-      const longest = Math.max(0, ...W.flatMap((w) => w.sessions.filter((s) => s.kind === "long").map((s) => s.km)));
-      const start = parseISO2(W[0].start), end = addDays2(start, 7 * W.length - 1);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(18);
-      doc.setTextColor(20, 32, 39);
-      doc.text(pdfTxt(S.name), M, M + 6);
-      const R = I.race && I.race.name ? I.race : null;
-      const line1 = [
-        distLabel2(I),
-        R ? `${t2("pdfRace")}: ${R.name}${R.city ? " (" + R.city + ")" : ""}` : "",
-        I.goal !== "fitness" ? fmtDay(parseISO2(I.raceDate)) : "",
-        `${fmtDate2(start)} - ${fmtDate2(end)}`
-      ].filter(Boolean).join("  \xB7  ");
-      const line2 = [
-        `${W.length} ${t2("stWeeks")}`,
-        `${Math.round(totals.reduce((a, b) => a + b, 0))} ${t2("stTotal")}`,
-        `${Math.round(Math.max(...totals))} ${t2("stPeak")}`,
-        `${longest} ${t2("stLongest")}`
-      ].join("  \xB7  ");
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9.5);
-      doc.setTextColor(90, 106, 111);
-      doc.text(pdfTxt(line1), M, M + 12);
-      doc.text(pdfTxt(line2), M, M + 16.5);
-      const body = [], meta = [];
-      W.forEach((w, wi) => {
-        const st = parseISO2(w.start);
-        const row = [
-          `${t2("wAbbr")}${w.n}
-${fmtShort(st)} - ${fmtShort(addDays2(st, 6))}
-${phaseLbl(w.phase)}${w.cutback ? " \xB7 " + t2("cutback") : ""}
-${RUN_UNIT === "t" ? estDur(w.sessions.reduce((a, s) => a + sesSec(s, Pe), 0)) : totals[wi].toFixed(1) + " km"}`
-        ];
-        const kinds = [w.phase];
-        for (let d = 0; d < 7; d++) {
-          const ss = w.sessions.filter((s) => s.day === d);
-          row.push(
-            ss.map((s) => `${s.name} \xB7 ${sesAmt(s, Pe)}
-${s.desc}${s.note ? "\n" + t2("note") + ": " + s.note : ""}`).join("\n\n")
-          );
-          kinds.push(ss.length ? sesEffort(ss[0]) : null);
-        }
-        body.push(row.map(pdfTxt));
-        meta.push({ type: "week", kinds });
-        if (w.note) {
-          body.push([{ content: pdfTxt(`${t2("note")}: ${w.note}`), colSpan: 8 }]);
-          meta.push({ type: "note" });
-        }
-      });
-      const dayW = (pw - 2 * M - 30) / 7;
-      run(doc, {
-        startY: M + 21,
-        margin: { left: M, right: M, top: M, bottom: M + 5 },
-        head: [[t2("week"), ...DAYS].map(pdfTxt)],
-        body,
-        theme: "grid",
-        showHead: "everyPage",
-        rowPageBreak: "avoid",
-        styles: {
-          font: "helvetica",
-          fontSize: 7.2,
-          cellPadding: { top: 1.6, right: 1.6, bottom: 1.6, left: 2.6 },
-          valign: "top",
-          lineColor: [213, 221, 219],
-          lineWidth: 0.2,
-          textColor: [20, 32, 39],
-          overflow: "linebreak"
+      navigator.geolocation.getCurrentPosition(
+        (p) => {
+          WX.busy = false;
+          wxSaveLoc({ name: "", lat: p.coords.latitude, lon: p.coords.longitude, country: "" });
+          wxLoad(true);
         },
-        headStyles: { fillColor: [20, 32, 39], textColor: 255, fontStyle: "bold", fontSize: 8 },
-        columnStyles: {
-          0: { cellWidth: 30, fontStyle: "bold" },
-          ...Object.fromEntries([1, 2, 3, 4, 5, 6, 7].map((i) => [i, { cellWidth: dayW }]))
-        },
-        didParseCell: (h) => {
-          if (h.section !== "body") return;
-          const m = meta[h.row.index];
-          if (!m) return;
-          if (m.type === "note") {
-            h.cell.styles.fillColor = [233, 238, 236];
-            h.cell.styles.fontStyle = "italic";
-            return;
-          }
-          if (h.column.index > 0 && m.kinds[h.column.index] === "race") h.cell.styles.fillColor = [245, 229, 243];
-        },
-        didDrawCell: (h) => {
-          if (h.section !== "body") return;
-          const m = meta[h.row.index];
-          if (!m || m.type !== "week") return;
-          const k = m.kinds[h.column.index];
-          const c = h.column.index === 0 ? PDF_PHASE[k] : PDF_KIND[k];
-          if (!c) return;
-          doc.setFillColor(...c);
-          doc.rect(h.cell.x + 0.4, h.cell.y + 0.6, 1.1, h.cell.height - 1.2, "F");
-        }
-      });
-      const used = [...new Set(W.flatMap((w) => w.sessions.map((s) => s.typeId)))].filter((id) => whyOf(id));
-      if (used.length)
-        run(doc, {
-          startY: (doc.lastAutoTable ? doc.lastAutoTable.finalY : M + 21) + 6,
-          margin: { left: M, right: M, top: M, bottom: M + 5 },
-          rowPageBreak: "avoid",
-          head: [[t2("pdfWhyHead"), t2("pdfWhyCol")].map(pdfTxt)],
-          body: used.map((id) => {
-            const ty = S.types.find((x) => x.id === id);
-            return [pdfTxt(ty && ty.name || t2("ty_" + id)), pdfTxt(whyOf(id))];
-          }),
-          theme: "grid",
-          styles: {
-            font: "helvetica",
-            fontSize: 7.6,
-            cellPadding: 1.8,
-            valign: "top",
-            lineColor: [213, 221, 219],
-            lineWidth: 0.2,
-            textColor: [20, 32, 39]
-          },
-          headStyles: { fillColor: [20, 32, 39], textColor: 255, fontStyle: "bold", fontSize: 8 },
-          columnStyles: { 0: { cellWidth: 40, fontStyle: "bold" } }
-        });
-      const n = doc.internal.getNumberOfPages(), gen = t2("pdfGenerated", { d: fmtDate2(/* @__PURE__ */ new Date()) });
-      for (let p = 1; p <= n; p++) {
-        doc.setPage(p);
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(7.5);
-        doc.setTextColor(90, 106, 111);
-        doc.text(pdfTxt(`Block Builder \xB7 ${gen}`), M, ph - 5);
-        doc.text(pdfTxt(t2("pdfPage", { p, n })), pw - M, ph - 5, { align: "right" });
-      }
-      saveFile(fname("pdf"), doc.output("blob"));
-    } catch (e) {
-      toast(t2("pdfFail", { m: e && e.message || t2("unknownErr") }));
-    } finally {
-      if (btn) btn.disabled = false;
+        fail,
+        { timeout: 1e4, maximumAge: 30 * 6e4 }
+      );
+    } catch (_) {
+      fail();
     }
   }
+  function wxBestSlot(D) {
+    const c = D.current || {}, H = D.hourly || {};
+    const nowH = String(c.time || "").slice(0, 13);
+    const idx = (H.time || []).map((tm, i) => ({ tm, i })).filter((o) => o.tm.slice(0, 13) >= nowH && +o.tm.slice(11, 13) <= 22);
+    let best = null;
+    if (idx.length > 1)
+      for (const o of idx) {
+        const p = H.precipitation_probability[o.i] ?? 0;
+        if (!best || p < best.p || p === best.p && H.temperature_2m[o.i] > best.tp)
+          best = { i: o.i, p, tp: H.temperature_2m[o.i] };
+      }
+    return { idx, best };
+  }
+  function wxHeat(D) {
+    if (!D) return null;
+    const c = D.current || {}, H = D.hourly || {};
+    const { best } = wxBestSlot(D);
+    const at = best && H.apparent_temperature ? H.apparent_temperature[best.i] : c.apparent_temperature;
+    if (!isFinite(at)) return null;
+    const add = at >= 28 ? 20 : at >= 22 ? 10 : 0;
+    return add ? { feels: Math.round(at), add } : null;
+  }
+  function renderWx() {
+    const el = document.getElementById("wx");
+    if (!el) return;
+    const D = WX.data;
+    const errMsg = WX.err === "blocked" ? t2("wxBlocked") : WX.err === "geo" ? t2("wxGeoFail") : WX.err.startsWith("nocity:") ? t2("wxNoCity", { q: esc(WX.err.slice(7)) }) : "";
+    const open = WX.open || WX.editing || !!errMsg;
+    const city = WX.loc ? esc(WX.loc.name || `${WX.loc.lat.toFixed(2)}, ${WX.loc.lon.toFixed(2)}`) : "";
+    const chev = html`<svg class="chev" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+    let sum, more;
+    if (!WX.loc || WX.editing) {
+      const sug = S.inputs.race && S.inputs.race.city || WX.loc && WX.loc.name || "";
+      sum = html`${wxIcon(2)}<span>${WX.loc ? html`<b>${t2("wxTitle")}</b> · ${city}` : t2("wxAdd")}</span>`;
+      more = html`<span class="hint">${t2("wxSet")}</span>
+    <form id="wxForm"><input id="wxQ" aria-label="${esc(t2("wxCity"))}" placeholder="${esc(t2("wxCityPh"))}" value="${esc(sug)}" autocomplete="address-level2"><button class="btn sm primary" type="submit" ${WX.busy ? "disabled" : ""}>${t2("wxGo")}</button></form>
+    <div class="wxloc">${navigator.geolocation ? html`<button type="button" class="icon-btn" data-act="wxgeo">${t2("wxGeo")}</button>` : ""}${WX.busy ? html`<span>${t2("wxLoading")}</span>` : ""}</div>
+    ${errMsg ? html`<span class="hint">${errMsg}</span>` : ""}`;
+    } else {
+      const change = html`<div class="wxloc">${D ? html`<span>${t2("wxUpd", { t: new Date(WX.at).toLocaleTimeString(LOC(), { hour: "2-digit", minute: "2-digit" }) })}</span>` : ""}<button type="button" class="icon-btn" data-act="wxedit">${t2("wxChange")}</button></div>`;
+      if (!D) {
+        sum = html`${wxIcon(3)}<span><b>${t2("wxTitle")}</b> · ${city}${WX.busy ? ` \xB7 ${t2("wxLoading")}` : ""}</span>`;
+        more = html`${errMsg ? html`<span class="hint">${errMsg}</span>` : ""}${change}`;
+      } else {
+        const c = D.current || {}, dd = D.daily || {}, H = D.hourly || {};
+        const { idx, best } = wxBestSlot(D);
+        const step = idx.length > 8 ? 2 : 1;
+        const hrs = idx.filter((_, j) => j % step === 0);
+        const wk = wmoKey(c.weather_code);
+        sum = html`${wxIcon(c.weather_code)}<span><b>${Math.round(c.temperature_2m)}°</b> ${esc(t2("wmo" + wk).toLowerCase())} · ${t2("wxRain", { p: dd.precipitation_probability_max ? dd.precipitation_probability_max[0] ?? 0 : 0 })}${best ? ` \xB7 ${t2("wxDriest", { h: hm(H.time[best.i]) })}` : ""} · ${city}</span>`;
+        more = html`<div class="wxnow">${wxIcon(c.weather_code)}<span class="tmp">${Math.round(c.temperature_2m)}°</span><span class="dsc"><b>${t2("wmo" + wk)}</b><span>${t2("wxFeels", { v: Math.round(c.apparent_temperature) })}</span></span></div>
+  <div class="wxfacts"><span>${t2("wxHiLo", { h: html`<b>${Math.round(dd.temperature_2m_max[0])}</b>`, l: html`<b>${Math.round(dd.temperature_2m_min[0])}</b>` })}</span><span>${t2("wxRain", { p: html`<b>${dd.precipitation_probability_max[0] ?? 0}</b>` })}</span><span>${t2("wxWind", { w: html`<b>${Math.round(c.wind_speed_10m)}</b>` })}</span>${dd.sunset ? html`<span>${t2("wxSun", { t: html`<b>${hm(dd.sunset[0])}</b>` })}</span>` : ""}</div>
+  ${hrs.length ? html`<div class="wxhours">${htmlJoin(hrs.map((o) => html`<div class="wxh ${best && best.i === o.i ? "best" : ""}"><span class="hr">${hm(o.tm)}</span><span class="tp">${Math.round(H.temperature_2m[o.i])}°</span><span class="pp">${H.precipitation_probability[o.i] ?? 0}%</span></div>`))}</div>` : ""}
+  ${best ? html`<span class="wxbest">${t2("wxBest", { h: hm(H.time[best.i]), p: best.p, tp: Math.round(best.tp) })}</span>` : ""}
+  ${change}`;
+      }
+    }
+    setHtml(
+      el,
+      html`<button type="button" class="wxline" data-act="wxtoggle" aria-expanded="${open}" aria-controls="wxMore">${sum}${chev}</button><div class="wxmore" id="wxMore" ${open ? "" : "hidden"}>${more}</div>`
+    );
+    WX.heat = wxHeat(D);
+    applyHeat();
+  }
+
+  // src/plan-file.js
   var KINDS = ["easy", "recovery", "hard", "long", "race"];
   var PACES = ["easy", "tempo", "interval", "rep", "race", "mp"];
   var nNum = (v, a, b, d) => {
@@ -4882,6 +4180,911 @@ ${s.desc}${s.note ? "\n" + t2("note") + ": " + s.note : ""}`).join("\n\n")
       updatedAt: nNum(p.updatedAt, 0, 864e13, 0)
     };
   }
+
+  // src/race.js
+  function finishersUrl(I) {
+    const m = Math.round(distKm2(I) * 1e3);
+    return `https://www.finishers.com/courses?discipline=road&dmin=${m}&dmax=${m}&distanceUnit=meters`;
+  }
+  function nameFromUrl(u) {
+    try {
+      const x = new URL(u);
+      if (!/finishers\.com$/.test(x.hostname.replace(/^www\./, ""))) return "";
+      const seg = x.pathname.split("/").filter(Boolean);
+      const i = seg.indexOf("course");
+      const slug2 = i >= 0 ? seg[i + 1] : seg[seg.length - 1];
+      if (!slug2) return "";
+      return decodeURIComponent(slug2).replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()).replace(/\b(De|Du|Des|La|Le|Les|Et|D|L)\b/g, (w) => w.toLowerCase());
+    } catch (_) {
+      return "";
+    }
+  }
+  function renderRaceBox() {
+    const R = S.inputs.race, el = $("#raceBox");
+    if (!el) return;
+    if (R && R.name && !S.raceEditing) {
+      el.className = "racebox set";
+      setHtml(
+        el,
+        html`<div><div style="font-weight:600">${esc(R.name)}</div><div class="hint">${R.city ? esc(R.city) + " \xB7 " : ""}${fmtDate2(parseISO2(S.inputs.raceDate))} · ${esc(distLabel2(S.inputs))}</div></div>
+    <div class="acts"><button type="button" class="btn sm" data-race="edit">${t2("editRace")}</button><button type="button" class="btn sm ghost" data-race="clear">${t2("removeRace")}</button></div>`
+      );
+      return;
+    }
+    el.className = "racebox";
+    if (!S.raceEditing) {
+      setHtml(
+        el,
+        html`<div class="hint">${t2("raceOptional")}</div>
+    <div class="acts"><a class="btn sm" href="${finishersUrl(S.inputs)}" target="_blank" rel="noopener">${esc(t2("findOn", { lbl: distLabel2(S.inputs).toLowerCase() }))}</a><button type="button" class="btn sm" data-race="edit">${t2("addMyRace")}</button></div>`
+      );
+      return;
+    }
+    const r = R || {};
+    setHtml(
+      el,
+      html`<div class="field"><label for="rUrl">${t2("raceUrl")}</label><input id="rUrl" type="url" placeholder="${esc(t2("raceUrlPh"))}" value="${esc(r.url || "")}"></div>
+  <div class="field"><label for="rName">${t2("raceName")}</label><input id="rName" value="${esc(r.name || "")}" placeholder="${esc(t2("raceNamePh"))}"></div>
+  <div class="field"><label for="rCity">${t2("city")}</label><input id="rCity" value="${esc(r.city || "")}"></div>
+  <div class="hint">${t2("raceMatch")}</div>
+  <div class="acts"><button type="button" class="btn sm primary" data-race="save">${t2("useRace")}</button><button type="button" class="btn sm ghost" data-race="cancel">${t2("cancel")}</button><a class="btn sm ghost" href="${finishersUrl(S.inputs)}" target="_blank" rel="noopener">${t2("searchFin")}</a></div>`
+    );
+    const u = el.querySelector("#rUrl"), n = el.querySelector("#rName");
+    u.addEventListener("input", () => {
+      const g = nameFromUrl(u.value);
+      if (g && (!n.value || n.dataset.auto === "1")) {
+        n.value = g;
+        n.dataset.auto = "1";
+      }
+    });
+    n.addEventListener("input", () => {
+      n.dataset.auto = "0";
+    });
+  }
+  function initRaceBox() {
+    $("#raceBox").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-race]");
+      if (!b) return;
+      e.stopPropagation();
+      const a = b.dataset.race;
+      if (a === "edit") {
+        S.raceEditing = true;
+        renderRaceBox();
+        const f = $("#rUrl");
+        f && f.focus();
+      } else if (a === "cancel") {
+        S.raceEditing = false;
+        renderRaceBox();
+      } else if (a === "clear") {
+        S.inputs.race = null;
+        S.raceEditing = false;
+        renderRaceBox();
+        renderHello();
+        markDirty();
+      } else if (a === "save") {
+        const name = $("#rName").value.trim(), city = $("#rCity").value.trim(), url = safeUrl($("#rUrl").value);
+        if (!name) {
+          $("#rName").focus();
+          toast(t2("needName"));
+          return;
+        }
+        S.inputs.race = { name, city, url };
+        S.raceEditing = false;
+        if (S.isExample || !S.savedAt) {
+          S.name = name;
+          $("#planName").value = name;
+        }
+        S.isExample = false;
+        renderRaceBox();
+        renderPlan();
+        markDirty();
+      }
+    });
+    $("#raceBox").addEventListener("change", (e) => e.stopPropagation());
+  }
+
+  // src/setup.js
+  function renderVolHint() {
+    $("#volHint").hidden = !volIsSuggested();
+  }
+  function renderLongPh() {
+    const I = S.inputs;
+    $("#curLong").placeholder = +I.curVol > 0 ? "\u2248 " + longOf2(I) : "";
+  }
+  function renderSetup() {
+    const I = S.inputs;
+    setHtml(
+      $("#distSeg"),
+      htmlJoin(
+        DISTS2.map(
+          (d) => html`<button type="button" data-dist="${d.k}" aria-pressed="${I.dist === d.k}">${t2("d" + d.k)}</button>`
+        )
+      )
+    );
+    $("#customRow").hidden = I.dist !== "custom";
+    $("#customKm").value = I.customKm;
+    $("#raceDate").value = I.raceDate;
+    $("#weeks").value = I.weeks;
+    $("#startDate").value = I.startDate || nextMonday2();
+    const fit = I.goal === "fitness";
+    $$("#goalSeg button").forEach(
+      (b) => b.setAttribute("aria-pressed", String(b.dataset.goal === (fit ? "fitness" : "race")))
+    );
+    $("#recWeeksF").hidden = fit;
+    const rw = recWeeksOf2({ ...I, goal: "race" });
+    setHtml(
+      $("#recSeg"),
+      htmlJoin(
+        [0, 1, 2].map(
+          (n) => html`<button type="button" data-rec="${n}" aria-pressed="${rw === n}">${t2("rec" + n)}</button>`
+        )
+      )
+    );
+    $("#recHint").textContent = t2(rw ? "recHint" : "recHint0");
+    $("#raceDateF").hidden = fit;
+    $("#startDateF").hidden = !fit;
+    $("#raceBox").hidden = fit;
+    $("#focusHint").hidden = !fit;
+    $("#distLbl").textContent = t2(fit ? "focusDist" : "distance");
+    $("#secRaceH").textContent = t2(fit ? "secFocus" : "secRace");
+    setHtml($("#introCards"), [
+      htmlJoin(
+        [
+          ["race", "goalRace", "icRace"],
+          ["fitness", "goalFit", "icFit"]
+        ].map(
+          ([g, a, b]) => html`<button type="button" class="icard" data-goal="${g}" aria-pressed="${(fit ? "fitness" : "race") === g}"><b>${t2(a)}</b><span>${t2(b)}</span></button>`
+        )
+      ),
+      html`<button type="button" class="icard" data-intro="quick"><b>${t2("qwOpen")}</b><span>${t2("icQuick")}</span></button>`
+    ]);
+    $("#focusHint").textContent = t2("focusHint");
+    $("#curVol").value = I.curVol;
+    renderVolHint();
+    $("#curLong").value = I.curLong;
+    renderLongPh();
+    $("#recDist").value = I.recDist;
+    $("#recTime").value = I.recTime;
+    const lv = levelOf2(I);
+    setHtml(
+      $("#levelSeg"),
+      htmlJoin(
+        LEVELS2.map(
+          (l) => html`<button type="button" data-level="${l}" aria-pressed="${lv === l}">${t2("lv_" + l)}</button>`
+        )
+      )
+    );
+    $("#levelHint").textContent = t2("lvHint_" + lv);
+    setHtml(
+      $("#runsSeg"),
+      htmlJoin(
+        [1, 2, 3, 4, 5, 6, 7].map(
+          (n) => html`<button type="button" data-runs="${n}" aria-pressed="${+I.runs === n}">${n}</button>`
+        )
+      )
+    );
+    setHtml(
+      $("#daysSeg"),
+      htmlJoin(
+        DAYS1.map(
+          (d, i) => html`<button type="button" data-day="${i}" aria-label="${DAYS[i]}" aria-pressed="${I.days.includes(i)}" class="${+I.longDay === i ? "long" : ""}">${d}</button>`
+        )
+      )
+    );
+    $("#daysCount").textContent = t2("daysCount", { a: I.days.length, b: I.runs || "-" });
+    setHtml($("#longDay"), [
+      +I.longDay < 0 ? html`<option value="-1" selected>-</option>` : "",
+      htmlJoin(DAYS.map((d, i) => html`<option value="${i}" ${+I.longDay === i ? "selected" : ""}>${d}</option>`))
+    ]);
+    renderTypes();
+    renderHints();
+    renderRaceBox();
+    renderIntro();
+  }
+  function renderHints() {
+    const I = S.inputs, P = paces2(I);
+    const start = parseISO2(S.plan ? S.plan.meta.start : I.raceDate || I.startDate);
+    const blank = missingSetup2(I).some((k) => SETUP_STEP2[k] === 2);
+    $("#startHint").textContent = blank ? "" : I.goal === "fitness" ? t2("fitHint", {
+      s: fmtDate2(start),
+      e: fmtDate2(addDays2(start, 7 * (S.plan ? S.plan.weeks.length : I.weeks) - 1))
+    }) : t2("startHint", { d: fmtDate2(start), r: fmtDay(parseISO2(I.raceDate)) });
+    $("#paceHint").textContent = P.vdot ? t2("paceHint", { e: P.txt.easy, t: P.txt.tempo, i: P.txt.interval, lbl: distLabel2(I), r: P.txt.race }) : badRaceTime2(I) ? badTimeMsg2(I) : t2("paceHintNone");
+  }
+  function renderChips() {
+    const tt = t2;
+    const focusId = document.activeElement && document.activeElement.closest && document.activeElement.closest("#typeChips") ? document.activeElement.id : null;
+    const chip = (t3, i) => html`<label class="tchip ${t3.on ? "" : "off"}" data-i="${i}"><input type="checkbox" id="t-on-${t3.id}" ${t3.on ? "checked" : ""} ${t3.locked ? "disabled" : ""} aria-label="${esc(tt("useType", { name: t3.name }))}"><span class="kind-dot" style="background:${effColor(effort(t3.id, t3.kind))}" aria-hidden="true"></span>${esc(t3.name)}${t3.locked ? html`<svg class="lock" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><title>${tt("alwaysOn")}</title><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>` : ""}</label>`;
+    const grp = (key, list) => list.length ? html`<div class="tgrp"><span class="lbl" id="tg-${key}">${tt(key)}</span><div class="tchips" role="group" aria-labelledby="tg-${key}">${htmlJoin(list.map(([t3, i]) => chip(t3, i)))}</div></div>` : "";
+    const idx = S.types.map((t3, i) => [t3, i]);
+    setHtml($("#typeChips"), [
+      grp(
+        "grpEasy",
+        idx.filter(([t3]) => t3.kind !== "hard")
+      ),
+      grp(
+        "grpQuality",
+        idx.filter(([t3]) => t3.kind === "hard")
+      )
+    ]);
+    $("#typesCount").textContent = tt("typesCount", { a: S.types.filter((t3) => t3.on).length, b: S.types.length });
+    if (focusId) {
+      const f = document.getElementById(focusId);
+      if (f) f.focus();
+    }
+  }
+  function renderTypes() {
+    const tt = t2;
+    const openCards = [...document.querySelectorAll("#types .type details[open]")].map(
+      (d) => (
+        /** @type {HTMLElement} */
+        d.closest(".type").dataset.i
+      )
+    );
+    renderChips();
+    setHtml(
+      $("#types"),
+      htmlJoin(
+        S.types.map(
+          (t3, i) => html`
+<div class="type ${t3.on ? "" : "off"}" data-i="${i}">
+  <div class="type-head">
+    <span class="kind-dot" style="background:${effColor(effort(t3.id, t3.kind))}" title="${kindLbl(t3.kind)}"></span>
+    <input class="tname" id="t-name-${t3.id}" data-f="name" value="${esc(t3.name)}" aria-label="${tt("typeNameLbl")}">
+    ${t3.locked || DEFAULT_TYPES().some((d) => d.id === t3.id) ? "" : html`<button class="icon-btn" data-del="${i}" aria-label="${tt("remove")} ${esc(t3.name)}">${tt("remove")}</button>`}
+  </div>
+  <details><summary>${kindLbl(t3.kind)}${t3.kind === "hard" ? " \xB7 " + t3.phases.map(phaseLbl).join(", ") : ""} · ${tt("editDesc")}</summary>
+    <div class="opts">
+      ${t3.locked || t3.id === "long" ? "" : html`<div class="field"><label for="t-kind-${t3.id}">${tt("kind")}</label><select id="t-kind-${t3.id}" data-f="kind">${htmlJoin(["easy", "recovery", "hard"].map((k) => html`<option value="${k}" ${t3.kind === k ? "selected" : ""}>${kindLbl(k)}</option>`))}</select></div>`}
+      ${t3.kind === "hard" ? html`<div class="field"><span class="lbl">${tt("usedPhases")}</span><div class="chips">${htmlJoin(PHASES2.map((p) => html`<button type="button" class="chip" data-phase="${p}" aria-pressed="${t3.phases.includes(p)}">${phaseLbl(p)}</button>`))}</div></div>` : ""}
+      <div class="field"><label for="t-tpl-${t3.id}">${tt("tplLbl")}</label><textarea id="t-tpl-${t3.id}" data-f="tpl" rows="3">${esc(t3.tpl)}</textarea></div>
+    </div>
+  </details>
+</div>`
+        )
+      )
+    );
+    for (const i of openCards) {
+      const d = cardDetails(`.type[data-i="${i}"] details`);
+      if (d) d.open = true;
+    }
+  }
+  function inputsChanged() {
+    S.isExample = false;
+    renderRaceBox();
+    if (S.inputs.weeks !== "") S.inputs.weeks = clamp2(Math.round(+S.inputs.weeks || 12), 3, 30);
+    if (S.edited) {
+      S.pendingRegen = true;
+      renderPlan();
+      renderHints();
+      return;
+    }
+    regen();
+    renderPlan();
+    renderHints();
+    markDirty();
+  }
+  function initSetup() {
+    $("#setup").addEventListener("click", (e) => {
+      const b = e.target.closest("button");
+      if (!b) return;
+      const I = S.inputs;
+      if (b.dataset.goal) {
+        const prevName = defaultName();
+        I.goal = b.dataset.goal;
+        if (S.nameAuto || S.name === prevName) {
+          S.nameAuto = true;
+          S.name = defaultName();
+          $("#planName").value = S.name;
+        }
+        renderSetup();
+        inputsChanged();
+      } else if (b.dataset.dist) {
+        const prevName = defaultName();
+        I.dist = b.dataset.dist;
+        if (!S.savedAt && S.isExample || S.nameAuto && !S.savedAt || S.name === prevName) S.name = defaultName();
+        suggestVolume();
+        renderSetup();
+        $("#planName").value = S.name;
+        inputsChanged();
+      } else if (b.dataset.rec !== void 0) {
+        I.recWeeks = +b.dataset.rec;
+        renderSetup();
+        inputsChanged();
+      } else if (b.dataset.level) {
+        I.level = b.dataset.level;
+        suggestVolume();
+        renderSetup();
+        inputsChanged();
+      } else if (b.dataset.runs) {
+        I.runs = +b.dataset.runs;
+        I.days = DEFAULT_DAYS2[I.runs].slice();
+        if (!I.days.includes(+I.longDay)) I.longDay = I.days[I.days.length - 1];
+        renderSetup();
+        inputsChanged();
+      } else if (b.dataset.day !== void 0) {
+        const d = +b.dataset.day;
+        I.days = I.days.includes(d) ? I.days.filter((x) => x !== d) : [...I.days, d].sort((a, b2) => a - b2);
+        renderSetup();
+        inputsChanged();
+      } else if (b.dataset.phase) {
+        const t3 = S.types[+b.closest(".type").dataset.i];
+        const p = b.dataset.phase;
+        t3.phases = t3.phases.includes(p) ? t3.phases.filter((x) => x !== p) : PHASES2.filter((x) => x === p || t3.phases.includes(x));
+        if (!t3.phases.length) t3.phases = [p];
+        const open = (
+          /** @type {HTMLDetailsElement} */
+          b.closest("details").open
+        );
+        renderTypes();
+        if (open) cardDetails(`.type[data-i="${S.types.indexOf(t3)}"] details`).open = true;
+        inputsChanged();
+      } else if (b.dataset.del !== void 0) {
+        S.types.splice(+b.dataset.del, 1);
+        renderTypes();
+        inputsChanged();
+      } else if (b.id === "btnAddType") {
+        const id = "c" + uid2();
+        S.types.push({
+          id,
+          name: t2("ty_custom"),
+          kind: "hard",
+          on: true,
+          phases: ["build", "peak"],
+          tpl: t2("tp_custom")
+        });
+        renderTypes();
+        const el = cardDetails(`.type[data-i="${S.types.length - 1}"] details`);
+        if (el) el.open = true;
+        inputsChanged();
+      }
+    });
+    $("#setup").addEventListener("change", (e) => {
+      const el = e.target, I = S.inputs;
+      const map = {
+        startDate: "startDate",
+        customKm: "customKm",
+        raceDate: "raceDate",
+        weeks: "weeks",
+        curVol: "curVol",
+        curLong: "curLong",
+        recDist: "recDist",
+        recTime: "recTime",
+        longDay: "longDay"
+      };
+      if (map[el.id]) {
+        if (el.id === "raceDate" && !el.value) {
+          el.value = I.raceDate;
+          return;
+        }
+        if (el.id === "startDate" && !el.value) {
+          el.value = I.startDate;
+          return;
+        }
+        const prevName = defaultName();
+        I[map[el.id]] = el.type === "number" && el.value === "" ? "" : el.type === "number" || el.id === "longDay" ? +el.value : el.value;
+        if (el.id === "longDay" && +el.value >= 0 && !I.days.includes(+el.value)) {
+          I.days = [...I.days.filter((d) => d !== I.days[I.days.length - 1]), +el.value].sort((a, b) => a - b);
+        }
+        if (el.id === "longDay") renderSetup();
+        if (el.id === "customKm") {
+          suggestVolume();
+          $("#curVol").value = I.curVol;
+        }
+        if (el.id === "customKm" || el.id === "curVol") renderVolHint();
+        if (el.id === "customKm" || el.id === "curVol") renderLongPh();
+        if (el.id === "recTime" || el.id === "recDist") {
+          const sec = raceTimeSec2(I.recTime, +I.recDist);
+          if (sec) {
+            I.recTime = fmtDur2(sec);
+            $("#recTime").value = I.recTime;
+          }
+        }
+        if (S.name === prevName) {
+          S.name = defaultName();
+          $("#planName").value = S.name;
+        }
+        inputsChanged();
+        return;
+      }
+      const cEl = el.closest(".tchip");
+      if (cEl) {
+        S.types[+cEl.dataset.i].on = el.checked;
+        renderTypes();
+        inputsChanged();
+        return;
+      }
+      const tEl = el.closest(".type");
+      if (tEl && el.dataset.f) {
+        const t3 = S.types[+tEl.dataset.i];
+        const f = el.dataset.f;
+        if (f === "on") t3.on = el.checked;
+        else if (f === "kind") {
+          t3.kind = el.value;
+          if (t3.kind === "hard" && !t3.phases.length) t3.phases = ["build", "peak"];
+        } else t3[f] = el.value;
+        if (f === "name") renderChips();
+        if (f === "on" || f === "kind") {
+          const open = (
+            /** @type {HTMLDetailsElement} */
+            tEl.querySelector("details").open
+          );
+          renderTypes();
+          if (open) cardDetails(`.type[data-i="${tEl.dataset.i}"] details`).open = true;
+        }
+        inputsChanged();
+      }
+    });
+  }
+
+  // src/intro.js
+  var phoneLayout = () => {
+    try {
+      return matchMedia("(max-width:900px)").matches;
+    } catch (_) {
+      return false;
+    }
+  };
+  var STEP_NAMES = () => ["secGoal", S.inputs.goal === "fitness" ? "secFocus" : "secRace", "secNow", "secYourWeek"];
+  function renderIntro() {
+    syncMode();
+    const A = $("#setup"), nav = $("#introNav"), n = S.intake || 0;
+    if (!A || !nav) return;
+    if (n) A.dataset.step = n;
+    else delete A.dataset.step;
+    nav.hidden = !n;
+    if (!n) {
+      clearHtml(nav);
+      return;
+    }
+    const ready = !missingSetup2(S.inputs).length && S.plan;
+    const prev = n >= 3 ? ready ? html`<div class="intro-prev"><span class="lbl">${t2("loadProfile")}</span><div class="chart">${profileSVG(S.plan.weeks, Math.max(260, (A.clientWidth || 340) - 8))}</div></div>` : html`<p class="hint intro-wait">${t2("introWait")}</p>` : "";
+    setHtml(
+      nav,
+      html`${prev}<p class="intro-err" id="introErr" role="alert">${esc(S.introErr || "")}</p>
+  <div class="intro-bar"><button type="button" class="btn" data-intro="back" ${n === 1 ? "hidden" : ""}>${t2("introBack")}</button>
+  <span class="intro-step">${t2("introStep", { n, name: t2(STEP_NAMES()[n - 1]) })}</span>
+  <button type="button" class="btn primary" data-intro="next">${t2(n === 4 ? "introDone" : "introNext")}</button></div>
+  <button type="button" class="linkbtn intro-skip" data-intro="skip">${t2("introSkip")}</button>`
+    );
+  }
+  function introGo(n) {
+    S.intake = n;
+    S.introErr = "";
+    renderSetup();
+    const A = $("#setup");
+    if (A && A.scrollIntoView) A.scrollIntoView({ block: "start" });
+  }
+  function newPlan() {
+    flushSave();
+    const go = () => {
+      S.nameAuto = true;
+      S.volSug = null;
+      S.fromExample = false;
+      S.inputs = BLANK_INPUTS();
+      S.types = BLANK_TYPES();
+      S.planId = uid2();
+      S.savedAt = null;
+      S.isExample = false;
+      S.dirty = false;
+      S.pendingRegen = false;
+      S.name = cap2(t2("blockName", { lbl: t2("lhm") }));
+      $("#planName").value = S.name;
+      S.intake = phoneLayout() ? 1 : 0;
+      S.introErr = "";
+      regen();
+      renderSetup();
+      renderPlan();
+      setStatus(t2("notSaved"));
+      if (S.intake) setTab("setup");
+    };
+    if (S.dirty && S.savedAt === null && !S.isExample) confirmBox(t2("newQ"), t2("newT"), t2("startNew"), go);
+    else go();
+  }
+  function initIntro() {
+    $("#setup").addEventListener("click", (e) => {
+      const c = e.target.closest(".icard"), b = e.target.closest("[data-intro]");
+      if (c && c.dataset.goal && S.intake === 1) {
+        introGo(2);
+        return;
+      }
+      if (!b) return;
+      const a = b.dataset.intro, n = S.intake || 0;
+      if (a === "quick") {
+        openQuick();
+        return;
+      }
+      if (a === "back" && n > 1) introGo(n - 1);
+      else if (a === "skip") {
+        S.intake = 0;
+        S.introErr = "";
+        renderSetup();
+      } else if (a === "next") {
+        const need = missingSetup2(S.inputs).filter((k) => SETUP_STEP2[k] === n);
+        if (need.length) {
+          S.introErr = t2("introNeed") + " " + need.map((k) => t2(k)).join(" ");
+          renderIntro();
+          return;
+        }
+        if (n < 4) introGo(n + 1);
+        else {
+          S.intake = 0;
+          S.introErr = "";
+          renderSetup();
+          renderPlan();
+          setTab("plan");
+        }
+      }
+    });
+  }
+
+  // src/sheet.js
+  var sheetOpener = null;
+  function syncMode() {
+    const on = !S.intake && !missingSetup2(S.inputs).length;
+    document.body.classList.toggle("planmode", on);
+    if (!on && document.body.classList.contains("sheet")) closeSheet(true);
+  }
+  var INERT = () => [...$$("header.top,#mtabs,#mbar,main.plan,footer.ver,.hello")];
+  function openSheet() {
+    if (!document.body.classList.contains("planmode") || !phoneLayout()) return false;
+    if (document.body.classList.contains("sheet")) return true;
+    const a = document.activeElement;
+    sheetOpener = a && a !== document.body ? a : lastTrigger && lastTrigger.isConnected && !lastTrigger.closest("#setup") ? lastTrigger : $("#btnEditPlan");
+    const A = $("#setup");
+    document.body.classList.add("sheet");
+    $("#sheetBg").hidden = false;
+    A.setAttribute("role", "dialog");
+    A.setAttribute("aria-modal", "true");
+    A.setAttribute("aria-labelledby", "sheetTitle");
+    A.tabIndex = -1;
+    A.scrollTop = 0;
+    INERT().forEach((el) => el.inert = true);
+    A.focus({ preventScroll: true });
+    return true;
+  }
+  function closeSheet(quiet) {
+    if (!document.body.classList.contains("sheet")) return;
+    const A = $("#setup");
+    document.body.classList.remove("sheet");
+    $("#sheetBg").hidden = true;
+    ["role", "aria-modal", "aria-labelledby"].forEach((k) => A.removeAttribute(k));
+    A.removeAttribute("tabindex");
+    INERT().forEach((el) => el.inert = false);
+    const o = sheetOpener;
+    sheetOpener = null;
+    if (!quiet && o && o.isConnected) o.focus({ preventScroll: true });
+  }
+  function setTab(tab) {
+    if (document.body.classList.contains("planmode") && phoneLayout()) {
+      if (tab === "setup") openSheet();
+      else closeSheet();
+      return;
+    }
+    document.body.dataset.tab = tab;
+    $$("#mtabs [data-tab]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
+    const L = $(".layout"), m = $("#mtabs");
+    if (L && m) {
+      const top = L.getBoundingClientRect().top;
+      const h = m.offsetHeight + 12;
+      if (top < h) window.scrollTo({ top: Math.max(0, top + scrollY - h) });
+    }
+  }
+  function initSheet() {
+    $("#btnEditPlan").addEventListener("click", openSheet);
+    $("#btnSheetDone").addEventListener("click", () => closeSheet());
+    $("#sheetBg").addEventListener("click", () => closeSheet());
+    document.addEventListener(
+      "keydown",
+      (e) => {
+        if (e.key !== "Escape" || !document.body.classList.contains("sheet") || $("#modalRoot").firstChild) return;
+        closeSheet();
+      },
+      true
+    );
+    document.addEventListener("click", (e) => {
+      const b = (
+        /** @type {HTMLElement|null} */
+        /** @type {HTMLElement} */
+        e.target.closest("[data-tab],[data-tabgo]")
+      );
+      if (b && (b.closest("#mtabs") || b.dataset.tabgo)) setTab(b.dataset.tab || b.dataset.tabgo);
+    });
+    $("#btnPlans").onclick = openPlans;
+    $("#btnNew").onclick = newPlan;
+    $("#btnQuick").onclick = () => openQuick();
+  }
+
+  // src/plan-view.js
+  var phaseColor = (p) => `var(--ph-${p})`;
+  var phaseText = (p) => `var(--ph-${p}-t)`;
+  function profileSVG(weeks, W) {
+    W = Math.max(Math.round(W || 600), 240);
+    const H = 186, pl = 30, pb = 22, pt = 34;
+    const max = Math.max(...weeks.map((w) => w.sessions.reduce((a, s) => a + s.km, 0)), 10);
+    const top = Math.ceil(max / 10) * 10;
+    const bw = (W - pl - 4) / weeks.length;
+    const every = bw >= 22 ? 1 : bw >= 12 ? 2 : 4;
+    const y = (v) => pt + (H - pt - pb) * (1 - v / top);
+    const today = /* @__PURE__ */ new Date();
+    today.setHours(0, 0, 0, 0);
+    const nowI = weeks.findIndex((w) => {
+      const st = parseISO2(w.start);
+      return today >= st && today < addDays2(st, 7);
+    });
+    let g = [];
+    for (let i = 0; i < weeks.length; ) {
+      let j = i;
+      while (j + 1 < weeks.length && weeks[j + 1].phase === weeks[i].phase) j++;
+      const ph = weeks[i].phase, x0 = pl + i * bw, wd = (j - i + 1) * bw, lbl = phaseLbl(ph);
+      g.push(
+        html`<rect class="band" data-phase="${esc(ph)}" x="${x0 + 1}" y="${pt - 22}" width="${Math.max(0, wd - 2)}" height="${H - pb - pt + 22}" rx="4" fill="${phaseColor(ph)}" opacity=".13"/>`
+      );
+      if (wd >= lbl.length * 6.6 + 10)
+        g.push(
+          html`<text class="band-lbl" x="${x0 + 6}" y="${pt - 9}" style="fill:${phaseText(ph)};font-weight:600">${esc(lbl)}</text>`
+        );
+      i = j + 1;
+    }
+    for (let t3 = 0; t3 <= top; t3 += top > 60 ? 20 : 10) {
+      g.push(
+        html`<line x1="${pl}" x2="${W}" y1="${y(t3)}" y2="${y(t3)}" stroke="var(--line)" stroke-width="1"/><text x="${pl - 6}" y="${y(t3) + 4}" text-anchor="end">${t3}</text>`
+      );
+    }
+    weeks.forEach((w, i) => {
+      const km = w.sessions.reduce((a, s) => a + s.km, 0);
+      const x = pl + i * bw + bw * 0.14, bwi = bw * 0.72;
+      const lk = (w.sessions.find((s) => s.kind === "long" || s.kind === "race") || {}).km || 0;
+      const race = w.sessions.some((s) => s.kind === "race"), now = i === nowI;
+      const lab = i % every === 0 || i === weeks.length - 1 || race || now;
+      const extra = [w.cutback ? t2("cutback") : "", now ? t2("svgNow") : "", race ? t2("svgRace") : ""].filter(Boolean).join(", ");
+      g.push(html`<g${race ? html` class="race"` : ""}${now ? html` class="now"` : ""}><title>${esc(t2("svgTitle", { n: w.n, km: km.toFixed(1), phase: phaseLbl(w.phase) }))}${extra ? " (" + esc(extra) + ")" : ""}</title><rect x="${x}" y="${y(km)}" width="${bwi}" height="${Math.max(0, y(0) - y(km))}" rx="2" fill="${phaseColor(w.phase)}" opacity="${w.cutback ? 0.55 : 1}"/>
+  ${lk ? html`<rect x="${x}" y="${y(lk)}" width="${bwi}" height="2" fill="var(--ink)" opacity=".55"/>` : ""}
+  ${lab ? html`<text x="${x + bwi / 2}" y="${y(km) - 5}" text-anchor="middle">${Math.round(km)}</text>` : ""}
+  ${race ? html`<path class="flag" d="M${x + bwi / 2 - 4} ${y(km) - 16}v-14l10 4l-10 4" fill="var(--race)" stroke="var(--race)" stroke-width="1.5" stroke-linejoin="round"/>` : ""}
+  ${lab ? html`<text x="${x + bwi / 2}" y="${H - 6}" text-anchor="middle"${now ? html` style="fill:var(--ink);font-weight:700"` : ""}>${w.n}</text>` : ""}</g>`);
+    });
+    if (nowI >= 0) {
+      const st = parseISO2(weeks[nowI].start), d = Math.round((+today - +st) / 864e5), xn = pl + nowI * bw + bw * (d + 0.5) / 7;
+      g.push(
+        html`<line class="today-mark" x1="${xn}" x2="${xn}" y1="${pt - 22}" y2="${H - pb}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="3 3" opacity=".8"><title>${esc(cap2(t2("svgToday")))}</title></line>`
+      );
+    }
+    return html`<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${t2("svgAria")}">${g}</svg>`;
+  }
+  var chartW = 0;
+  function drawProfile() {
+    const el = $("#profileChart");
+    if (!el || !S.plan) return;
+    chartW = el.clientWidth;
+    setHtml(el, profileSVG(S.plan.weeks, chartW));
+  }
+  function fieldLabel(f) {
+    const k = {
+      date: S.inputs.goal === "fitness" ? "startDate" : "raceDate",
+      weeks: "weeks",
+      curVol: "curVol",
+      curLong: "curLong",
+      runs: "runsPerWeek",
+      days: "runningDays",
+      longDay: "longDay",
+      types: "secTypes",
+      pace: "recTime"
+    }[f];
+    return t2(k).replace(/\s*\(.*\)$/, "");
+  }
+  function renderFieldWarns(items) {
+    for (const f of SETUP_FIELDS2) {
+      const el = $("#fw-" + f);
+      if (!el) continue;
+      const ms = items.filter((x) => x.f === f).map((x) => x.m);
+      el.hidden = !ms.length;
+      setHtml(el, htmlJoin(ms.map((m) => html`<p>${esc(m)}</p>`)));
+    }
+  }
+  var nameCtx = null;
+  function fitName() {
+    const el = (
+      /** @type {HTMLInputElement} */
+      $("#planName")
+    );
+    if (!el) return;
+    try {
+      nameCtx = nameCtx || document.createElement("canvas").getContext("2d");
+      const cs = getComputedStyle(el);
+      nameCtx.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      el.style.width = Math.min(320, Math.ceil(nameCtx.measureText(el.value || "").width) + 18) + "px";
+    } catch (_) {
+    }
+  }
+  function renderPlan() {
+    fitName();
+    const P = S.plan, I = S.inputs;
+    if (!P) return;
+    syncMode();
+    const miss = missingSetup2(I);
+    if (miss.length) {
+      renderFieldWarns([]);
+      const h0 = $("#hello");
+      if (h0) clearHtml(h0);
+      setHtml(
+        $("#plan"),
+        html`<div class="banner info"><span>${esc(t2("needTitle"))}</span><ul>${htmlJoin(miss.map((k) => html`<li>${esc(t2(k))}</li>`))}</ul><button class="btn sm m-only" type="button" data-tabgo="setup">${t2("editSettings")}</button></div><p class="qempty">${t2("qwEmpty")} <button type="button" class="linkbtn" data-act="quick">${t2("qwEmptyGo")}</button></p>`
+      );
+      return;
+    }
+    renderHello();
+    const weeks = P.weeks;
+    const totals = weeks.map((w) => w.sessions.reduce((a, s) => a + s.km, 0));
+    const longest = Math.max(...weeks.flatMap((w) => w.sessions.filter((s) => s.kind === "long").map((s) => s.km)), 0);
+    const Pg = paces2(I);
+    const items = warningItems2(I, S.types, P, S.edited);
+    renderFieldWarns(items);
+    const warns = items.filter((x) => !x.f).map((x) => x.m);
+    const setupF = [...new Set(items.filter((x) => x.f && (x.f !== "pace" || badRaceTime2(I))).map((x) => x.f))];
+    let h = [];
+    if (S.isExample)
+      h.push(
+        html`<div class="banner info"><span>${t2("exampleBanner")}</span><button class="btn sm m-only" type="button" data-tabgo="setup">${t2("editSettings")}</button></div>`
+      );
+    if (!S.isExample && backupDue())
+      h.push(
+        html`<div class="banner info" id="bkBanner"><span>${t2("bkBanner")}</span><button class="btn sm primary" data-act="bksave">${t2("bkSave")}</button><button class="btn sm ghost" data-act="bklater">${t2("bkLater")}</button></div>`
+      );
+    if (S.pendingRegen)
+      h.push(
+        html`<div class="banner"><span>${t2("pendingBanner")}</span><button class="btn sm primary" data-act="regen">${t2("rebuildPlan")}</button><button class="btn sm ghost" data-act="keep">${t2("keepEdits")}</button></div>`
+      );
+    if (setupF.length)
+      h.push(
+        html`<div class="banner" id="setupWarn"><span>${esc(t2("setupWarn", { f: setupF.map(fieldLabel).join(", ") }))}</span><button class="btn sm m-only" type="button" data-tabgo="setup">${t2("editSettings")}</button></div>`
+      );
+    if (warns.length)
+      h.push(html`<div class="banner"><ul>${htmlJoin(warns.map((w) => html`<li>${esc(w)}</li>`))}</ul></div>`);
+    const today = /* @__PURE__ */ new Date();
+    today.setHours(0, 0, 0, 0);
+    const raceI = weeks.findIndex((w) => w.sessions.some((s) => s.kind === "race")), endI = raceI >= 0 ? raceI : weeks.length - 1;
+    const nowI = weeks.findIndex((w) => {
+      const st = parseISO2(w.start);
+      return today >= st && today < addDays2(st, 7);
+    });
+    const toGo = today < parseISO2(weeks[0].start) ? endI + 1 : nowI >= 0 ? Math.max(0, endI - nowI + 1) : 0;
+    const u = (x) => html`<small>${x}</small>`;
+    const hm2 = (sec) => {
+      sec = Math.round(sec / 60) * 60;
+      const h2 = Math.floor(sec / 3600), m = Math.round(sec % 3600 / 60);
+      return h2 ? html`${h2}${u(t2("uH"))}${String(m).padStart(2, "0")}` : html`${m}${u(t2("uMin"))}`;
+    };
+    h.push(html`<div class="summary">
+  <div class="stat" data-stat="togo"><b>${toGo}</b><span>${t2(toGo === 1 ? "sToGo1" : "sToGo")}</span></div>
+  <div class="stat" data-stat="peak"><b>${Math.round(Math.max(...totals))}${u("km")}</b><span>${t2("sPeak")}</span></div>
+  <div class="stat" data-stat="long"><b>${longest}${u("km")}</b><span>${t2("sLongest")}</span></div>
+  ${P.meta.raceSec ? html`<div class="stat" data-stat="target" title="${esc(fmtDur2(P.meta.raceSec))}"><b>${hm2(P.meta.raceSec)}</b><span>${esc(cap2(t2("sTarget", { lbl: distLabel2(I) })))}</span></div>` : ""}
+</div>`);
+    h.push(renderToday());
+    h.push(
+      html`<div class="profile"><div class="profile-head"><h2>${t2("loadProfile")}</h2><div class="legend"><span><i style="background:var(--ink);height:2px;opacity:.55;vertical-align:3px"></i>${t2("longRunLeg")}</span></div></div><div class="chart" id="profileChart"></div></div>`
+    );
+    h.push(html`<div class="toolbar">
+  <span class="spacer"></span>
+  <button class="btn sm" data-act="quick">${t2("qwOpen")}</button>
+  <button class="btn sm" data-act="allwatch">${t2("sendAll")}</button>
+  <button class="btn sm" data-act="ics">${t2("exportCal")}</button>
+  <span class="exp"><select id="expFmt" aria-label="${esc(t2("exportFmt"))}"><option value="csv" ${S.exportFmt === "csv" ? "selected" : ""}>${t2("fmtCsv")}</option><option value="pdf" ${S.exportFmt === "pdf" ? "selected" : ""}>${t2("fmtPdf")}</option></select><button class="btn sm" data-act="export">${t2("exportGo")}</button></span>
+  <button class="btn sm ghost" data-act="rebuild">${t2("rebuildFrom")}</button>
+</div>`);
+    const pastN = nowI > 0 ? nowI : 0;
+    if (pastN)
+      h.push(
+        html`<button type="button" class="btn sm ghost mpast" data-act="past" aria-expanded="${!!S.showPast}">${t2(S.showPast ? "hidePast" : "showPast", { n: pastN })}</button>`
+      );
+    h.push(
+      html`<div class="grid-wrap${S.showPast ? " show-past" : ""}"><table class="grid"><thead><tr><th class="wk">${t2("week")}</th>${htmlJoin(DAYS.map((d) => html`<th>${d}</th>`))}</tr></thead><tbody>`
+    );
+    weeks.forEach((w, wi) => {
+      const st = parseISO2(w.start), en = addDays2(st, 6);
+      const rc = (wi < pastN ? " past" : "") + (wi === nowI ? " now" : "");
+      h.push(html`<tr class="wrow${w.cutback ? " cutback" : ""}${rc}"><td class="wk"><div class="wkcell"><span class="bar" style="background:${phaseColor(w.phase)}"></span><div>
+    <div class="n">${t2("wAbbr")}${esc(w.n)}</div><div class="meta"><span>${fmtShort(st)} – ${fmtShort(en)}</span><span class="ph" data-cut="${t2("cutback")}" style="color:${phaseText(w.phase)}">${phaseLbl(w.phase)}</span><span class="km">${RUN_UNIT === "t" ? estDur(w.sessions.reduce((a, s) => a + sesSec(s, Pg), 0)) : totals[wi].toFixed(1) + " km"}</span></div>
+    <button class="btn sm ghost wbtn" data-act="wwatch" data-w="${wi}" aria-label="${esc(t2("sendWatchWeek", { n: w.n }))}" title="${esc(t2("sendWatchWeek", { n: w.n }))}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="3"/><path d="M9 6l1-3h4l1 3M9 18l1 3h4l1-3M12 10v2l1.5 1"/></svg>${t2("watchShort")}</button></div></div></td>`);
+      for (let d = 0; d < 7; d++) {
+        const ss = w.sessions.filter((s) => s.day === d);
+        h.push(
+          html`<td class="day" data-w="${wi}" data-d="${d}" data-dl="${esc(DAYS[d])}">${ss.length ? htmlJoin(ss.map((s) => html`<button type="button" class="ses ${s.kind === "race" ? "race" : ""}" draggable="true" data-w="${wi}" data-s="${s.id}" style="--k:${effColor(sesEffort(s))};--kt:${effText(sesEffort(s))}"><span class="t">${esc(s.name)}</span><span class="k">${sesAmt(s, Pg)}</span><span class="d">${esc(s.desc)}</span>${s.note ? html`<span class="nb">${t2("noteBadge")}</span>` : ""}</button>`)) : html`<div class="empty" tabindex="0" role="button" aria-label="${esc(t2("rest") + " " + t2("addRun") + " \xB7 " + t2("eTitle", { n: w.n, day: DAYS[d] }))}" data-act="add" data-w="${wi}" data-d="${d}"><span>${t2("rest")}</span><span class="plus">${t2("addRun")}</span></div>`}</td>`
+        );
+      }
+      h.push(html`</tr>`);
+      weekChecks2(w, I, weeks[wi - 1]).forEach((c) => {
+        h.push(
+          html`<tr class="wwarn${rc}" data-check="${c.k}"><td colspan="8"><p><b>${t2("wkWarn")}</b>${esc(c.txt)}</p></td></tr>`
+        );
+      });
+      if (w.note) h.push(html`<tr class="wnote${rc}"><td colspan="8"><p><b>${t2("note")}</b>${esc(w.note)}</p></td></tr>`);
+    });
+    h.push(html`</tbody></table></div>`);
+    setHtml($("#plan"), h);
+    drawProfile();
+    renderWx();
+    wxLoad(false);
+  }
+  function initPlanView() {
+    try {
+      new ResizeObserver(() => {
+        const el = $("#profileChart");
+        if (el && Math.abs(el.clientWidth - chartW) > 4) drawProfile();
+      }).observe($("#plan"));
+    } catch (_) {
+    }
+  }
+  function renderHello() {
+    const el = $("#hello");
+    if (!el) return;
+    const P = S.plan, I = S.inputs;
+    const today = /* @__PURE__ */ new Date();
+    today.setHours(12, 0, 0, 0);
+    const race = parseISO2(I.raceDate);
+    const days = Math.round((+race - +today) / 864e5);
+    const lbl = distLabel2(I);
+    let line;
+    if (I.goal === "fitness") {
+      const st0 = parseISO2(P.weeks[0].start), end = addDays2(st0, 7 * P.weeks.length - 1);
+      const wi = P.weeks.findIndex((w) => {
+        const st = parseISO2(w.start);
+        return today >= st && today < addDays2(st, 7);
+      });
+      if (today < st0) line = t2("hFitStarts", { n: P.weeks.length, d: fmtDate2(st0) });
+      else if (wi < 0) line = t2("hFitDone", { n: P.weeks.length, d: fmtDate2(end) });
+      else {
+        const w = P.weeks[wi];
+        const tdow = dow2(today);
+        const next = w.sessions.find((s) => s.day >= tdow) || P.weeks[wi + 1] && P.weeks[wi + 1].sessions[0];
+        const when = next ? next.day === tdow && w.sessions.includes(next) ? t2("today") : DAYS[next.day] : "";
+        line = html`${t2("hFitIn", { n: w.n, t: P.weeks.length, phase: phaseLbl(w.phase), cut: w.cutback ? t2("hCut") : "" })}${next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), amt: sesAmt(next) }) : ""}`;
+      }
+    } else if (days < 0) {
+      const wi = P.weeks.findIndex((w2) => {
+        const st = parseISO2(w2.start);
+        return today >= st && today < addDays2(st, 7);
+      });
+      const w = wi >= 0 ? P.weeks[wi] : null;
+      if (w && w.phase === "recovery") {
+        const tdow = dow2(today), rw = P.weeks.filter((x) => x.phase === "recovery");
+        const next = w.sessions.find((s) => s.day >= tdow) || P.weeks[wi + 1] && P.weeks[wi + 1].sessions[0];
+        const when = next ? next.day === tdow && w.sessions.includes(next) ? t2("today") : DAYS[next.day] : "";
+        line = html`${t2("hRecIn", { lbl: esc(lbl), k: rw.indexOf(w) + 1, r: rw.length })}${next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), amt: sesAmt(next) }) : ""}`;
+      } else line = t2("hPast", { lbl: esc(lbl), d: fmtDate2(race) });
+    } else if (days === 0) line = t2("hToday", { lbl: esc(lbl) });
+    else {
+      const wi = P.weeks.findIndex((w) => {
+        const st = parseISO2(w.start);
+        return today >= st && today < addDays2(st, 7);
+      });
+      const head = t2(days === 1 ? "hDay1" : "hDays", { n: days, lbl: esc(lbl), d: fmtDate2(race) });
+      if (wi < 0) {
+        line = html`${head} ${t2("hStarts", { d: fmtDate2(parseISO2(P.weeks[0].start)) })}`;
+      } else {
+        const w = P.weeks[wi];
+        const tdow = dow2(today);
+        const next = w.sessions.find((s) => s.day >= tdow) || P.weeks[wi + 1] && P.weeks[wi + 1].sessions[0];
+        const when = next ? next.day === tdow && w.sessions.includes(next) ? t2("today") : DAYS[next.day] : "";
+        line = html`${head} ${t2("hInWeek", {
+          n: w.n,
+          t: P.weeks.filter((x) => x.phase !== "recovery").length,
+          phase: phaseLbl(w.phase),
+          cut: w.cutback ? t2("hCut") : ""
+        })}${next ? t2("hNext", { when, name: esc(next.name.toLowerCase()), amt: sesAmt(next) }) : ""}`;
+      }
+    }
+    const R = I.race;
+    let cd = html``;
+    if (I.goal !== "fitness" && R && R.name && days >= 0) {
+      const nm = R.url ? html`<a class="rn" href="${esc(R.url)}" target="_blank" rel="noopener">${esc(R.name)}</a>` : html`<span class="rn">${esc(R.name)}</span>`;
+      cd = html`<div class="countdown"><div class="num">${days}<small>${days === 1 ? t2("dayOne") : t2("dayMany")}</small></div>${nm}<span class="rm">${R.city ? esc(R.city) + " \xB7 " : ""}${fmtDay(race)} · ${esc(lbl)}</span></div>`;
+    }
+    setHtml(el, html`<div class="txt"><p class="lead">${line}</p></div>${cd}`);
+  }
+
+  // src/storage.js
   function snapshot() {
     return { name: S.name, inputs: S.inputs, types: S.types, plan: S.plan, edited: S.edited, updatedAt: Date.now() };
   }
@@ -5009,17 +5212,6 @@ ${s.desc}${s.note ? "\n" + t2("note") + ": " + s.note : ""}`).join("\n\n")
     clearTimeout(saveTimer);
     saveTimer = null;
   }
-  addEventListener("pagehide", flushSave);
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") flushSave();
-  });
-  addEventListener("beforeunload", (e) => {
-    flushSave();
-    if (S.dirty && !S.savedAt && !S.isExample && !missingSetup2(S.inputs).length) {
-      e.preventDefault();
-      e.returnValue = "";
-    }
-  });
   function loadPlan(p) {
     S.intake = 0;
     S.planId = p.id;
@@ -5159,188 +5351,35 @@ ${s.desc}${s.note ? "\n" + t2("note") + ": " + s.note : ""}`).join("\n\n")
       }
     );
   }
-  var phoneLayout = () => {
+  function initStorage() {
+    addEventListener("pagehide", flushSave);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") flushSave();
+    });
+    addEventListener("beforeunload", (e) => {
+      flushSave();
+      if (S.dirty && !S.savedAt && !S.isExample && !missingSetup2(S.inputs).length) {
+        e.preventDefault();
+        e.returnValue = "";
+      }
+    });
+  }
+
+  // src/prefs.js
+  var RUN_UNIT = (() => {
     try {
-      return matchMedia("(max-width:900px)").matches;
+      if (localStorage.getItem("bb-run-unit") === "t") return "t";
     } catch (_) {
-      return false;
     }
-  };
-  var STEP_NAMES = () => ["secGoal", S.inputs.goal === "fitness" ? "secFocus" : "secRace", "secNow", "secYourWeek"];
-  function renderIntro() {
-    syncMode();
-    const A = $("#setup"), nav = $("#introNav"), n = S.intake || 0;
-    if (!A || !nav) return;
-    if (n) A.dataset.step = n;
-    else delete A.dataset.step;
-    nav.hidden = !n;
-    if (!n) {
-      clearHtml(nav);
-      return;
-    }
-    const ready = !missingSetup2(S.inputs).length && S.plan;
-    const prev = n >= 3 ? ready ? html`<div class="intro-prev"><span class="lbl">${t2("loadProfile")}</span><div class="chart">${profileSVG(S.plan.weeks, Math.max(260, (A.clientWidth || 340) - 8))}</div></div>` : html`<p class="hint intro-wait">${t2("introWait")}</p>` : "";
-    setHtml(
-      nav,
-      html`${prev}<p class="intro-err" id="introErr" role="alert">${esc(S.introErr || "")}</p>
-  <div class="intro-bar"><button type="button" class="btn" data-intro="back" ${n === 1 ? "hidden" : ""}>${t2("introBack")}</button>
-  <span class="intro-step">${t2("introStep", { n, name: t2(STEP_NAMES()[n - 1]) })}</span>
-  <button type="button" class="btn primary" data-intro="next">${t2(n === 4 ? "introDone" : "introNext")}</button></div>
-  <button type="button" class="linkbtn intro-skip" data-intro="skip">${t2("introSkip")}</button>`
-    );
-  }
-  function introGo(n) {
-    S.intake = n;
-    S.introErr = "";
-    renderSetup();
-    const A = $("#setup");
-    if (A && A.scrollIntoView) A.scrollIntoView({ block: "start" });
-  }
-  $("#setup").addEventListener("click", (e) => {
-    const c = e.target.closest(".icard"), b = e.target.closest("[data-intro]");
-    if (c && c.dataset.goal && S.intake === 1) {
-      introGo(2);
-      return;
-    }
-    if (!b) return;
-    const a = b.dataset.intro, n = S.intake || 0;
-    if (a === "quick") {
-      openQuick();
-      return;
-    }
-    if (a === "back" && n > 1) introGo(n - 1);
-    else if (a === "skip") {
-      S.intake = 0;
-      S.introErr = "";
-      renderSetup();
-    } else if (a === "next") {
-      const need = missingSetup2(S.inputs).filter((k) => SETUP_STEP2[k] === n);
-      if (need.length) {
-        S.introErr = t2("introNeed") + " " + need.map((k) => t2(k)).join(" ");
-        renderIntro();
-        return;
-      }
-      if (n < 4) introGo(n + 1);
-      else {
-        S.intake = 0;
-        S.introErr = "";
-        renderSetup();
-        renderPlan();
-        setTab("plan");
-      }
-    }
-  });
-  function newPlan() {
-    flushSave();
-    const go = () => {
-      S.nameAuto = true;
-      S.volSug = null;
-      S.fromExample = false;
-      S.inputs = BLANK_INPUTS();
-      S.types = BLANK_TYPES();
-      S.planId = uid2();
-      S.savedAt = null;
-      S.isExample = false;
-      S.dirty = false;
-      S.pendingRegen = false;
-      S.name = cap2(t2("blockName", { lbl: t2("lhm") }));
-      $("#planName").value = S.name;
-      S.intake = phoneLayout() ? 1 : 0;
-      S.introErr = "";
-      regen();
-      renderSetup();
-      renderPlan();
-      setStatus(t2("notSaved"));
-      if (S.intake) setTab("setup");
-    };
-    if (S.dirty && S.savedAt === null && !S.isExample) confirmBox(t2("newQ"), t2("newT"), t2("startNew"), go);
-    else go();
-  }
-  $("#planName").addEventListener("input", fitName);
-  try {
-    document.fonts.ready.then(fitName);
-  } catch (_) {
-  }
-  $("#planName").addEventListener("change", (e) => {
-    S.nameAuto = !e.target.value.trim();
-    S.name = e.target.value.trim() || t2("trainingBlock");
-    e.target.value = S.name;
-    markDirty();
-  });
-  $("#btnSave").onclick = () => savePlan(false);
-  var sheetOpener = null;
-  function syncMode() {
-    const on = !S.intake && !missingSetup2(S.inputs).length;
-    document.body.classList.toggle("planmode", on);
-    if (!on && document.body.classList.contains("sheet")) closeSheet(true);
-  }
-  var INERT = () => [...$$("header.top,#mtabs,#mbar,main.plan,footer.ver,.hello")];
-  function openSheet() {
-    if (!document.body.classList.contains("planmode") || !phoneLayout()) return false;
-    if (document.body.classList.contains("sheet")) return true;
-    const a = document.activeElement;
-    sheetOpener = a && a !== document.body ? a : lastTrigger && lastTrigger.isConnected && !lastTrigger.closest("#setup") ? lastTrigger : $("#btnEditPlan");
-    const A = $("#setup");
-    document.body.classList.add("sheet");
-    $("#sheetBg").hidden = false;
-    A.setAttribute("role", "dialog");
-    A.setAttribute("aria-modal", "true");
-    A.setAttribute("aria-labelledby", "sheetTitle");
-    A.tabIndex = -1;
-    A.scrollTop = 0;
-    INERT().forEach((el) => el.inert = true);
-    A.focus({ preventScroll: true });
-    return true;
-  }
-  function closeSheet(quiet) {
-    if (!document.body.classList.contains("sheet")) return;
-    const A = $("#setup");
-    document.body.classList.remove("sheet");
-    $("#sheetBg").hidden = true;
-    ["role", "aria-modal", "aria-labelledby"].forEach((k) => A.removeAttribute(k));
-    A.removeAttribute("tabindex");
-    INERT().forEach((el) => el.inert = false);
-    const o = sheetOpener;
-    sheetOpener = null;
-    if (!quiet && o && o.isConnected) o.focus({ preventScroll: true });
-  }
-  $("#btnEditPlan").addEventListener("click", openSheet);
-  $("#btnSheetDone").addEventListener("click", () => closeSheet());
-  $("#sheetBg").addEventListener("click", () => closeSheet());
-  document.addEventListener(
-    "keydown",
-    (e) => {
-      if (e.key !== "Escape" || !document.body.classList.contains("sheet") || $("#modalRoot").firstChild) return;
-      closeSheet();
-    },
-    true
-  );
-  function setTab(tab) {
-    if (document.body.classList.contains("planmode") && phoneLayout()) {
-      if (tab === "setup") openSheet();
-      else closeSheet();
-      return;
-    }
-    document.body.dataset.tab = tab;
-    $$("#mtabs [data-tab]").forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
-    const L = $(".layout"), m = $("#mtabs");
-    if (L && m) {
-      const top = L.getBoundingClientRect().top;
-      const h = m.offsetHeight + 12;
-      if (top < h) window.scrollTo({ top: Math.max(0, top + scrollY - h) });
+    return "d";
+  })();
+  function useRunUnit(u) {
+    RUN_UNIT = u;
+    try {
+      localStorage.setItem("bb-run-unit", u);
+    } catch (_) {
     }
   }
-  document.addEventListener("click", (e) => {
-    const b = (
-      /** @type {HTMLElement|null} */
-      /** @type {HTMLElement} */
-      e.target.closest("[data-tab],[data-tabgo]")
-    );
-    if (b && (b.closest("#mtabs") || b.dataset.tabgo)) setTab(b.dataset.tab || b.dataset.tabgo);
-  });
-  $("#btnPlans").onclick = openPlans;
-  $("#btnNew").onclick = newPlan;
-  $("#btnQuick").onclick = () => openQuick();
   function applyStatic() {
     document.documentElement.lang = LANG;
     $$("[data-i18n]").forEach((el) => {
@@ -5392,29 +5431,6 @@ ${s.desc}${s.note ? "\n" + t2("note") + ": " + s.note : ""}`).join("\n\n")
     const st = $("#saveStatus");
     if (st && !S.savedAt) setStatus(t2("notSaved"));
   }
-  $("#langSel").addEventListener("change", (e) => setLang(e.target.value));
-  $("#themeSeg").addEventListener("click", (e) => {
-    const b = e.target.closest("[data-theme-v]");
-    if (!b) return;
-    const v = b.dataset.themeV;
-    document.documentElement.dataset.theme = v;
-    try {
-      localStorage.setItem("bb-theme", v);
-    } catch (_) {
-    }
-    syncTheme();
-  });
-  $("#runUnitSeg").addEventListener("click", (e) => {
-    const b = (
-      /** @type {HTMLElement | null} */
-      /** @type {HTMLElement} */
-      e.target.closest("[data-run-unit]")
-    );
-    if (!b || b.dataset.runUnit === RUN_UNIT) return;
-    useRunUnit(b.dataset.runUnit === "t" ? "t" : "d");
-    syncRunUnit();
-    renderPlan();
-  });
   function setPrefs(open, focusBack) {
     const P = $("#prefsPanel"), B = $("#btnPrefs");
     P.hidden = !open;
@@ -5434,26 +5450,79 @@ ${s.desc}${s.note ? "\n" + t2("note") + ": " + s.note : ""}`).join("\n\n")
   var replacePrefs = () => {
     if (!$("#prefsPanel").hidden) placePrefs();
   };
-  window.addEventListener("resize", replacePrefs);
-  if (typeof ResizeObserver === "function") {
-    const ro = new ResizeObserver(replacePrefs);
-    for (const el of $("header.top").children) if (el.id !== "prefs") ro.observe(el);
-  }
-  $("#btnQuickGoal").addEventListener("click", () => openQuick());
-  $("#btnPrefs").addEventListener("click", () => setPrefs($("#prefsPanel").hidden));
-  $("#prefs").addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !$("#prefsPanel").hidden) {
-      e.stopPropagation();
-      setPrefs(false, true);
+  function initPrefs() {
+    $("#langSel").addEventListener("change", (e) => setLang(e.target.value));
+    $("#themeSeg").addEventListener("click", (e) => {
+      const b = e.target.closest("[data-theme-v]");
+      if (!b) return;
+      const v = b.dataset.themeV;
+      document.documentElement.dataset.theme = v;
+      try {
+        localStorage.setItem("bb-theme", v);
+      } catch (_) {
+      }
+      syncTheme();
+    });
+    $("#runUnitSeg").addEventListener("click", (e) => {
+      const b = (
+        /** @type {HTMLElement | null} */
+        /** @type {HTMLElement} */
+        e.target.closest("[data-run-unit]")
+      );
+      if (!b || b.dataset.runUnit === RUN_UNIT) return;
+      useRunUnit(b.dataset.runUnit === "t" ? "t" : "d");
+      syncRunUnit();
+      renderPlan();
+    });
+    window.addEventListener("resize", replacePrefs);
+    if (typeof ResizeObserver === "function") {
+      const ro = new ResizeObserver(replacePrefs);
+      for (const el of $("header.top").children) if (el.id !== "prefs") ro.observe(el);
     }
+    $("#btnQuickGoal").addEventListener("click", () => openQuick());
+    $("#btnPrefs").addEventListener("click", () => setPrefs($("#prefsPanel").hidden));
+    $("#prefs").addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !$("#prefsPanel").hidden) {
+        e.stopPropagation();
+        setPrefs(false, true);
+      }
+    });
+    $("#prefs").addEventListener("focusout", (e) => {
+      if (e.relatedTarget && !$("#prefs").contains(e.relatedTarget)) setPrefs(false);
+    });
+    document.addEventListener("click", (e) => {
+      if (!$("#prefsPanel").hidden && !/** @type {HTMLElement} */
+      e.target.closest("#prefs")) setPrefs(false);
+    });
+  }
+
+  // src/app.js
+  var VERSION = "1.14.3";
+  $("#appVersion").textContent = "Block Builder v" + VERSION;
+  BBEngine.setLocale({ t: t2, days: () => DAYS, fmtDate: fmtDate2 });
+  initSetup();
+  initPlanView();
+  initToday();
+  initRaceBox();
+  initPlanEdit();
+  initModal();
+  initExports();
+  initStorage();
+  initIntro();
+  $("#planName").addEventListener("input", fitName);
+  try {
+    document.fonts.ready.then(fitName);
+  } catch (_) {
+  }
+  $("#planName").addEventListener("change", (e) => {
+    S.nameAuto = !e.target.value.trim();
+    S.name = e.target.value.trim() || t2("trainingBlock");
+    e.target.value = S.name;
+    markDirty();
   });
-  $("#prefs").addEventListener("focusout", (e) => {
-    if (e.relatedTarget && !$("#prefs").contains(e.relatedTarget)) setPrefs(false);
-  });
-  document.addEventListener("click", (e) => {
-    if (!$("#prefsPanel").hidden && !/** @type {HTMLElement} */
-    e.target.closest("#prefs")) setPrefs(false);
-  });
+  $("#btnSave").onclick = () => savePlan(false);
+  initSheet();
+  initPrefs();
   applyStatic();
   regen();
   renderSetup();

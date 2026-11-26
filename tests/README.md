@@ -14,7 +14,7 @@ npm run test:engine    # unit tests only: plan engine and safe HTML helper (Node
 npm run test:desktop   # or test:mobile, test:chrome
 npm run test:report    # open the last HTML report
 npm run build          # rebuild app.js from src/ (the browser tests run the built app.js)
-npm run typecheck      # type-check the Playwright tests (strict) and src/app.js (non-strict)
+npm run typecheck      # type-check the Playwright tests (strict) and src/ (non-strict)
 npm run lint           # ESLint on the page scripts and engine tests
 npm run format         # Prettier on the page scripts (format:check only checks)
 ```
@@ -43,6 +43,7 @@ Every iOS browser, Chrome included, runs on WebKit, so the iPhone Chrome setup c
 | `unit/html.unit.mjs` | the safe HTML helper (BB-78): values escaped by default, nested and joined markup kept, booleans as text, `esc()` never escaping twice, `setHtml` refusing plain strings |
 | `unit/check-workflows.unit.mjs` | the workflow file check (BB-91): the BB-78 unquoted step name with ": " fails at its line, duplicate keys, missing `on` or `jobs`, jobs with no `runs-on` or no steps, steps without exactly one of `run` / `uses`, two documents in a file; this repo's own workflows pass; the command exits 1 naming the file |
 | `unit/fetch-fonts.unit.mjs` | the font fetch script (BB-89): faces read from Google's CSS, only the asked subsets kept, weights sharing a file merged into a range, a weight range read as such, two files that would get the same name refused; `index.html` loads exactly four fonts, all from `fonts/`, each a real woff2 file, and names no Google host |
+| `unit/split-module.unit.mjs` | the module split tool (BB-76): a move carries a declaration's comment, imports follow the code that uses them both ways and unused ones go, external modules are never rewritten, `--init` wraps load-time code and calls it where it was, a destructuring is exported once, moving into a module that imported the names drops those imports; refuses assigning an imported binding, a name declared in two modules and a range cutting a statement; this repo's `src/` has nothing left to resolve and no module imports `app.js` |
 | `unit/no-hook-bypass.unit.mjs` | the Claude hook that refuses commits skipping the git pre-commit hook (ADR 0010): `--no-verify` anywhere and abbreviated, `-n` alone or bundled, `-c core.hooksPath`, chains with `&&` and `;`; and no false alarm on `-n` inside a message, `git log -n`, `echo`, or after `--` |
 | `engine/engine.unit.mjs` | paces, watch workouts, the five athlete profiles against the plan rules at each experience level, what each level changes (BB-49), recovery weeks after the race (BB-42), week 1 within the stated volume (BB-41), a Personal plan with no start date built without the page (BB-79) |
 | `plan-generation.spec.ts` | distances, weeks, dates, runs per week, fitness goal, load profile (phase bands, race flag, current week and today), summary numbers (weeks to go, units, French labels), recovery weeks after the race, script URLs carry the version (BB-74) |

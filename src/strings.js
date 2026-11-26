@@ -1,7 +1,6 @@
 // @ts-check
 /* Every interface string in English and French (BB-76). t() in i18n.js picks the language. */
 
-/* ---------- language ---------- */
 export const I18N = {
   en: {
     planNameLabel: "Plan name",

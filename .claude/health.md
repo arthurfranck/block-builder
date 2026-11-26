@@ -17,17 +17,19 @@ GitHub Actions `Tests` workflow on every push and pull request: engine tests plu
 ## Metrics to track
 
 ```metrics
-index_html_kb: echo $(( $(cat index.html src/app.js | wc -c) / 1024 ))
-index_html_lines: cat index.html src/app.js | wc -l
+index_html_kb: echo $(( $(cat index.html $(ls src/*.js | grep -v engine.js) | wc -c) / 1024 ))  # page + interface modules (src/ minus the engine) since BB-76
+index_html_lines: cat index.html $(ls src/*.js | grep -v engine.js) | wc -l
 engine_js_lines: wc -l < src/engine.js
-longest_line_index_html: awk '{ if (length($0)>m) m=length($0) } END { print m }' index.html src/app.js
-lines_over_500_chars: awk 'length($0)>500 { n++ } END { print n+0 }' index.html src/app.js
-html_from_strings: grep -oE "innerHTML|outerHTML|insertAdjacentHTML" src/app.js | wc -l  # 0 since BB-78: only src/html.js writes markup
-esc_calls: grep -o "esc(" src/app.js | wc -l
-i18n_en_keys: awk '/^ *en: \{/{f=1;next} /^ *fr: \{/{f=0} f' src/app.js | grep -oE '^ *[A-Za-z0-9_]+:' | wc -l
+longest_line_index_html: awk '{ if (length($0)>m) m=length($0) } END { print m }' index.html $(ls src/*.js | grep -v engine.js)
+lines_over_500_chars: awk 'length($0)>500 { n++ } END { print n+0 }' index.html $(ls src/*.js | grep -v engine.js)
+src_modules: ls src/*.js | wc -l  # 3 before BB-76, 27 after
+largest_ui_module_lines: wc -l $(ls src/*.js | grep -v 'engine.js\|strings.js') | sort -n | tail -2 | head -1 | awk '{ print $1 }'
+html_from_strings: grep -oE "innerHTML|outerHTML|insertAdjacentHTML" $(ls src/*.js | grep -v "engine.js\|html.js") | wc -l  # 0 since BB-78: only src/html.js writes markup
+esc_calls: grep -o "esc(" $(ls src/*.js | grep -v "engine.js\|html.js") | wc -l
+i18n_en_keys: awk '/^ *en: \{/{f=1;next} /^ *fr: \{/{f=0} f' src/strings.js | grep -oE '^ *[A-Za-z0-9_]+:' | wc -l
 test_skip_lines: grep -c "test.skip" tests/*.ts | awk -F: '{ s+=$2 } END { print s }'
 test_fail_lines: grep -c "test.fail(" tests/*.ts | awk -F: '{ s+=$2 } END { print s }'
-localstorage_keys: grep -oE "localStorage\.(getItem|setItem|removeItem)\(\"[a-z-]+" src/app.js theme.js | sed 's/.*"//' | sort -u | wc -l
+localstorage_keys: grep -oE "localStorage\.(getItem|setItem|removeItem)\(\"[a-z-]+" src/*.js theme.js | sed 's/.*"//' | sort -u | wc -l
 ```
 
 Thresholds: flag `index_html_kb` above 250 and any rise in `lines_over_500_chars`, `test_fail_lines` or `localstorage_keys` (a new key must be listed in the README's Privacy and storage section).
@@ -44,7 +46,7 @@ From CLAUDE.md; check each:
 
 ## Known risks
 - Plans live only in `localStorage` (`bb-plans`): lost when site data is cleared or evicted by the browser; the only backup is manual Export (BB-84; ADR 0003).
-- `src/app.js` is one ~4,700-line module (formatted in BB-79; bundled into app.js since BB-86). About 100 lines are still over 160 characters: prose strings and HTML template literals (now `html`-tagged and escaped by default since BB-78; shorter once BB-76 splits the views). Split: BB-76.
-- Type checking is strict for `tests/*.ts` but non-strict for `src/app.js`; `src/engine.js` and `tests/engine/*.mjs` are not checked (BB-70, then BB-81).
+- The interface is split into 25 feature modules since BB-76 (largest: `src/quick.js`, 503 lines; strings in `src/strings.js`, 1,037), but they still import each other in cycles because render functions call one another; a module that runs code from another while it loads would hit a not-yet-initialised binding (tests catch it). One state with explicit actions: BB-80. About 100 lines are over 160 characters: prose strings and `html` template literals.
+- Type checking is strict for `tests/*.ts` (and `src/strings.js`, which the tests import) but non-strict for the interface modules; `src/engine.js` and `tests/engine/*.mjs` are not checked (BB-70, then BB-81).
 - PDF export needs cdnjs (jsPDF 4.2.1, AutoTable 5.0.9) and fails offline. Fonts are served from `fonts/` since BB-89 (ADR 0011): no Google request.
 - ICS line folding counts characters, not octets (BB-16).

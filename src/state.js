@@ -40,7 +40,6 @@ export const BLANK_INPUTS = () => ({
 });
 export const BLANK_TYPES = () => DEFAULT_TYPES().map((x) => ({ ...x, on: x.id === "easy" }));
 
-/* ---------- state ---------- */
 export const S = {
   nameAuto: true,
   inputs: /** @type {Record<string, any>} */ (DEFAULT_INPUTS()),

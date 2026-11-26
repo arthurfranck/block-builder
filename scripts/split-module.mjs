@@ -203,8 +203,20 @@ export function moveLines(fromCode, start, end, toCode, title, init) {
     }
   }
   const rest = [...L.slice(0, start - 1), ...call, ...L.slice(end)].join('\n');
-  const head = toCode ?? `// @ts-check\n${title ? `/* ${title} */\n` : ''}`;
-  return { from: rest, to: head.replace(/\n*$/, '\n\n') + moved + '\n' };
+  let head = toCode ?? `// @ts-check\n${title ? `/* ${title} */\n` : ''}`;
+  if (toCode) {
+    // names the target imports but now gets as declarations: drop those import specifiers (resolve rebuilds imports)
+    const movedNames = new Set(analyze(moved, 'moved code').declared.keys());
+    const t = parse(toCode, 'to');
+    for (const st of t.body.filter((x) => x.type === 'ImportDeclaration').reverse()) {
+      const keep = st.specifiers.filter((sp) => !movedNames.has(sp.local.name));
+      if (keep.length === st.specifiers.length) continue;
+      const names = keep.map((sp) => (sp.imported && sp.imported.name !== sp.local.name ? `${sp.imported.name} as ${sp.local.name}` : sp.local.name));
+      const text = keep.length ? `import { ${names.join(', ')} } from "${st.source.value}";` : '';
+      head = head.slice(0, st.range[0]) + text + head.slice(st.range[1]);
+    }
+  }
+  return { from: rest, to: head.replace(/\n*$/, '\n\n') + moved.replace(/^\s*\n/, '') + '\n' };
 }
 
 /**
