@@ -17,6 +17,7 @@ ADRs 0001 to 0007 were written on 2026-11-23, after the fact, to record choices 
 | [0009](0009-visual-snapshots-linux-baselines.md) | Visual snapshots on two setups, with Linux baselines made in CI | Accepted |
 | [0010](0010-git-pre-commit-hook.md) | Commit checks in a git pre-commit hook, not a Claude hook | Accepted |
 | [0011](0011-fonts-served-from-the-repo.md) | Fonts served from the repo, not Google Fonts | Accepted |
+| [0012](0012-feature-modules-wired-by-init.md) | Feature modules that only declare, wired by `init…()` from the entry module | Accepted |
 
 
 ## Template

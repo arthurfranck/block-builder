@@ -20,7 +20,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - name: Type-check tests (strict) and src/app.js (non-strict)
+      - name: Type-check tests (strict) and src/ (non-strict)
         run: npm run typecheck
       # BB-79: ESLint (eslint.config.mjs) and Prettier (.prettierrc.json) on the page scripts.
       - name: Lint

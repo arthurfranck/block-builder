@@ -2,6 +2,11 @@
 
 All notable changes to Block Builder. Format: [Keep a Changelog](https://keepachangelog.com), versioning: [Semantic Versioning](https://semver.org).
 
+## [1.14.3] - 2026-11-26
+
+### Changed
+- Under the hood: the page's code is split into one file per feature (language, settings, plan, Today, quick workout, exports, saving…) instead of one 4,800-line file, so it is easier to change safely. Nothing changes on screen (BB-76).
+
 ## [1.14.2] - 2026-11-26
 
 ### Changed

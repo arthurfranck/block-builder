@@ -14,7 +14,11 @@
     "lint": "eslint . && node scripts/check-workflows.mjs",
     "format": "prettier --write src/*.js theme.js eslint.config.mjs",
     "format:check": "prettier --check src/*.js theme.js eslint.config.mjs",
+    "split": "node scripts/split-module.mjs",
     "build": "esbuild src/app.js --bundle --format=iife --target=es2022 --sourcemap --external:./vendor/* --legal-comments=none --banner:js=\"/* Block Builder: built from src/ by esbuild (npm run build). Edit src/, not this file. */\" --outfile=app.js"
+  },
+  "splitModule": {
+    "external": ["engine.js", "html.js"]
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.0",

@@ -84,7 +84,8 @@ I run Block Builder as a team lead. I make the product, design and technical dec
 
 ```text
 index.html            the page: HTML and CSS
-src/app.js            the interface: rendering, storage, exports (ES module)
+src/app.js            entry module: wires the feature modules and starts the page
+src/*.js              the interface, one ES module per feature: setup, plan-view, today, quick, exports, storage… (strings.js: every text in English and French)
 src/engine.js         the plan engine: paces, plan building, warnings, week checks (no DOM, no storage)
 app.js, app.js.map    built from src/ by npm run build (committed, so the page opens as is)
 theme.js              sets the theme before the page paints
@@ -94,7 +95,7 @@ docs/                 features in detail, architecture decisions (adr/), brainst
 tests/                Playwright browser tests, Node engine tests, test server (see tests/README.md)
 .github/              CI workflow and Dependabot
 .githooks/            the git pre-commit hook (ADR 0010)
-scripts/              repo tooling: check-workflows.mjs checks the GitHub workflow files (BB-91), fetch-fonts.mjs refreshes fonts/ (BB-89)
+scripts/              repo tooling: check-workflows.mjs checks the GitHub workflow files (BB-91), fetch-fonts.mjs refreshes fonts/ (BB-89), split-module.mjs moves code between modules with imports worked out (BB-76)
 .claude/              Claude Code setup (see CLAUDE.md)
 CHANGELOG.md          what changed in each version
 CLAUDE.md             rules for working on this repo with Claude Code
@@ -102,7 +103,7 @@ CLAUDE.md             rules for working on this repo with Claude Code
 
 ### Tech
 
-- The code is ES modules in `src/`. [esbuild](https://esbuild.github.io) bundles them into one classic script, `app.js` (with a source map), so the page still works opened from disk; the bundle is committed and CI checks it matches `src/` ([ADR 0008](docs/adr/0008-es-modules-bundled-with-esbuild.md)). `theme.js` is a separate classic script that runs before the page paints.
+- The code is ES modules in `src/`, one per feature; `src/app.js` imports them, wires their events in order and starts the page ([ADR 0012](docs/adr/0012-feature-modules-wired-by-init.md)). [esbuild](https://esbuild.github.io) bundles them into one classic script, `app.js` (with a source map), so the page still works opened from disk; the bundle is committed and CI checks it matches `src/` ([ADR 0008](docs/adr/0008-es-modules-bundled-with-esbuild.md)). `theme.js` is a separate classic script that runs before the page paints.
 - Type: Archivo (expanded and heavy) for the brand and big numbers, Inter for everything else, both served from `fonts/` (SIL Open Font License, licences beside the files), so no font request leaves the page ([ADR 0011](docs/adr/0011-fonts-served-from-the-repo.md)). `node scripts/fetch-fonts.mjs` refreshes them from Google Fonts.
 - [jsPDF](https://github.com/parallax/jsPDF) 4.2.1 and [jsPDF-AutoTable](https://github.com/simonbengtsson/jsPDF-AutoTable) 5.0.9 from cdnjs, loaded only when exporting a PDF, with integrity hashes: if the CDN serves a different file, the browser refuses it.
 - Vendored [`@bibixx/workoutkit`](https://www.npmjs.com/package/@bibixx/workoutkit) 0.2.0 (MIT) in `vendor/workoutkit-0.2.0/`, loaded only when exporting to Apple Watch.
