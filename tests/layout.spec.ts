@@ -108,27 +108,46 @@ test.describe('display and language panel', () => {
       return { left: r.left, right: r.right, vw: document.documentElement.clientWidth };
     });
 
-  test('the panel opens fully on screen, also where the header wraps the gear to the left (BB-92)', async ({ app, page, mobile }) => {
-    /* 864-1056 px: the widths where it hung off the left edge (sweep in docs/brainstorms/bb-92-prefs-panel-onscreen.md);
-       phones keep their own size */
-    const widths = mobile ? [page.viewportSize()!.width] : [864, 960, 1024, 1056, 1440];
-    for (const width of widths) {
-      if (!mobile) await page.setViewportSize({ width, height: 800 });
-      await app.openPrefs();
-      const b = await panelBox(page);
-      expect(b.left, `left edge at ${width}px`).toBeGreaterThanOrEqual(0);
-      expect(b.right, `right edge at ${width}px`).toBeLessThanOrEqual(b.vw);
+  /** The panel keeps 8 px from both window edges (0.5 px allowed for sub-pixel layout). */
+  const expectInside = async (page: import('@playwright/test').Page, at: string) => {
+    await expect.poll(async () => (await panelBox(page)).left, `left edge ${at}`).toBeGreaterThanOrEqual(7.5);
+    const b = await panelBox(page);
+    expect(b.right, `right edge ${at}`).toBeLessThanOrEqual(b.vw - 7.5);
+  };
+
+  /* Where the header wraps the gear to the left (Playwright sweep, 2026-11-26): English 864-1056 px, French 928-1104 px.
+     Phones keep their own size. */
+  for (const [lang, widths] of [['en', [864, 960, 1024, 1056, 1440]], ['fr', [928, 1088, 1104, 1440]]] as const) {
+    test(`the panel opens fully on screen in ${lang}, also where the header wraps the gear to the left (BB-92)`, async ({ app, page, mobile }) => {
+      if (lang === 'fr') await app.setLang('fr');
       await app.closePrefs();
-    }
-  });
+      for (const width of mobile ? [page.viewportSize()!.width] : widths) {
+        if (!mobile) await page.setViewportSize({ width, height: 800 });
+        await app.openPrefs();
+        await expectInside(page, `at ${width}px (${lang})`);
+        await app.closePrefs();
+      }
+    });
+  }
 
   test('the panel stays on screen when the window is resized while it is open (BB-92)', async ({ app, page, mobile }) => {
     test.skip(mobile, 'phones do not resize');
     await app.openPrefs();
     await page.setViewportSize({ width: 960, height: 800 });
-    await expect.poll(async () => (await panelBox(page)).left).toBeGreaterThanOrEqual(0);
-    const b = await panelBox(page);
-    expect(b.right).toBeLessThanOrEqual(b.vw);
+    await expectInside(page, 'after resizing to 960px');
+  });
+
+  test('the panel stays on screen when switching language while it is open moves the gear (BB-92)', async ({ app, page, mobile }) => {
+    test.skip(mobile, 'the gear stays put on phones');
+    /* 1088 px: English keeps the gear on the right, French wraps it left; 880 px: the other way round */
+    for (const width of [1088, 880]) {
+      await page.setViewportSize({ width, height: 800 });
+      await app.setLang('en');
+      await app.closePrefs();
+      await app.setLang('fr'); /* opens the panel, then switches with it open */
+      await expectInside(page, `after switching to French at ${width}px`);
+      await app.closePrefs();
+    }
   });
 });
 

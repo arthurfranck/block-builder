@@ -4810,9 +4810,16 @@ const BBEngine = engine;
     const dx = r.left < m ? m - r.left : r.right > vw - m ? vw - m - r.right : 0;
     if (dx) P.style.right = `${-dx}px`;
   }
-  window.addEventListener("resize", () => {
+  /* and again whenever the gear may have moved while it is open: a window resize, or anything in the header changing
+     size (language switch, save status text, plan name), which re-wraps the header without a resize event */
+  const replacePrefs = () => {
     if (!$("#prefsPanel").hidden) placePrefs();
-  });
+  };
+  window.addEventListener("resize", replacePrefs);
+  if (typeof ResizeObserver === "function") {
+    const ro = new ResizeObserver(replacePrefs);
+    for (const el of $("header.top").children) if (el.id !== "prefs") ro.observe(el);
+  }
   /* Quick workout from the Goal row (BB-58): an action next to the goal, not a third goal; the plan is left as it is */
   $("#btnQuickGoal").addEventListener("click", () => openQuick());
   $("#btnPrefs").addEventListener("click", () => setPrefs($("#prefsPanel").hidden));

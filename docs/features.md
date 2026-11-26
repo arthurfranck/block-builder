@@ -85,7 +85,7 @@ Build one workout from the run types and send it to a watch without changing the
 - **Autosave:** a plan saves itself in this browser 1.5 seconds after each change, as soon as its setup is complete (it can be built); a new plan needs no Save button. The status next to the name says "Unsaved changes", then "Saved in this browser · 14:05". Changes are also written just before New plan, opening another plan or leaving the page.
 - **Example plan:** the plan shown on a first visit is never saved on its own, even once you change it. Keep this plan (shown only on the example) saves it as yours; from then on it autosaves.
 - **Opening the page (BB-88):** the page reopens the plan that was open last (opened from My plans or saved), exactly as My plans → Open would. If that plan was deleted, the most recently changed plan opens instead. The example only shows when there are no saved plans. A new plan that was never saved (setup not complete) is not reopened: the last saved plan is.
-- **Header:** plan name (tap to rename), ▾ to open My plans (switch, rename, delete, save to a file, import), save status, New plan, Quick workout and the settings gear. The header wraps on narrower windows; the gear menu opens under the gear, shifted when needed to stay 8 px inside the window, also if the window is resized while it is open (BB-92).
+- **Header:** plan name (tap to rename), ▾ to open My plans (switch, rename, delete, save to a file, import), save status, New plan, Quick workout and the settings gear. The header wraps on narrower windows; the gear menu opens under the gear, shifted when needed to stay 8 px inside the window, also when the window is resized or the header changes while it is open, such as after a language switch (BB-92).
 
 ## Settings and display
 

@@ -5417,9 +5417,14 @@ ${s.desc}${s.note ? "\n" + t2("note") + ": " + s.note : ""}`).join("\n\n")
       const dx = r.left < m ? m - r.left : r.right > vw - m ? vw - m - r.right : 0;
       if (dx) P.style.right = `${-dx}px`;
     }
-    window.addEventListener("resize", () => {
+    const replacePrefs = () => {
       if (!$("#prefsPanel").hidden) placePrefs();
-    });
+    };
+    window.addEventListener("resize", replacePrefs);
+    if (typeof ResizeObserver === "function") {
+      const ro = new ResizeObserver(replacePrefs);
+      for (const el of $("header.top").children) if (el.id !== "prefs") ro.observe(el);
+    }
     $("#btnQuickGoal").addEventListener("click", () => openQuick());
     $("#btnPrefs").addEventListener("click", () => setPrefs($("#prefsPanel").hidden));
     $("#prefs").addEventListener("keydown", (e) => {
